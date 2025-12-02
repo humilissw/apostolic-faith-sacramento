@@ -1,0 +1,41 @@
+# https://github.com/testdrivenio/vault-consul-swarm
+
+# https://testdriven.io/blog/deploying-vault-and-consul/
+# $ eval $(docker-machine env node-1)
+# $ docker network create -d overlay --attachable core
+# $ docker stack deploy --compose-file=docker-compose.yml secrets
+
+networks:
+  postgres:
+    external: true
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    platform: linux/amd64
+    restart: always
+    env_file:
+      - ./db.env
+    volumes:
+      - ./cert.pem:/certs/cert.pem:ro
+      - ./key.pem:/certs/server.key:ro 
+    ports:
+      - 5432:5432
+      - 5433:443
+
+  pgadmin:
+    image: rapidfort/pgadmin-ib:latest
+    # image: dpage/pgadmin4:7.8
+    restart: always
+    platform: linux/amd64
+    env_file:
+      - ./db.env
+    volumes:
+      - ./pgadmin_data:/pgadmin_data:rw
+      - ./cert.pem:/certs/server.cert:ro
+      - ./key.pem:/certs/server.key:ro
+    ports:
+      - 5004:80
+      - 5005:443
+    links:
+      - "postgres:postgres"
