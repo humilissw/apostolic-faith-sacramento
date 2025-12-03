@@ -6,9 +6,14 @@
 
 
 @theme inline {
+    --font-playfair: var(--font-playfair), serif;
     --font-lora: var(--font-lora), serif;
     --font-quick: var(--font-quicksand), sans-serif;
     --font-merri: var(--font-merriweather), serif;
+    --font-libre: var(--font-libre), serif;
+    --font-noto: var(--font-noto), serif;
+    --font-pt: var(--font-pt), serif;
+    --font-gara: var(--font-gara), serif;
     --font-barlow: var(--font-barlow_condensed), sans-serif;
 
 
