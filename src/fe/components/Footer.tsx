@@ -12,6 +12,7 @@ import { TbBrandYoutubeFilled } from "react-icons/tb";
 import { IoLogoYoutube } from "react-icons/io5";
 import { BsTelephone } from "react-icons/bs";
 import { IoMailOutline } from "react-icons/io5";
+import Home from "@/app/page";
 
 
 
@@ -26,13 +27,7 @@ export default function Footer() {
                 <div>
                     <div className="flex gap-45 pb-10 border-b">
                         <div className="flex">
-                            <a href="/">
-                                <Image 
-                                src='/logo.png' 
-                                alt="Apostolic Faith Church Logo" 
-                                width="175"
-                                height="175"/>
-                            </a>
+                            <HomepageImage width={175} height={175}/>
                         </div>
 
                             <ul className="flex flex-col gap-4 static bold">

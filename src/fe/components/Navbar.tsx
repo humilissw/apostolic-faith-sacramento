@@ -25,8 +25,8 @@ export default function NavigationMenuDemo() {
   return (
     <div className="flex justify-center items-center py-2 text-black bg-transparent">
 
-    <div className="flex gap-5 justify-center items-center mr-350">
-      <HomepageImage />
+    <div className="flex gap-5 justify-center items-center mr-250">
+      <HomepageImage width={125} height={125}/>
 
     </div>
 
