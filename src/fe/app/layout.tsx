@@ -1,8 +1,8 @@
-import type {Metadata} from "next";
+import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer"
-import "./globals.css"
-import { Quicksand, Lora, Merriweather, Barlow_Condensed, Libre_Baskerville, Playfair_Display, PT_Serif, Noto_Serif, EB_Garamond} from 'next/font/google';
+import type { Metadata } from "next";
+import { Barlow_Condensed, EB_Garamond, Libre_Baskerville, Lora, Merriweather, Noto_Serif, Playfair_Display, PT_Serif } from 'next/font/google';
+import "./globals.css";
 
 const playfair = Playfair_Display({
   variable: '--font-playfair'

@@ -1,9 +1,8 @@
 'use client'
-import Link from "next/link";
 import Image from 'next/image';
 
 
-export default function HomepageImage(props: { width: number; height: number; }) {
+export default function AFCLogo(props: { width: number; height: number; }) {
     return (
         <a href="/">
             <Image 

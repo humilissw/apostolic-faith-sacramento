@@ -1,18 +1,10 @@
 'use client';
 
+import AFCLogo from "@/components/AFCLogo";
 import Link from "next/link";
-import Image from 'next/image';
-import HomepageImage from '@/components/ChurchLogo'
-import { FaRegCopyright } from "react-icons/fa";
-import { IoLocationOutline } from "react-icons/io5";
-import { IoLocationSharp } from "react-icons/io5";
-import { FaFacebookSquare } from "react-icons/fa";
-import { FaYoutube } from "react-icons/fa";
-import { TbBrandYoutubeFilled } from "react-icons/tb";
-import { IoLogoYoutube } from "react-icons/io5";
 import { BsTelephone } from "react-icons/bs";
-import { IoMailOutline } from "react-icons/io5";
-import Home from "@/app/page";
+import { FaFacebookSquare, FaRegCopyright } from "react-icons/fa";
+import { IoLocationOutline, IoLogoYoutube, IoMailOutline } from "react-icons/io5";
 
 
 
@@ -27,7 +19,7 @@ export default function Footer() {
                 <div>
                     <div className="flex gap-45 pb-10 border-b">
                         <div className="flex">
-                            <HomepageImage width={175} height={175}/>
+                            <AFCLogo width={175} height={175}/>
                         </div>
 
                             <ul className="flex flex-col gap-4 static bold">

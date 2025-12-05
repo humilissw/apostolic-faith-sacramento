@@ -1,23 +1,23 @@
 "use client"
 
-import * as React from "react"
+import AFCLogo from '@/components/AFCLogo'
 import Link from "next/link"
-import HomepageImage from '@/components/ChurchLogo'
+import * as React from "react"
 
-import { useIsMobile } from "@/hooks/use-mobile"
 import {
   NavigationMenu,
   NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
-  NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
+  NavigationMenuTrigger
 } from "@/components/ui/navigation-menu"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 import {
   Button
 } from "@/components/ui/button"
+
 
 export default function NavigationMenuDemo() {
   const isMobile = useIsMobile()
@@ -26,7 +26,7 @@ export default function NavigationMenuDemo() {
     <div className="flex justify-center items-center py-2 text-black bg-transparent">
 
     <div className="flex gap-5 justify-center items-center mr-250">
-      <HomepageImage width={125} height={125}/>
+      <AFCLogo width={125} height={125}/>
 
     </div>
 
