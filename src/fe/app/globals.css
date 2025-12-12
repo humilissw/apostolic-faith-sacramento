@@ -15,6 +15,10 @@
     --font-pt: var(--font-pt), serif;
     --font-gara: var(--font-gara), serif;
     --font-barlow: var(--font-barlow_condensed), sans-serif;
+    --font-roboto: var(--font-roboto), sans-serif;
+    --font-noto-sans: var(--font-noto_sans), sans-serif;
+    --font-work-sans: var(--font-work_sans), sans-serif;
+    --font-epilogue: var(--font-epilogue), sans-serif;
 
 
     --radius-sm: calc(var(--radius) - 4px);
