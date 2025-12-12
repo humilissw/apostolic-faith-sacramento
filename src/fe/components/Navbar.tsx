@@ -31,7 +31,7 @@ export default function NavigationMenuDemo() {
     </div>
 
     <NavigationMenu className="absolute" viewport={isMobile}>
-      <NavigationMenuList className="flex-wrap font-work-sans">
+      <NavigationMenuList className="flex-wrap font-noto-sans">
       
         <NavigationMenuItem className="hidden md:block">
           <NavigationMenuTrigger>About</NavigationMenuTrigger>
@@ -113,7 +113,7 @@ export default function NavigationMenuDemo() {
       </NavigationMenuList>
     </NavigationMenu>
 
-    <Button className="bg-zinc-800 ml-60 rounded-md font-work-sans" variant="default">LOGIN</Button>
+    <Button className="bg-zinc-800 ml-60 rounded-md font-noto-sans" variant="default">LOGIN</Button>
     </div>
   )
 }
