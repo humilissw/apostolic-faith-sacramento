@@ -5,7 +5,7 @@ import {
 export default function Home() {
   return (
     <div className="flex justify-center bg-[url('../public/frontChurchCopy1.JPG')] h-screen bg-cover bg-center bg-fixed">
-      <div className="backdrop-opacity-50 text-shadow-sm font-noto-sans text-shadow-zinc-900">
+      <div className="backdrop-opacity-50 text-shadow-sm font-roboto text-shadow-zinc-900">
         <h1 className="text-6xl font-medium text-white tracking-wider text-center pt-60 pb-2">
           Welcome to
         </h1>
