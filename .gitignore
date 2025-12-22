@@ -145,3 +145,4 @@ __pycache__/
 .env
 prod.env
 *.pem
+.DS_Store
