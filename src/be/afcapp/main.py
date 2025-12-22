@@ -1,10 +1,8 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from fastapi.responses import FileResponse
 import os
-import logging
-import time
-from helpers import create_random_string
+from asyncio import sleep
+
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
 
 fake_db = {
     1: {"id": 1,
@@ -24,6 +22,10 @@ app = FastAPI()
 async def root():
     return {"message": "Hello World"}
 
+@app.get('/healthcheck')
+async def healthcheck():
+    return {"status": "ok"}
+
 # Endpoint to retrieve a file
 @app.get("/file/{file_name}")
 async def get_file(file_name): 
@@ -42,5 +44,5 @@ async def read_text(text):
 # Route for theoretical database call
 @app.get("/movies/{movie_id}")
 async def get_movies(movie_id: int):
-    time.sleep(0.5)
+    await sleep(0.5)
     return fake_db[movie_id]

@@ -1,0 +1,35 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredPackages">
+        <list>
+          <option value="blinker" />
+          <option value="certifi" />
+          <option value="charset-normalizer" />
+          <option value="click" />
+          <option value="envparse" />
+          <option value="feedparser" />
+          <option value="flask" />
+          <option value="Flask-Login" />
+          <option value="Flask-SQLAlchemy" />
+          <option value="idna" />
+          <option value="itsdangerous" />
+          <option value="Jinja2" />
+          <option value="MarkupSafe" />
+          <option value="peewee" />
+          <option value="python-dotenv" />
+          <option value="requests" />
+          <option value="sgmllib3k" />
+          <option value="SQLAlchemy" />
+          <option value="typing_extensions" />
+          <option value="urllib3" />
+          <option value="Werkzeug" />
+          <option value="flask_jwt_extended" />
+          <option value="structlog" />
+          <option value="Flask-OIDC" />
+        </list>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>
