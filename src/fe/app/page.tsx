@@ -9,10 +9,10 @@ export default function Home() {
         <h1 className="text-6xl text-white tracking-wider text-center pt-60 pb-2 font-lora">
           Welcome to
         </h1>
-        <h1 className="text-6xl text-white tracking-wide pb-4 font-lora">
+        <h1 className="text-6xl text-white tracking-wide pb-4 ">
            Apostolic Faith Church
         </h1> 
-        <h1 className="text-4xl text-white text-center font-barlow">
+        <h1 className="text-4xl text-white text-center">
            Sundays at 11:00 AM & 5:00 PM
         </h1> 
         <div className="flex gap-8 pt-5 justify-center items-center ">
