@@ -23,12 +23,12 @@ jobs:
       message: "Hello from the caller!"
     secrets: inherit # Optional: pass all secrets automatically
 
-  use-output:
-    needs: [Run-CI-Python]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Get time output
-        run: echo "The called workflow finished at: ${{ needs.Run-CI-Python.outputs.current_time }}"
+  # use-output:
+  #   needs: [Run-CI-Python]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Get time output
+  #       run: echo "The called workflow finished at: ${{ needs.Run-CI-Python.outputs.current_time }}"
 
   # Run-CI-Node:
   #   runs-on: ubuntu-latest
