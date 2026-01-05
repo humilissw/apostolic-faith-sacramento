@@ -51,13 +51,13 @@ pipx install poetry
 * If you need to uninstall: `pipx uninstall poetry`.
 
 ```shell
-> cd src/be/afcapp
+> cd src/be/afcapp_root
 ## activate the virtual env
 > Invoke-Expression (poetry env activate)
 # install the project dependencies
 > poetry install
-## run the app
-> poetry run fastapi dev main.py
+## run the app - 
+> poetry run uvicorn afcapp.main:app --reload
 ```
 
 ### Mac/Linux
