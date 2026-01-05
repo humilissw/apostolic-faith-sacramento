@@ -16,3 +16,13 @@ jobs:
         run: |
           ls ${{ github.workspace }}
       - run: echo "🍏 This job's status is ${{ job.status }}."
+  Run-CI-Python:
+    runs-on: ubuntu-latest
+    steps:
+      - run: python.yml      
+  Run-CI-Node:
+    runs-on: ubuntu-latest
+    steps:
+      - run: node.yml
+
+  
