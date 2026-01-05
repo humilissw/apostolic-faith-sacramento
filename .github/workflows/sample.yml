@@ -3,15 +3,7 @@ run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
 on: [push]
 jobs:
   Run-CI-Python:
-    permissions:
-      contents: read
-      pull-requests: write
-    runs-on: ubuntu-latest
     uses: humilissw/apostolic-faith-sacramento/.github/workflows/python.yml@feature/add-ci # Use main branch or specific commit SHA
 
   Run-CI-Node:
-    permissions:
-      contents: read
-      pull-requests: write
-    runs-on: ubuntu-latest
     uses: humilissw/apostolic-faith-sacramento/.github/workflows/node.yml@feature/add-ci # Use main branch or specific commit SHA
