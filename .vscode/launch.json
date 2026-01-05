@@ -5,11 +5,49 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Launch via bun",
+            "request": "launch",
+            "runtimeArgs": [
+                "dev"
+            ],
+            "runtimeExecutable": "bun",
+            "cwd": "${workspaceFolder}/src/fe",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node"
+        },
+        {
+            "name": "Launch via npm",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/src/fe",
+            "runtimeArgs": [
+                "run",
+                "dev"
+            ],
+            "runtimeExecutable": "npm",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node"
+        },
+        {
             "name": "Python Debugger: Current File",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal"
+        },
+        {
+            "name": "Python Debugger: FastAPI",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "afcapp.main:app",
+                "--reload"
+            ],
+            "jinja": true
         }
     ]
 }
