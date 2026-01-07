@@ -29,6 +29,7 @@ jobs:
     #   with:
     #     node-version: ${{ matrix.node-version }}
     #     cache: 'npm'
+    - run: cd src/fe
     - uses: oven-sh/setup-bun@v2
     - run: bun install
     - run: bun test:ci
