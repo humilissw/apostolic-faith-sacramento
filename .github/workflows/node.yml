@@ -19,21 +19,11 @@ jobs:
     strategy:
       matrix:
         node-version: [25.x]
-        # node-version: [20.x, 22.x, 25.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
     - uses: actions/checkout@v4
-    # - name: Use Node.js ${{ matrix.node-version }}
-    #   uses: actions/setup-node@v4
-    #   with:
-    #     node-version: ${{ matrix.node-version }}
-    #     cache: 'npm'
     - uses: oven-sh/setup-bun@v2
     - run: bun install
       working-directory: src/fe
     - run: bun test:ci
       working-directory: src/fe
-    # - run: npm ci
-    # - run: npm run build --if-present
-    # - run: npm test
