@@ -30,9 +30,10 @@ jobs:
     #     node-version: ${{ matrix.node-version }}
     #     cache: 'npm'
     - uses: oven-sh/setup-bun@v2
-    - working-directory: src/fe
     - run: bun install
+      working-directory: src/fe
     - run: bun test:ci
+      working-directory: src/fe
     # - run: npm ci
     # - run: npm run build --if-present
     # - run: npm test
