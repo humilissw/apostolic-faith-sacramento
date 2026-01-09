@@ -50,6 +50,8 @@ pipx install poetry
 * If you need to upgrade, merely run: `pipx upgrade poetry`.
 * If you need to uninstall: `pipx uninstall poetry`.
 
+1. Then install the dependencies:
+
 ```shell
 > cd src/be/afcapp_root
 ## activate the virtual env
