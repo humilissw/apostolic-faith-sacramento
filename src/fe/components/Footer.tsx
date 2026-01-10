@@ -90,4 +90,4 @@ export default function Footer() {
                 </div>
         </footer>
     )
-}<FaFacebookSquare size="25"/>
+}

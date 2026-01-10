@@ -31,7 +31,7 @@ export default function Navbar() {
     </div>
 
     <NavigationMenu className="absolute" viewport={isMobile}>
-      <NavigationMenuList className="flex-wrap font-lora">
+      <NavigationMenuList className="flex-wrap font-noto-sans">
       
         <NavigationMenuItem className="hidden md:block">
           <NavigationMenuTrigger>About</NavigationMenuTrigger>
@@ -53,7 +53,7 @@ export default function Navbar() {
         </NavigationMenuItem>
 
         <NavigationMenuItem className="hidden md:block">
-          <NavigationMenuTrigger>Resources</NavigationMenuTrigger>
+          <NavigationMenuTrigger className="">Resources</NavigationMenuTrigger>
           <NavigationMenuContent>
             <ul className="grid w-[150px] gap-4">
               <li>
@@ -106,25 +106,6 @@ export default function Navbar() {
           </NavigationMenuContent>
         </NavigationMenuItem>
 
-          <NavigationMenuItem className="hidden md:block">
-          <NavigationMenuTrigger>Simple</NavigationMenuTrigger>
-          <NavigationMenuContent>
-            <ul className="grid w-[200px] gap-4">
-              <li>
-                <NavigationMenuLink asChild>
-                  <Link href="#">Components</Link>
-                </NavigationMenuLink>
-                <NavigationMenuLink asChild>
-                  <Link href="#">Documentation</Link>
-                </NavigationMenuLink>
-                <NavigationMenuLink asChild>
-                  <Link href="#">Blocks</Link>
-                </NavigationMenuLink>
-              </li>
-            </ul>
-          </NavigationMenuContent>
-        </NavigationMenuItem>
-
         <NavigationMenuItem className="hidden md:block">
           <NavigationMenuTrigger>Contact Us</NavigationMenuTrigger>
         </NavigationMenuItem>
@@ -132,7 +113,7 @@ export default function Navbar() {
       </NavigationMenuList>
     </NavigationMenu>
 
-    <Button className="bg-zinc-800 ml-60 rounded-md" variant="default">LOGIN</Button>
+    <Button className="bg-zinc-800 ml-60 rounded-md font-noto-sans" variant="default">LOGIN</Button>
     </div>
   )
 }
