@@ -3,6 +3,9 @@ import Navbar from "@/components/Navbar";
 import type { Metadata } from "next";
 import { Barlow_Condensed, EB_Garamond, Libre_Baskerville, Lora, Merriweather, Noto_Serif, Playfair_Display, PT_Serif, Roboto, Noto_Sans, Work_Sans, Epilogue } from 'next/font/google';
 import "./globals.css";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { AppSidebar } from "@/components/nav-sidebar"
+import { Sidebar } from "lucide-react";
 
 const roboto = Roboto({
   weight: ['100', '300', '400', '500', '700', '900'],
