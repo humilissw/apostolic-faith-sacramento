@@ -27,3 +27,12 @@ jobs:
       working-directory: src/fe
     - run: bun test:ci
       working-directory: src/fe
+    - run: bun run build
+      working-directory: src/fe
+    - uses: actions/upload-artifact@v4
+      with:
+        # Name of the artifact to upload.
+        # Optional. Default is 'artifact'
+        name: 'afcwebapp'
+        path: .next
+        if-no-files-found: 'fail'
