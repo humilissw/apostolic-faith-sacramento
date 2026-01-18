@@ -53,10 +53,10 @@ jobs:
       run: |
         cd src/be/afcapp_root
         poetry build
-    - uses: actions/upload-artifact@v4
-      with:
-        # Name of the artifact to upload.
-        # Optional. Default is 'artifact'
-        name: 'afcwebapp'
-        path: .next
-        if-no-files-found: 'fail'
+    # - uses: actions/upload-artifact@v4
+    #   with:
+    #     # Name of the artifact to upload.
+    #     # Optional. Default is 'artifact'
+    #     name: 'afcwebapp'
+    #     path: .next
+    #     if-no-files-found: 'fail'
