@@ -36,4 +36,4 @@ jobs:
         # Optional. Default is 'artifact'
         name: 'afcwebapp'
         path: .next
-        if-no-files-found: 'fail'
+        if-no-files-found: 'error'
