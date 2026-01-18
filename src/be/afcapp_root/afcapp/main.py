@@ -1,8 +1,23 @@
 import os
 from asyncio import sleep
 
+from afcapp.db.church_db import ChurchDb
+from afcapp.environment.env_wrapper import EnvReader
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
+
+env_reader = EnvReader()
+conn_str = env_reader.conn_str
+db = ChurchDb(conn_str)
+
+try:
+    print('----trying to connect to db')
+    db.test_connect()
+except Exception as err:
+    print(err)
+    
+
+# print(conn_str)
 
 fake_db = {
     1: {"id": 1,
