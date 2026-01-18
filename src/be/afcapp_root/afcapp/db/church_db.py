@@ -21,7 +21,6 @@ class ChurchDb:
     
     def test_connect(self) -> None:
         eng = self.create()
-        Base.metadata.drop_all(eng)
         Base.metadata.create_all(eng)
         with Session(eng) as session:
             test_1 = Test(
