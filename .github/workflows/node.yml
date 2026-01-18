@@ -35,5 +35,5 @@ jobs:
         # Name of the artifact to upload.
         # Optional. Default is 'artifact'
         name: 'afcwebapp'
-        path: .next
+        path: src/fe/.next
         if-no-files-found: 'error'
