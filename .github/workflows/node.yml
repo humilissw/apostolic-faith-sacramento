@@ -45,7 +45,7 @@ jobs:
     #       ~/.bun/install/cache
     #     key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
     - run: bun run build
-      working-directory: ${{ github.workspace }}
+      working-directory: src/fe
     - name: upload-node-artifact
       uses: actions/upload-artifact@v4
       with:
