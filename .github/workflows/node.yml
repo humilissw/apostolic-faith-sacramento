@@ -40,7 +40,7 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-nextjs-${{ hashFiles('**/bun.lockb') }}-
     - run: bun install
-      if: steps.cache.outputs.cache-hit != 'true'
+      # if: steps.cache.outputs.cache-hit != 'true'
       working-directory: src/fe
     - run: bun test:ci
       working-directory: src/fe
