@@ -48,10 +48,13 @@ jobs:
       working-directory: src/fe
       run: |
         bun run build
-    - name: save files to build dir
+    - name: save files to build dir for .next dir
       working-directory: src/fe
       run: |
         cp -a .next/. ${{ github.workspace }}/build/.next
+    - name: save files to build dir
+      working-directory: src/fe
+      run: |
         cp -a dist/. ${{ github.workspace }}/build/dist
     - name: Save packages
       id: cache-package-save
