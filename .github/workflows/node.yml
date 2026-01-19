@@ -38,19 +38,19 @@ jobs:
         # If source files changed but packages didn't, rebuild from a prior cache.
         restore-keys: |
           ${{ runner.os }}-nextjs-${{ hashFiles('**/bun.lockb') }}-      
-    - run: bun run build
-      working-directory: src/fe
     # - name: cache build
     #   uses: actions/cache@v4
     #   with:
     #     path: |
     #       ~/.bun/install/cache
     #     key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+    - run: bun run build
+      working-directory: ${{ github.workspace }}
     - name: upload-node-artifact
       uses: actions/upload-artifact@v4
       with:
         # Name of the artifact to upload.
         # Optional. Default is 'artifact'
         name: 'afcwebapp'
-        path: ${{ github.workspace }}/src/fe/.next
+        path: src/fe/.next
         if-no-files-found: 'error'
