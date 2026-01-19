@@ -53,6 +53,7 @@ jobs:
       # working-directory: src/fe
       run: |
         cd src/fe
+        mkdir ${{ github.workspace }}/build
         mkdir ${{ github.workspace }}/build/.next
         cp -a .next/. ${{ github.workspace }}/build/.next
     - name: save files to build dir

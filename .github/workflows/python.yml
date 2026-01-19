@@ -90,6 +90,7 @@ jobs:
       # working-directory: src/be/afcapp_root
       run: |
         cd src/be/afcapp_root
+        mkdir ${{ github.workspace }}/build
         mkdir ${{ github.workspace }}/build/py
         cp -a dist/. ${{ github.workspace }}/build/py
     - name: Upload pytest test results
