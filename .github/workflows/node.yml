@@ -60,6 +60,7 @@ jobs:
       # working-directory: src/fe
       run: |
         cd src/fe
+        ls -l .
         mkdir ${{ github.workspace }}/build/dist
         cp -a dist/. ${{ github.workspace }}/build/dist
     - name: Save packages
