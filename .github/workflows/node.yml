@@ -39,8 +39,11 @@ jobs:
       working-directory: src/fe
     - run: bun test:ci
       working-directory: src/fe
-    - run: bun run build
+    - name: run bun build
       working-directory: src/fe
+      run: |
+        bun run build
+        cp -r .next ${{ github.workspace }}
     - name: upload-node-artifact
       uses: actions/upload-artifact@v4
       with:
