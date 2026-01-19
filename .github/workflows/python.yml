@@ -69,15 +69,15 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
-      working-directory: src/be/afcapp_root
+      # working-directory: src/be/afcapp_root
       run: |
-        # cd src/be/afcapp_root
+        cd src/be/afcapp_root
         poetry run pytest
 
     - name: Run build
-      working-directory: src/be/afcapp_root
+      # working-directory: src/be/afcapp_root
       run: |
-        # cd src/be/afcapp_root
+        cd src/be/afcapp_root
         poetry build
     # - name: Save packages
     #   id: cache-package-save
@@ -87,12 +87,9 @@ jobs:
     #       ~/.bun/install/cache
     #     key: ${{ steps.cache-restore.outputs.cache-primary-key }}
     - name: save files to build dir
-      working-directory: src/be/afcapp_root
+      # working-directory: src/be/afcapp_root
       run: |
-        ls -l dist
-        # ls -l .
-        # ls -l src/be/afcapp_root
-        # ls -l ${{ github.workspace }}
+        cd src/be/afcapp_root
         cp -a dist/. ${{ github.workspace }}/build/py
     - name: Upload pytest test results
       uses: actions/upload-artifact@v4

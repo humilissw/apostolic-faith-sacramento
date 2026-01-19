@@ -45,16 +45,19 @@ jobs:
     - run: bun test:ci
       working-directory: src/fe
     - name: run bun build
-      working-directory: src/fe
+      # working-directory: src/fe
       run: |
+        cd src/fe
         bun run build
     - name: save files to build dir for .next dir
-      working-directory: src/fe
+      # working-directory: src/fe
       run: |
+        cd src/fe
         cp -a .next/. ${{ github.workspace }}/build/.next
     - name: save files to build dir
-      working-directory: src/fe
+      # working-directory: src/fe
       run: |
+        cd src/fe
         cp -a dist/. ${{ github.workspace }}/build/dist
     - name: Save packages
       id: cache-package-save
