@@ -1,4 +1,4 @@
-name: GitHub Actions Demo
+name: Main Workflow (parent triggers others)
 run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
 on: [push]
 jobs:
