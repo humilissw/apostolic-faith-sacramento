@@ -47,5 +47,5 @@ jobs:
         # Name of the artifact to upload.
         # Optional. Default is 'artifact'
         name: 'afcwebapp'
-        path: src/fe/.next
+        path: ${{ github.workspace }}/src/fe/.next
         if-no-files-found: 'error'
