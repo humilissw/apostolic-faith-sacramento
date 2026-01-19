@@ -28,8 +28,7 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: |
-          path/to/dependencies
-          some/other/dependencies
+          ~/.bun/install/cache
         key: ${{ runner.os }}-nextjs-${{ hashFiles('**/bun.lockb') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
     - name: Cache Next.js build
       uses: actions/cache@v4
@@ -37,7 +36,6 @@ jobs:
       with:
         path: |
           ~/.bun/install/cache
-          #  ${{ github.workspace }}/build/cache
         key: ${{ runner.os }}-nextjs-${{ hashFiles('**/bun.lockb') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
         # enableCrossOsArchive: true
         # fail-on-cache-miss: true
@@ -66,7 +64,6 @@ jobs:
       with:
         path: |
           ~/.bun/install/cache
-          #  ${{ github.workspace }}/build/cache
         key: ${{ steps.cache-restore.outputs.cache-primary-key }}
     # - name: check contents
     #   # working-directory: ${{ github.workspace }}
