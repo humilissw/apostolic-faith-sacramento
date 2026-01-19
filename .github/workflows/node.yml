@@ -59,7 +59,7 @@ jobs:
     - name: save files to build dir
       working-directory: src/fe
       run: |
-        cp -r .next ${{ github.workspace }}/build
+        cp -a .next/. ${{ github.workspace }}/build
     - name: Save build
       id: cache-build-save
       uses: actions/cache/save@v4
