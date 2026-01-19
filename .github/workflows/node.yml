@@ -27,26 +27,26 @@ jobs:
       working-directory: src/fe
     - run: bun test:ci
       working-directory: src/fe
-    - run: bun run build
-      working-directory: src/fe
-    - name: cache build
+    - name: create build cache
       uses: actions/cache@v4
       with:
+        # See here for caching with `yarn`, `bun` or other package managers https://github.com/actions/cache/blob/main/examples.md or you can leverage caching with actions/setup-node https://github.com/actions/setup-node
         path: |
-          ~/.bun/install/cache
-        key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          ~/.npm
+          ${{ github.workspace }}/src/fe/.next/cache
+        # Generate a new cache whenever packages or source files change.
+        key: ${{ runner.os }}-nextjs-${{ hashFiles('**/bun.lockb') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
+        # If source files changed but packages didn't, rebuild from a prior cache.
+        restore-keys: |
+          ${{ runner.os }}-nextjs-${{ hashFiles('**/bun.lockb') }}-      
+    - run: bun run build
+      working-directory: src/fe
     # - name: cache build
     #   uses: actions/cache@v4
     #   with:
-    #     # See here for caching with `yarn`, `bun` or other package managers https://github.com/actions/cache/blob/main/examples.md or you can leverage caching with actions/setup-node https://github.com/actions/setup-node
     #     path: |
-    #       ~/.npm
-    #       ${{ github.workspace }}/src/fe/.next/cache
-    #     # Generate a new cache whenever packages or source files change.
-    #     key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
-    #     # If source files changed but packages didn't, rebuild from a prior cache.
-    #     restore-keys: |
-    #       ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-      
+    #       ~/.bun/install/cache
+    #     key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
     - name: upload-node-artifact
       uses: actions/upload-artifact@v4
       with:
