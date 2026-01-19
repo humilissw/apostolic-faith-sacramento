@@ -30,19 +30,13 @@ jobs:
         path: |
           ~/.bun/install/cache
         key: ${{ runner.os }}-nextjs-${{ hashFiles('**/bun.lockb') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
-    - name: Cache Next.js build
+    - name: Setup cache configuration
       uses: actions/cache@v4
       id: cache
       with:
         path: |
           ~/.bun/install/cache
         key: ${{ runner.os }}-nextjs-${{ hashFiles('**/bun.lockb') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
-        # enableCrossOsArchive: true
-        # fail-on-cache-miss: true
-        # lookup-only: false
-        # save-always: true
-        # # Generate a new cache whenever packages or source files change.
-        # key: ${{ runner.os }}-nextjs-${{ hashFiles('**/bun.lockb') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
         restore-keys: |
           ${{ runner.os }}-nextjs-${{ hashFiles('**/bun.lockb') }}-
     - run: bun install
@@ -58,20 +52,13 @@ jobs:
       working-directory: src/fe
       run: |
         cp -a .next/. ${{ github.workspace }}/build
-    - name: Save build
-      id: cache-build-save
+    - name: Save packages
+      id: cache-package-save
       uses: actions/cache/save@v4
       with:
         path: |
           ~/.bun/install/cache
         key: ${{ steps.cache-restore.outputs.cache-primary-key }}
-    # - name: check contents
-    #   # working-directory: ${{ github.workspace }}
-    #   run: |
-    #     echo "checking build dir"
-    #     ls -l ${{ github.workspace }}/build
-    #     echo "checking cache dir"
-    #     ls -l ${{ github.workspace }}/build/cache
     - name: upload-node-artifact
       uses: actions/upload-artifact@v4
       with:
