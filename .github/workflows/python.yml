@@ -89,6 +89,9 @@ jobs:
     - name: save files to build dir
       working-directory: src/be/afcapp_root
       run: |
+        ls -l .
+        ls -l src/be/afcapp_root
+        ls -l ${{ github.workspace }}
         cp -a dist/. ${{ github.workspace }}/build/py
     - name: Upload pytest test results
       uses: actions/upload-artifact@v4
