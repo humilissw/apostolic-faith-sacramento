@@ -1,5 +1,5 @@
 name: Main Workflow (parent triggers others)
-run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
+run-name: Running CI on ${{ github.ref_name }}
 on: [push]
 jobs:
   Run-CI-Python:
