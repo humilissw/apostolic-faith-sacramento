@@ -29,11 +29,23 @@ jobs:
       working-directory: src/fe
     - run: bun run build
       working-directory: src/fe
+    - name: cache build
+      uses: actions/cache@v4
+      with:
+        # See here for caching with `yarn`, `bun` or other package managers https://github.com/actions/cache/blob/main/examples.md or you can leverage caching with actions/setup-node https://github.com/actions/setup-node
+        path: |
+          ~/.npm
+          ${{ github.workspace }}/src/fe/.next/cache
+        # Generate a new cache whenever packages or source files change.
+        key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
+        # If source files changed but packages didn't, rebuild from a prior cache.
+        restore-keys: |
+          ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-      
     - name: upload-node-artifact
       uses: actions/upload-artifact@v4
       with:
         # Name of the artifact to upload.
         # Optional. Default is 'artifact'
         name: 'afcwebapp'
-        path: src/fe/.next
+        path: ${{ github.workspace }}/src/fe/.next
         if-no-files-found: 'error'
