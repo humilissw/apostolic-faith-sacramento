@@ -1,0 +1,9 @@
+name: Main Workflow (parent triggers others)
+run-name: Running CI on ${{ github.ref_name }}
+on: [push]
+jobs:
+  Run-CI-Python:
+    uses: humilissw/apostolic-faith-sacramento/.github/workflows/python.yml@feature/update-pipelines # Use main branch or specific commit SHA
+
+  Run-CI-Node:
+    uses: humilissw/apostolic-faith-sacramento/.github/workflows/node.yml@feature/update-pipelines # Use main branch or specific commit SHA
