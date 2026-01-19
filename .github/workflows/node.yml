@@ -29,7 +29,7 @@ jobs:
         path: |
           ~/.bun/install/cache
            ${{ github.workspace }}/src/fe/.next/cache
-        key: ${{ runner.os }}-nextjs-${{ hashFiles('**/bun.lockb') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
+        key: ${{ runner.os }}-bun-nextjs-${{ hashFiles('**/bun.lockb') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
 
         # # Generate a new cache whenever packages or source files change.
         # key: ${{ runner.os }}-nextjs-${{ hashFiles('**/bun.lockb') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
