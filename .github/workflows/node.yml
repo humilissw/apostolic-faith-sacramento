@@ -53,11 +53,13 @@ jobs:
       # working-directory: src/fe
       run: |
         cd src/fe
+        mkdir ${{ github.workspace }}/build/.next
         cp -a .next/. ${{ github.workspace }}/build/.next
     - name: save files to build dir
       # working-directory: src/fe
       run: |
         cd src/fe
+        mkdir ${{ github.workspace }}/build/dist
         cp -a dist/. ${{ github.workspace }}/build/dist
     - name: Save packages
       id: cache-package-save
