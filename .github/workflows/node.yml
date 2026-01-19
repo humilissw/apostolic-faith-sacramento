@@ -60,11 +60,8 @@ jobs:
       # working-directory: src/fe
       run: |
         cd src/fe
-        ls -l .
-        ls -l out
-        ls -l .next
-        mkdir ${{ github.workspace }}/build/dist
-        cp -a dist/. ${{ github.workspace }}/build/dist
+        mkdir ${{ github.workspace }}/build/out
+        cp -a out/. ${{ github.workspace }}/build/out
     - name: Save packages
       id: cache-package-save
       uses: actions/cache/save@v4
