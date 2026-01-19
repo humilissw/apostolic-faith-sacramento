@@ -44,6 +44,10 @@ jobs:
       run: |
         bun run build
         cp -r .next ${{ github.workspace }}
+        ls -l ${{ github.workspace }}
+        ls -l ${{ github.workspace }}/src/fe/
+        ls -l ${{ github.workspace }}/src/fe/.next
+        ls -l ${{ github.workspace }}/src/fe/.next/cache
     - name: upload-node-artifact
       uses: actions/upload-artifact@v4
       with:
