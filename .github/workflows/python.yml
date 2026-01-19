@@ -20,7 +20,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["pypy3.10", "3.9", "3.10", "3.11", "3.12", "3.13", "3.13.5"]
+        #poetry requires at least 3.13
+        python-version: ["3.13", "3.13.5"]
+        # python-version: ["pypy3.10", "3.9", "3.10", "3.11", "3.12", "3.13", "3.13.5"]
 
     steps:
     - uses: actions/checkout@v5
