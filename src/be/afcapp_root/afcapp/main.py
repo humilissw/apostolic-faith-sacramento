@@ -1,63 +1,33 @@
-import os
-from asyncio import sleep
+import sentry_sdk
+from fastapi import FastAPI
+from fastapi.routing import APIRoute
+from starlette.middleware.cors import CORSMiddleware
 
-from afcapp.db.church_db import ChurchDb
-from afcapp.environment.env_wrapper import EnvReader
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
-
-env_reader = EnvReader()
-conn_str = env_reader.conn_str
-db = ChurchDb(conn_str)
-
-try:
-    print('----trying to connect to db')
-    db.test_connect()
-except Exception as err:
-    print(err)
-    
-
-# print(conn_str)
-
-fake_db = {
-    1: {"id": 1,
-    "title": "Cinderella"
-    },
-    2: {"id": 2,
-    "title": "Toy Story"
-    }
-}
-
-file_path = "loremipsum.txt"
-
-app = FastAPI()
-
-# Hello World route
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
-
-@app.get('/healthcheck')
-async def healthcheck():
-    return {"status": "ok"}
-
-# Endpoint to retrieve a file
-@app.get("/file/{file_name}")
-async def get_file(file_name): 
-    if os.path.exists(file_name): 
-        return FileResponse(file_name)
-    else:
-        raise HTTPException(status_code=404, detail="File not found")
+from app.api.main import api_router
+from app.core.config import settings
 
 
-# Route for dynamic load testing
-@app.get("/text/{text}")
-async def read_text(text): 
-    results = {'text': text}
-    return results
-    
-# Route for theoretical database call
-@app.get("/movies/{movie_id}")
-async def get_movies(movie_id: int):
-    await sleep(0.5)
-    return fake_db[movie_id]
+def custom_generate_unique_id(route: APIRoute) -> str:
+    return f"{route.tags[0]}-{route.name}"
+
+
+if settings.SENTRY_DSN and settings.ENVIRONMENT != "local":
+    sentry_sdk.init(dsn=str(settings.SENTRY_DSN), enable_tracing=True)
+
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    generate_unique_id_function=custom_generate_unique_id,
+)
+
+# Set all CORS enabled origins
+if settings.all_cors_origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.all_cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+app.include_router(api_router, prefix=settings.API_V1_STR)

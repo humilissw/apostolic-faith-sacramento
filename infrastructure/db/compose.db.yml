@@ -24,3 +24,9 @@ services:
     # restart: always
     ports:
       - 5080:8080
+
+  mailcatcher:
+    image: schickling/mailcatcher
+    ports:
+      - "1080:1080"
+      - "1025:1025"
