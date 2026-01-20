@@ -14,8 +14,6 @@ interface TriggerProps {
  
 export default function CustomTrigger(props: TriggerProps) {
   const { toggleSidebar } = useSidebar()
-
-  console.log(props.state)
   
 
   return (
