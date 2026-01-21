@@ -14,10 +14,7 @@ interface TriggerProps {
  
 export default function CustomTrigger(props: TriggerProps) {
   const { toggleSidebar } = useSidebar()
-
-  console.log(props.state)
   
-
   return (
     <button onClick={toggleSidebar}>
         {props.state ? (<IoMdClose size="30"/>) : (<AiOutlineMenu size="30"/>)}

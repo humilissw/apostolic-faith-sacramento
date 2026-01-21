@@ -9,23 +9,16 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 
-export default function Doctrines() {
-
-    const testArray = ["THE DIVINE TRINITY", "The Father, the Son, and the Holy Ghost are separate and distinct Persons, possessing recognizable personalities and qualities, perfectly united in One. They are not to be thought of in any sense, as merely three names for one Person. The doctrine of the Trinity begins to develop in the first chapter of the Bible: \"And God said, Let us make man in our image\ (Genesis 1:26). The plural forms \"us\" and \"our\" indicate that the Godhead consists of more than one individual. Almost invariably throughout the Bible, the Hebrew word translated as \"God\" is Elohim, and this is the plural form. With the coming of Jesus Christ to earth, mankind was able to observe the mysterious reality of the Triune God as never before. In Matthew 3:16-17, we read of the cooperation of the three Persons of the Godhead at the baptism of Jesus in what is perhaps the clearest picture of the Trinity presented in Scripture."]
-    const testArray2 = ["REPENTANCE", "Repentance is a deep, heartfelt sorrow for sin with a renunciation of sin. When one comes to the Lord to be saved, he is desperately in need of forgiveness for the sins he has committed. If these sins are not forgiven, they will take that person into a lost eternity. Knowing this moves a person to a feeling of dread and a desire to be completely forgiven, at any cost. The radical change which true salvation brings means that one cannot mix the old life with the new. If one is hanging on to the past, he is not ready for entrance into the Kingdom of God. Repentance is the sinner's key to Heaven—the only way he can approach God and receive divine favor. But when one turns to God with all of his heart, true repentance brings the abundant joy and peace of salvation into the life."]
-    
+export default function Doctrines() {    
   return (
-
-    <div className="flex flex-col justify-center">
-
-        
-        <div className="flex justify-center items-center bg-[url('../public/bible-wood.jpg')] bg-cover bg-position-[center_top_40rem] h-75">
-            <h1 className="text-white text-7xl text-shadow-md text-shadow-zinc-900 font-noto-sans">
+    <div className="flex flex-col justify-center bg-white">
+        <div className="flex justify-center items-center h-20 bg-position-[center_top_11rem] bg-[url('../public/bible-wood.jpg')] bg-cover md:h-35 md:bg-position-[center_top_19rem] lg:bg-position-[center_top_40rem] lg:h-75">
+            <h1 className="text-white text-4xl md:text-6xl lg:text-8xl text-shadow-lg font-noto-sans">
                 Our Beliefs
             </h1>
         </div>
 
-    <div className="w-full p-6 pl-20 pr-60 flex justify-center font-noto-sans">
+    <div className="w-full p-6 lg:pl-20 lg:pr-60 flex justify-center font-noto-sans">
       <div className="w-full">
         <Accordion
           type="single"
@@ -34,10 +27,10 @@ export default function Doctrines() {
           defaultValue="item-1"
         >
       <AccordionItem value="item-1">
-        <AccordionTrigger className="flex text-3xl">
+        <AccordionTrigger className="flex text-2xl lg:text-3xl cursor-pointer">
             THE DIVINE TRINITY
         </AccordionTrigger>
-        <p className="pb-10">The Divine Trinity consists of three Persons: God the Father, Jesus Christ the Son, and the Holy Ghost, perfectly united as one. (Matthew 3:16-17; 1 John 5:7)</p>
+          <p className="pb-10">The Divine Trinity consists of three Persons: God the Father, Jesus Christ the Son, and the Holy Ghost, perfectly united as one. (Matthew 3:16-17; 1 John 5:7)</p>
         <AccordionContent className="flex flex-col gap-4 text-balance">
           <p>
             The Father, the Son, and the Holy Ghost are separate and distinct Persons, possessing recognizable personalities and qualities, perfectly united in One. They are not to be thought of in any sense, as merely three names for one Person.
@@ -52,7 +45,7 @@ export default function Doctrines() {
       </AccordionItem>
 
       <AccordionItem value="item-2">
-        <AccordionTrigger className="flex text-3xl">
+        <AccordionTrigger className="flex text-2xl lg:text-3xl cursor-pointer">
             REPENTANCE
         </AccordionTrigger>
         <p className="pb-10">Repentance is a godly sorrow for sin with a renunciation of sin. (Isaiah 55:7; Matthew 4:17)</p>
@@ -68,7 +61,7 @@ export default function Doctrines() {
       </AccordionItem>
 
     <AccordionItem value="item-3">
-        <AccordionTrigger className="flex text-3xl">
+        <AccordionTrigger className="flex text-2xl lg:text-3xl cursor-pointer">
             SALVATION
         </AccordionTrigger>
         <p className="pb-10">Salvation is the act of God's grace whereby we receive forgiveness for sins and stand before God as though we had never sinned. (Romans 5:1; 2 Corinthians 5:17)</p>
@@ -87,7 +80,7 @@ export default function Doctrines() {
       </AccordionItem>
 
     <AccordionItem value="item-4">
-        <AccordionTrigger className="flex text-3xl">
+        <AccordionTrigger className="flex text-2xl lg:text-3xl cursor-pointer">
             SANCTIFICATION
         </AccordionTrigger>
         <p className="pb-10">Sanctification or Holiness, the act of God's grace whereby we are made holy, is the second definite work and is subsequent to salvation. (John 17:15-21; Hebrews 13:12)</p>
@@ -103,7 +96,7 @@ export default function Doctrines() {
       </AccordionItem>
 
       <AccordionItem value="item-5">
-        <AccordionTrigger className="flex text-3xl">
+        <AccordionTrigger className="flex text-2xl lg:text-3xl cursor-pointer">
             THE BAPTISM OF THE HOLY GHOST
         </AccordionTrigger>
         <p className="pb-10">The Baptism of the Holy Ghost is the enduement of power from on high upon the clean, sanctified life, and is evidenced by speaking in tongues as the Spirit gives utterance. (Luke 24:49; Acts 1:5-8; 2:1-4)</p>
@@ -119,7 +112,7 @@ export default function Doctrines() {
       </AccordionItem>
 
       <AccordionItem value="item-6">
-        <AccordionTrigger className="flex text-3xl">
+        <AccordionTrigger className="flex text-2xl lg:text-3xl cursor-pointer">
             DIVINE HEALING
         </AccordionTrigger>
         <p className="pb-10">Divine Healing of sickness is provided through the atonement. (James 5:14-16; 1 Peter 2:24)</p>
@@ -135,7 +128,7 @@ export default function Doctrines() {
       </AccordionItem>
 
       <AccordionItem value="item-7">
-        <AccordionTrigger className="flex text-3xl">
+        <AccordionTrigger className="flex text-2xl lg:text-3xl cursor-pointer">
             THE SECOND COMING OF JESUS
         </AccordionTrigger>
         <p className="pb-10">The Second Coming of Jesus will be just as literal and visible as His going away. Acts 1:9-11. There will be two appearances under one coming: First, to catch away His waiting Bride. Matthew 24:40-44; 1 Thessalonians 4:15-17. Second, to execute judgment upon the ungodly. (2 Thessalonians 1:7-10; Jude 14-15)</p>
@@ -153,7 +146,7 @@ export default function Doctrines() {
       </AccordionItem>
 
       <AccordionItem value="item-8">
-        <AccordionTrigger className="flex text-3xl">
+        <AccordionTrigger className="flex text-2xl lg:text-3xl cursor-pointer">
             THE GREAT TRIBULATION
         </AccordionTrigger>
         <p className="pb-10">The Great Tribulation will occur between Christ's coming for His Bride and His return in judgment. (Isaiah 26:20-21; Revelation 9 and 16)</p>
@@ -171,7 +164,7 @@ export default function Doctrines() {
       </AccordionItem>
 
       <AccordionItem value="item-9">
-        <AccordionTrigger className="flex text-3xl">
+        <AccordionTrigger className="flex text-2xl lg:text-3xl cursor-pointer">
             CHRIST'S MILLENNIAL REIGN
         </AccordionTrigger>
         <p className="pb-10">Christ's Millennial Reign is the literal 1000 years of peaceful reign by Jesus on earth. (Isaiah 11 and 35)</p>
@@ -187,7 +180,7 @@ export default function Doctrines() {
       </AccordionItem>
 
       <AccordionItem value="item-10">
-        <AccordionTrigger className="flex text-3xl">
+        <AccordionTrigger className="flex text-2xl lg:text-3xl cursor-pointer">
             THE GREAT TRIBULATION
         </AccordionTrigger>
         <p className="pb-10">The Great Tribulation will occur between Christ's coming for His Bride and His return in judgment. (Isaiah 26:20-21; Revelation 9 and 16)</p>
@@ -205,7 +198,7 @@ export default function Doctrines() {
       </AccordionItem>
 
       <AccordionItem value="item-11">
-        <AccordionTrigger className="flex text-3xl">
+        <AccordionTrigger className="flex text-2xl lg:text-3xl cursor-pointer">
             THE GREAT WHITE THRONE JUDGMENT
         </AccordionTrigger>
         <p className="pb-10">The Great White Throne Judgment is the final judgment when all the wicked dead will stand before God. (Revelation 20:11-15)</p>
@@ -219,7 +212,7 @@ export default function Doctrines() {
       </AccordionItem>
 
       <AccordionItem value="item-12">
-        <AccordionTrigger className="flex text-3xl">
+        <AccordionTrigger className="flex text-2xl lg:text-3xl cursor-pointer">
             THE NEW HEAVEN AND THE NEW EARTH
         </AccordionTrigger>
         <p className="pb-10">The New Heaven and the New Earth will replace the present heaven and earth, which will be destroyed after the Great White Throne Judgment (2 Peter 3:12-13; Revelation 21:1-3)</p>
@@ -233,7 +226,7 @@ export default function Doctrines() {
       </AccordionItem>
 
       <AccordionItem value="item-13">
-        <AccordionTrigger className="flex text-3xl">
+        <AccordionTrigger className="flex text-2xl lg:text-3xl cursor-pointer">
             ETERNAL HEAVEN AND ETERNAL HELL
         </AccordionTrigger>
         <p className="pb-10">Eternal Heaven and Eternal Hell are literal places of final destiny, each as eternal as the other. (Matthew 25:41-46; Luke 16:22-28)</p>
@@ -249,7 +242,7 @@ export default function Doctrines() {
       </AccordionItem>
 
       <AccordionItem value="item-14">
-        <AccordionTrigger className="flex text-3xl">
+        <AccordionTrigger className="flex text-2xl lg:text-3xl cursor-pointer">
             MARRIAGE IS FOR LIFE
         </AccordionTrigger>
         <p className="pb-10">Marriage is a holy institution between one man and one woman that is binding before God, giving neither partner liberty to marry again as long as the first companion lives. (Mark 10:6-12; Romans 7:1-3)</p>
@@ -265,7 +258,7 @@ export default function Doctrines() {
       </AccordionItem>
 
       <AccordionItem value="item-15">
-        <AccordionTrigger className="flex text-3xl">
+        <AccordionTrigger className="flex text-2xl lg:text-3xl cursor-pointer">
             WATER BAPTISM
         </AccordionTrigger>
         <p className="pb-10">Water Baptism is by one immersion "in the name of the Father, and of the Son, and of the Holy Ghost," as Jesus commanded. (Matthew 3:16; 28:19)</p>
@@ -283,7 +276,7 @@ export default function Doctrines() {
       </AccordionItem>
 
       <AccordionItem value="item-16">
-        <AccordionTrigger className="flex text-3xl">
+        <AccordionTrigger className="flex text-2xl lg:text-3xl cursor-pointer">
             RESTITUTION
         </AccordionTrigger>
         <p className="pb-10">Restitution is subsequent to salvation, wherein wrongs against our fellowmen are made right in order to have a clear conscience before God and man. (Ezekiel 33:15; Matthew 5:23-24)</p>
@@ -299,7 +292,7 @@ export default function Doctrines() {
       </AccordionItem>
 
       <AccordionItem value="item-17">
-        <AccordionTrigger className="flex text-3xl">
+        <AccordionTrigger className="flex text-2xl lg:text-3xl cursor-pointer">
             THE LORD'S SUPPER
         </AccordionTrigger>
         <p className="pb-10">The Lord's Supper is an institution ordained by Jesus so that we might remember His death until He returns. (Matthew 26:26-29; 1 Corinthians 11:23,26)</p>
@@ -316,7 +309,7 @@ export default function Doctrines() {
 
     
     <AccordionItem value="item-18">
-        <AccordionTrigger className="flex text-3xl">
+        <AccordionTrigger className="flex text-2xl lg:text-3xl cursor-pointer">
             WASHING THE DISCIPLE'S FEET
         </AccordionTrigger>
         <p className="pb-10">Washing the Disciple's Feet is practiced according to the example and commandment Jesus gave. (John 13:14-15)</p>

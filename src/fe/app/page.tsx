@@ -1,6 +1,7 @@
 import {
   Button
 } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -16,8 +17,12 @@ export default function Home() {
            Sundays at 11:00 AM & 5:00 PM
         </h1> 
         <div className="flex gap-8 pt-5 justify-center items-center ">
-          <Button className="border-2 border-white bg-transparent text-shadow-md text-shadow-zinc-900" variant="default">About Us</Button>
-          <Button className="border-2 border-white bg-transparent text-shadow-md text-shadow-zinc-900" variant="default">Latest Sermon</Button>
+          <Link href="/doctrines">
+              <Button className="border-2 border-white bg-transparent text-shadow-md text-shadow-zinc-900" variant="default">About Us</Button>
+          </Link>
+          <Link href="https://www.youtube.com/@ApostolicFaithSacramento/streams">
+              <Button className="border-2 border-white bg-transparent text-shadow-md text-shadow-zinc-900" variant="default">Latest Sermon</Button>
+          </Link>
         </div>
       </div>
     </div>
