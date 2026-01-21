@@ -4,6 +4,9 @@ import NavbarCopy from "@/components/NavbarCopy";
 import type { Metadata } from "next";
 import { Barlow_Condensed, EB_Garamond, Libre_Baskerville, Lora, Merriweather, Noto_Serif, Playfair_Display, PT_Serif, Roboto, Noto_Sans, Work_Sans, Epilogue } from 'next/font/google';
 import "./globals.css";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { AppSidebar } from "@/components/nav-sidebar"
+import { Sidebar } from "lucide-react";
 
 const roboto = Roboto({
   weight: ['100', '300', '400', '500', '700', '900'],
@@ -60,9 +63,6 @@ const barlow_condensed = Barlow_Condensed({
   weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
   variable: '--font-barlow_condensed'
 })
-
-
-
 
 export const metadata: Metadata = {
   title: "Apostolic Faith Church Sacramento",

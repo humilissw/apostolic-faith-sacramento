@@ -1,41 +1,34 @@
-# https://github.com/testdrivenio/vault-consul-swarm
-
-# https://testdriven.io/blog/deploying-vault-and-consul/
-# $ eval $(docker-machine env node-1)
-# $ docker network create -d overlay --attachable core
-# $ docker stack deploy --compose-file=docker-compose.yml secrets
+# https://www.kisphp.com/posgresql/docker-compose-setup-for-postgres13-and-pgadmin4
+# https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html
+# https://linuxhint.com/postgresql_docker/
+# https://devopsheaven.com/docker/docker-compose/volumes/2018/01/16/volumes-in-docker-compose.html
 
 networks:
-  postgres:
+  nat:
     external: true
 
 services:
-  postgres:
-    image: postgres:18-alpine
-    platform: linux/amd64
-    restart: always
+  mysql:
+    image: mysql:9.5.0
+    # NOTE: use of "mysql_native_password" is not recommended: https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html#upgrade-caching-sha2-password
+    # (this is just an example, not intended to be a production configuration)
+    # command: --default-authentication-plugin=mysql_native_password
+    # command: --default-authentication-plugin=caching_sha2_password
+    # restart: always
     env_file:
       - ./db.env
-    volumes:
-      - ./cert.pem:/certs/cert.pem:ro
-      - ./key.pem:/certs/server.key:ro 
+    # environment:
+    #   # username -> root
+    #   MYSQL_ROOT_PASSWORD: DisIss3cur3br4h!
+    #   # caching_sha2_password: DisIss3cur3br4h!
     ports:
-      - 5432:5432
-      - 5433:443
+      - 3306:3306
+      - 33060:33060
 
-  pgadmin:
-    image: rapidfort/pgadmin-ib:latest
-    # image: dpage/pgadmin4:7.8
-    restart: always
-    platform: linux/amd64
-    env_file:
-      - ./db.env
-    volumes:
-      - ./pgadmin_data:/pgadmin_data:rw
-      - ./cert.pem:/certs/server.cert:ro
-      - ./key.pem:/certs/server.key:ro
+  adminer:
+    image: adminer
+    depends_on:
+      - mysql # has to be db because it is configured to look at db
+    # restart: always
     ports:
-      - 5004:80
-      - 5005:443
-    links:
-      - "postgres:postgres"
+      - 5080:8080

@@ -3,6 +3,7 @@
 import AFCLogo from '@/components/AFCLogo'
 import Link from "next/link"
 import * as React from "react"
+import { useState } from "react";
 
 import {
   NavigationMenu,
@@ -18,19 +19,37 @@ import {
   Button
 } from "@/components/ui/button"
 
+import { NavSidebar } from "@/components/nav-sidebar"
+import { Separator } from "@/components/ui/separator"
+import {
+  SidebarHeader,
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar"
+
+import CustomTrigger from "@/components/sidebartrigger"
+
 
 export default function Navbar() {
   const isMobile = useIsMobile()
 
   return (
-    <div className="flex justify-center items-center py-2">
+    <div className="flex gap-35 justify-center items-center py-2 md:py-5 lg:gap-50 xl:gap-10 text-black">
 
-    <div className="flex gap-5 justify-center items-center mr-250">
+    <div className="flex justify-center items-center gap-45 md:gap-125 md:mr-10 lg:mr-95 xl:mr-200 2xl:mr-250">
       <AFCLogo width={125} height={125}/>
-
+      <div className="flex justify-center items-center lg:hidden">
+        <SidebarProvider >
+        <NavSidebar />
+        <CustomTrigger state={false}/>
+        <SidebarInset className=''>
+        </SidebarInset>
+      </SidebarProvider>
+      </div>
     </div>
 
-    <NavigationMenu className="absolute" viewport={isMobile}>
+    <NavigationMenu className="hidden lg:block absolute" viewport={isMobile}>
       <NavigationMenuList className="flex-wrap font-noto-sans">
       
         <NavigationMenuItem className="hidden md:block">
@@ -113,7 +132,8 @@ export default function Navbar() {
       </NavigationMenuList>
     </NavigationMenu>
 
-    <Button className="bg-zinc-800 ml-60 rounded-md font-noto-sans" variant="default">LOGIN</Button>
+    <Button className="hidden lg:block md:bg-zinc-800 md:ml-60 md:rounded-md md:font-noto-sans" variant="default">LOGIN</Button>
+  
     </div>
   )
 }
