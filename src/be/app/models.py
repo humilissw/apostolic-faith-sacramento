@@ -1,7 +1,7 @@
 import uuid
 
 from pydantic import EmailStr
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Date, Field, Relationship, SQLModel
 
 
 # Shared properties
@@ -111,3 +111,16 @@ class TokenPayload(SQLModel):
 class NewPassword(SQLModel):
     token: str
     new_password: str = Field(min_length=8, max_length=128)
+
+class Media(SQLModel):
+    # id: Mapped[int] = mapped_column(primary_key=True)
+    name: str
+    upload_date: Date
+    
+class Test(SQLModel):
+    #  id: int
+     test1: int
+     test2: int
+     test3: int
+     test4: int
+    
