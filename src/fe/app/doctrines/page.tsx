@@ -12,8 +12,8 @@ import {
 export default function Doctrines() {    
   return (
     <div className="flex flex-col justify-center bg-white">
-        <div className="flex justify-center items-center h-20 bg-position-[center_top_11rem] bg-[url('../public/bible-wood.jpg')] bg-cover md:h-35 md:bg-position-[center_top_19rem] lg:bg-position-[center_top_40rem] lg:h-75">
-            <h1 className="text-white text-4xl md:text-6xl lg:text-8xl text-shadow-lg font-noto-sans">
+        <div className="flex justify-center items-center h-40 bg-position-[center_top_31rem] bg-[url('../public/bible-wood.jpg')] bg-cover md:h-35 md:bg-position-[center_top_19rem] lg:bg-position-[center_top_40rem] lg:h-75">
+            <h1 className="text-white text-5xl md:text-6xl lg:text-8xl text-shadow-lg font-noto-sans">
                 Our Beliefs
             </h1>
         </div>
