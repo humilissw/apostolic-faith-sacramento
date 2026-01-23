@@ -35,9 +35,9 @@ export default function Navbar() {
   const isMobile = useIsMobile()
 
   return (
-    <div className="flex gap-35 justify-center items-center py-2 md:py-5 lg:gap-50 xl:gap-10 text-black bg-white">
+    <div className="flex gap-35 justify-center items-center py-2 md:py-5 lg:gap-35 xl:gap-10 text-black bg-white">
 
-    <div className="flex justify-center items-center gap-45 md:gap-125 md:mr-10 lg:mr-95 xl:mr-200 2xl:mr-250">
+    <div className="flex justify-center items-center xs:gap-40 sm:gap-110 md:gap-125 lg:mr-95 xl:mr-175 2xl:mr-275">
       <AFCLogo width={125} height={125}/>
       <div className="flex justify-center items-center lg:hidden">
         <SidebarProvider className='' >

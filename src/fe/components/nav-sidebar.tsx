@@ -70,7 +70,7 @@ const data = {
 
 export function NavSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
- <Sidebar className="" side="right" {...props}>
+ <Sidebar className="w-screen" side="right" {...props}>
       <SidebarHeader className="items-end">
         <CustomTrigger state={true}/>
       </SidebarHeader>

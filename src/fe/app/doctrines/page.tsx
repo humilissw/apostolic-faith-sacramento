@@ -18,7 +18,7 @@ export default function Doctrines() {
             </h1>
         </div>
 
-    <div className="w-full p-6 lg:pl-20 lg:pr-60 flex justify-center font-noto-sans">
+    <div className="w-full p-6 lg:pl-20 lg:pr-20 xl:pl-45 xl:pr-45 flex justify-center font-noto-sans">
       <div className="w-full">
         <Accordion
           type="single"
