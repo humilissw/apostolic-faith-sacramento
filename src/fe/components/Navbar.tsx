@@ -40,7 +40,7 @@ export default function Navbar() {
     <div className="flex justify-center items-center gap-45 md:gap-125 md:mr-10 lg:mr-95 xl:mr-200 2xl:mr-250">
       <AFCLogo width={125} height={125}/>
       <div className="flex justify-center items-center lg:hidden">
-        <SidebarProvider >
+        <SidebarProvider className='' >
         <NavSidebar />
         <CustomTrigger state={false}/>
         <SidebarInset className=''>
