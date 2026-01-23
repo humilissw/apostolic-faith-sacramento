@@ -52,7 +52,7 @@ jobs:
         pip install flake8 pytest
 
     - name: Setup Poetry
-      working-directory: src/be/afcapp_root
+      working-directory: src/be/app
       run: |
         python -m pip install --user pipx
         python -m pipx ensurepath
@@ -69,15 +69,15 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
-      # working-directory: src/be/afcapp_root
+      # working-directory: src/be/app
       run: |
-        cd src/be/afcapp_root
+        cd src/be/app
         poetry run pytest
 
     - name: Run build
-      # working-directory: src/be/afcapp_root
+      # working-directory: src/be/app
       run: |
-        cd src/be/afcapp_root
+        cd src/be/app
         poetry build
     # - name: Save packages
     #   id: cache-package-save
@@ -87,9 +87,9 @@ jobs:
     #       ~/.bun/install/cache
     #     key: ${{ steps.cache-restore.outputs.cache-primary-key }}
     - name: save files to build dir
-      # working-directory: src/be/afcapp_root
+      # working-directory: src/be/app
       run: |
-        cd src/be/afcapp_root
+        cd src/be/app
         mkdir ${{ github.workspace }}/build
         mkdir ${{ github.workspace }}/build/py
         cp -a dist/. ${{ github.workspace }}/build/py
