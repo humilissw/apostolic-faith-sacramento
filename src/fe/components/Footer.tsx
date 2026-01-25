@@ -84,7 +84,7 @@ export default function Footer() {
                         </div>
                         <div className="flex flex-row gap-5 items-center justify-center mb-10">
                             <Link href="https://www.facebook.com/p/Sacramento-AFC-100064440229528/"> <FaFacebookSquare size="25"/> </Link>
-                            <Link href="https://www.youtube.com/@ApostolicFaithSacramento"> <IoLogoYoutube size="25"/> </Link>
+                            <Link href="https://www.youtucom/@ApostolicFaithSacramento"> <IoLogoYoutube size="25"/> </Link>
                         </div>
                     </div>
                 </div>

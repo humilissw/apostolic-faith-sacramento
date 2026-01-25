@@ -3,7 +3,7 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
-from app.core.config import settings
+from app.config import settings
 from app.core.security import verify_password
 from app.crud import create_user
 from app.models import UserCreate
