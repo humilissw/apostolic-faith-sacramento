@@ -20,11 +20,9 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 
-import CustomTrigger from "@/components/sidebartrigger"
+import CustomSidebarTrigger from "@/components/custom-sidebar-trigger"
 
-// This is sample data.
 const data = {
-  versions: ["1.0.1", "1.1.0-alpha", "2.0.0-beta1"],
   navMain: [
     {
       title: "About",
@@ -72,7 +70,7 @@ export function NavSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
  <Sidebar className="" side="right" {...props}>
       <SidebarHeader className="items-end">
-        <CustomTrigger state={true}/>
+        <CustomSidebarTrigger state={true}/>
       </SidebarHeader>
       <SidebarContent className="pl-3">
         {/* We create a collapsible SidebarGroup for each parent. */}
@@ -97,7 +95,7 @@ export function NavSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <SidebarMenu>
                     {item.items.map((item) => (
                       <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton className="text-xl" asChild /*isActive={item.isActive}*/>
+                        <SidebarMenuButton className="text-xl" asChild>
                           <a href={item.url}>{item.title}</a>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
@@ -113,32 +111,3 @@ export function NavSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     </Sidebar>
   )
 }
-
-
-/*
-  <Sidebar className="" side="right" {...props}>
-      <SidebarHeader className="items-end">
-        <CustomTrigger state={true}/>
-      </SidebarHeader>
-      <SidebarContent className="pl-3">
-        {/* We create a SidebarGroup for each parent.*/ /*
-        {data.navMain.map((item) => (
-          <SidebarGroup key={item.title}>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {item.items.map((item) => (
-                  <SidebarMenuItem className="pb-10" key={item.title}>
-                    <SidebarMenuButton className="text-2xl" asChild /*isActive={item.isActive}*/
-/*                      <a href={item.url}>{item.title}</a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
-      </SidebarContent>
-      <SidebarRail />
-    </Sidebar>
-    
-*/
