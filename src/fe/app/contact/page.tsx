@@ -2,7 +2,7 @@ import Link from "next/link";
 import { BsTelephone } from "react-icons/bs";
 import { IoLocationOutline, IoMailOutline } from "react-icons/io5";
 
-export default function Home() {
+export default function Contact() {
   return (
     <div >
         <div className="flex justify-center items-center h-40 bg-position-[center_top_31rem] bg-[url('../public/choir-edit.jpg')] bg-cover md:h-35 md:bg-position-[center_top_19rem] lg:bg-position-[center_top_80rem] lg:h-75">
