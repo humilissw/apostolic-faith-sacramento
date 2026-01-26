@@ -29,5 +29,3 @@ export default function Home() {
   )
 }
 
-
-//Apostolic Faith Church - <i>Sacramento, CA</i>

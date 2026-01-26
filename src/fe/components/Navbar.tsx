@@ -1,9 +1,8 @@
 "use client"
 
-import AFCLogo from '@/components/AFCLogo'
+import AFCLogo from '@/components/afc-logo'
 import Link from "next/link"
 import * as React from "react"
-import { useState } from "react";
 
 import {
   NavigationMenu,
@@ -28,7 +27,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 
-import CustomTrigger from "@/components/sidebartrigger"
+import CustomSidebarTrigger from "@/components/custom-sidebar-trigger"
 
 
 export default function Navbar() {
@@ -42,7 +41,7 @@ export default function Navbar() {
       <div className="flex justify-center items-center lg:hidden">
         <SidebarProvider className='' >
         <NavSidebar />
-        <CustomTrigger state={false}/>
+        <CustomSidebarTrigger state={false}/>
         <SidebarInset className=''>
         </SidebarInset>
       </SidebarProvider>
