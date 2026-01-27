@@ -3,41 +3,49 @@
 exports[`renders homepage unchanged 1`] = `
 <div>
   <div
-    class="flex justify-center bg-[url('../public/frontChurchCopy1.JPG')] h-screen bg-cover bg-center bg-fixed"
+    class="w-full flex justify-center pt-35 bg-[url('../public/frontChurchCopy1.JPG')] h-screen bg-cover bg-center bg-fixed"
   >
     <div
-      class="backdrop-opacity-50 text-shadow-sm font-noto-sans text-shadow-zinc-900"
+      class="text-shadow-sm font-noto-sans text-shadow-zinc-900 "
     >
       <h1
-        class="text-6xl font-medium text-white tracking-wider text-center pt-60 pb-2"
+        class="text-4xl text-white md:text-5xl md:font-medium lg:text-6xl lg:pt-40 md:pb-2 tracking-wider text-center "
       >
         WELCOME TO
       </h1>
       <h1
-        class="text-6xl font-medium text-white tracking-wider pb-4"
+        class="text-4xl md:text-5xl md:font-medium md:pb-4 lg:text-6xl text-white tracking-wider text-center"
       >
         APOSTOLIC FAITH CHURCH
       </h1>
       <h1
-        class="text-4xl text-white text-center"
+        class="text-2xl pt-3 text-white text-center md:text-3xl lg:text-4xl"
       >
         Sundays at 11:00 AM & 5:00 PM
       </h1>
       <div
         class="flex gap-8 pt-5 justify-center items-center "
       >
-        <button
-          class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive text-white hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 border-2 border-white bg-transparent text-shadow-md text-shadow-zinc-900"
-          data-slot="button"
+        <a
+          href="/doctrines"
         >
-          About Us
-        </button>
-        <button
-          class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive text-white hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 border-2 border-white bg-transparent text-shadow-md text-shadow-zinc-900"
-          data-slot="button"
+          <button
+            class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive text-white hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 border-2 border-white bg-transparent text-shadow-md text-shadow-zinc-900"
+            data-slot="button"
+          >
+            About Us
+          </button>
+        </a>
+        <a
+          href="https://www.youtube.com/@ApostolicFaithSacramento/streams"
         >
-          Latest Sermon
-        </button>
+          <button
+            class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive text-white hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 border-2 border-white bg-transparent text-shadow-md text-shadow-zinc-900"
+            data-slot="button"
+          >
+            Latest Sermon
+          </button>
+        </a>
       </div>
     </div>
   </div>

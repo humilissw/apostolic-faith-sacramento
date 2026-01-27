@@ -1,6 +1,6 @@
 "use client"
 
-import AFCLogo from '@/components/AFCLogo'
+import AFCLogo from '@/components/afc-logo'
 import Link from "next/link"
 import * as React from "react"
 
@@ -18,19 +18,37 @@ import {
   Button
 } from "@/components/ui/button"
 
+import { NavSidebar } from "@/components/nav-sidebar"
+import { Separator } from "@/components/ui/separator"
+import {
+  SidebarHeader,
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar"
 
-export default function NavigationMenuDemo() {
+import CustomSidebarTrigger from "@/components/custom-sidebar-trigger"
+
+
+export default function Navbar() {
   const isMobile = useIsMobile()
 
   return (
-    <div className="flex justify-center items-center py-2 text-black bg-transparent">
+    <div className="flex gap-35 justify-center items-center py-2 md:py-5 lg:gap-35 xl:gap-10 text-black bg-white">
 
-    <div className="flex gap-5 justify-center items-center mr-250">
+    <div className="flex justify-center items-center xs:gap-40 sm:gap-110 md:gap-125 lg:mr-95 xl:mr-175 2xl:mr-275">
       <AFCLogo width={125} height={125}/>
-
+      <div className="flex justify-center items-center lg:hidden">
+        <SidebarProvider className='' >
+        <NavSidebar />
+        <CustomSidebarTrigger state={false}/>
+        <SidebarInset className=''>
+        </SidebarInset>
+      </SidebarProvider>
+      </div>
     </div>
 
-    <NavigationMenu className="absolute" viewport={isMobile}>
+    <NavigationMenu className="hidden lg:block absolute" viewport={isMobile}>
       <NavigationMenuList className="flex-wrap font-noto-sans">
       
         <NavigationMenuItem className="hidden md:block">
@@ -39,13 +57,7 @@ export default function NavigationMenuDemo() {
             <ul className="grid w-[150px] gap-4">
               <li>
                 <NavigationMenuLink asChild>
-                  <Link href="#">About Us</Link>
-                </NavigationMenuLink>
-                <NavigationMenuLink asChild>
-                  <Link href="#">Our Beliefs</Link>
-                </NavigationMenuLink>
-                <NavigationMenuLink asChild>
-                  <Link href="#">Our History</Link>
+                  <Link href="/doctrines">Our Beliefs</Link>
                 </NavigationMenuLink>
               </li>
             </ul>
@@ -61,13 +73,10 @@ export default function NavigationMenuDemo() {
                   <Link href="#">Sermons</Link>
                 </NavigationMenuLink>
                 <NavigationMenuLink asChild>
-                  <Link href="#">Sunday School Lessons</Link>
+                  <Link href="https://www.apostolicfaith.org/library/this-weeks-lessons">Sunday School Lessons</Link>
                 </NavigationMenuLink>
                 <NavigationMenuLink asChild>
-                  <Link href="#">Curriclum</Link>
-                </NavigationMenuLink>
-                <NavigationMenuLink asChild>
-                  <Link href="#">Apostolic Faith Magazine</Link>
+                  <Link href="https://www.apostolicfaith.org/apostolic-faith-magazine">Apostolic Faith Magazine</Link>
                 </NavigationMenuLink>
               </li>
             </ul>
@@ -75,45 +84,14 @@ export default function NavigationMenuDemo() {
         </NavigationMenuItem>
 
         <NavigationMenuItem className="hidden md:block">
-          <NavigationMenuTrigger>Events</NavigationMenuTrigger>
-          <NavigationMenuContent>
-            <ul className="grid w-[150px] gap-4">
-              <li>
-                <NavigationMenuLink asChild>
-                  <Link href="#">Calendar</Link>
-                </NavigationMenuLink>
-              </li>
-            </ul>
-          </NavigationMenuContent>
-        </NavigationMenuItem>
-
-        <NavigationMenuItem className="hidden md:block">
-          <NavigationMenuTrigger>Give</NavigationMenuTrigger>
-          <NavigationMenuContent>
-            <ul className="grid w-[150px] gap-4">
-              <li>
-                <NavigationMenuLink asChild>
-                  <Link href="#">Components</Link>
-                </NavigationMenuLink>
-                <NavigationMenuLink asChild>
-                  <Link href="#">Documentation</Link>
-                </NavigationMenuLink>
-                <NavigationMenuLink asChild>
-                  <Link href="#">Blocks</Link>
-                </NavigationMenuLink>
-              </li>
-            </ul>
-          </NavigationMenuContent>
-        </NavigationMenuItem>
-
-        <NavigationMenuItem className="hidden md:block">
-          <NavigationMenuTrigger>Contact Us</NavigationMenuTrigger>
+          <Link href="/contact" className='group inline-flex h-9 w-max items-center justify-center rounded-md cursor-pointer px-7 py-2 text-base tracking-[0.04em] font-medium hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 data-[state=open]:hover:bg-accent data-[state=open]:text-accent-foreground data-[state=open]:focus:bg-accent data-[state=open]:bg-accent/50 focus-visible:ring-ring/50 outline-none transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1"'>Contact Us</Link>
         </NavigationMenuItem>
        
       </NavigationMenuList>
     </NavigationMenu>
 
-    <Button className="bg-zinc-800 ml-60 rounded-md font-noto-sans" variant="default">LOGIN</Button>
+    <Button className="hidden lg:block md:bg-zinc-800 md:ml-60 md:rounded-md md:font-noto-sans" variant="default">LOGIN</Button>
+  
     </div>
   )
 }
