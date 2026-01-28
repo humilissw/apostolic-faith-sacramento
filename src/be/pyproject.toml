@@ -9,7 +9,7 @@ license = {text = "MIT"}
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "pydantic (>=2.12.5,<3.0.0)",
+    "pydantic[email] (>=2.12.5,<3.0.0)",
     "locust (>=2.42.6,<3.0.0)",
     "uvicorn[standard] (>=0.40.0,<0.41.0)",
     "sqlalchemy (>=2.0.45,<3.0.0)",
