@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Barlow_Condensed, EB_Garamond, Libre_Baskerville, Lora, Merriweather, Noto_Serif, Playfair_Display, PT_Serif, Roboto, Noto_Sans, Work_Sans, Epilogue } from 'next/font/google';
 import "./globals.css";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import Footer from "@/components/footer";
+import Navbar from "@/components/navbar";
 
 const roboto = Roboto({
   weight: ['100', '300', '400', '500', '700', '900'],
