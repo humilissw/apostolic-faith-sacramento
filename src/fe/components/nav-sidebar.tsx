@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/sidebar"
 
 import CustomSidebarTrigger from "@/components/custom-sidebar-trigger"
+import Link from "next/link"
 
 const data = {
   navMain: [
@@ -96,7 +97,7 @@ export function NavSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     {item.items.map((item) => (
                       <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton className="text-xl" asChild>
-                          <a href={item.url}>{item.title}</a>
+                          <Link href={item.url}>{item.title}</Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     ))}
