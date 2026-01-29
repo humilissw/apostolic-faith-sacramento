@@ -25,6 +25,15 @@ services:
       - 3306:3306
       - 33060:33060
 
+  
+  apache:
+    image: httpd:2.4
+    volumes:
+      - ./public_app/:/usr/local/apache2/htdocs/
+    ports:
+      - 8080:80
+
+
   adminer:
     image: adminer
     depends_on:
