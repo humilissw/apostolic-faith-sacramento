@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/sidebar"
 
 import CustomSidebarTrigger from "@/components/custom-sidebar-trigger"
+import Link from "next/link"
 
 const data = {
   navMain: [
@@ -57,7 +58,7 @@ const data = {
     },
     {
       title: "Contact Us",
-      url: "#",
+      url: "/contact",
       empty: true,
       items: [
 
@@ -86,7 +87,7 @@ export function NavSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 className="group/label font-normal text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-2xl"
               >
                 <CollapsibleTrigger className="">
-                  {item.title}{" "}
+                  {item.empty ? <a href={item.url}>{item.title}</a> : item.title}
                   {item.empty ? <></> : (<ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90"/>)}
                 </CollapsibleTrigger>
               </SidebarGroupLabel>
@@ -96,7 +97,7 @@ export function NavSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     {item.items.map((item) => (
                       <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton className="text-xl" asChild>
-                          <a href={item.url}>{item.title}</a>
+                          <Link href={item.url}>{item.url}{item.title}</Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     ))}

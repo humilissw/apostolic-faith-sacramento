@@ -74,11 +74,12 @@ export default function RootLayout({
   return (
     <html lang="en" >
       <body>
-        <div className={`${playfair.variable} ${lora.variable} ${libre.variable} ${merriweather.variable} ${noto.variable} ${pt.variable} ${eb.variable} ${barlow_condensed.variable} ${roboto.variable} ${noto_sans.variable} ${work_sans.variable} ${epilogue.variable}`}>
+        <div className={`${playfair.variable} ${lora.variable} ${libre.variable} ${merriweather.variable} ${noto.variable} ${pt.variable} ${eb.variable} ${barlow_condensed.variable} ${roboto.variable} ${noto_sans.variable} ${work_sans.variable} ${epilogue.variable}`}> 
           <Navbar />
           {children}
           <Footer />
-       </div>
+          </div>
+    
       </body>
     </html>
   )
