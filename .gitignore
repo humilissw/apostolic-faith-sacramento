@@ -146,3 +146,5 @@ __pycache__/
 prod.env
 *.pem
 .DS_Store
+
+infrastructure/db/public_app/
