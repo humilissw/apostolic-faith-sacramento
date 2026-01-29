@@ -24,6 +24,7 @@ services:
     image: httpd:2.4
     volumes:
       - ./public_app/:/usr/local/apache2/htdocs/
+      # - ./public_html/:/usr/local/apache2/htdocs/
     ports:
       - 8080:80
 

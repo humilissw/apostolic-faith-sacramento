@@ -4,25 +4,17 @@ erDiagram
 %% O{: Zero or many (also common for "many" side).
 %% O|: Zero or one. 
     %% relationships
-    SERMON_MEDIA |o--o| MEDIA : "many sermons to many media types (audio, video, etc.)"
+    SERMON ||--|{ MEDIA : has
     VIDEO ||--|{ MEDIA : has
     AUDIO ||--|{ MEDIA : has
     USER ||--|{ CLAIM : has
-    USER ||--|| USER_DETAILS : "one to one"
     %% entities
     SERMON {
         int id PK
-        string title "The title of the sermon"
-        string messenger_name "The name of the person preaching"
-        date message_date "The date the sermon was preached"
-    }
-    %% many to many table for capturing the kind of media that can be associated
-    %% with a sermon; we don't want to constrain ourselves to one type of media as it can
-    %%  be output in a variety of ways. 
-    SERMON_MEDIA {
-        int id PK
-        int sermon_id
-        int media_id
+        string title
+        string messenger_name
+        date message_date
+        int media_id FK
     }
     MEDIA {
         int id PK, FK
@@ -46,15 +38,6 @@ erDiagram
         string user_name
         string password_hash
         boolean is_locked_out
-    }
-    USER_DETAILS {
-        int id PK, FK
-        int user_id FK
-        string first_name
-        string last_name
-        string email_address
-        string birthday
-        string address
     }
     CLAIM {
         int id PK

@@ -1,5 +1,6 @@
 {
   "name": "homepage",
+  "homepage": "localhost/out/",
   "version": "0.1.0",
   "private": true,
   "engines": {
