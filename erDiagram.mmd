@@ -1,0 +1,47 @@
+erDiagram
+%% ||: One and only one.
+%% |{: One or many (often used for the "many" side of one-to-many).
+%% O{: Zero or many (also common for "many" side).
+%% O|: Zero or one. 
+    %% relationships
+    SERMON ||--|{ MEDIA : has
+    VIDEO ||--|{ MEDIA : has
+    AUDIO ||--|{ MEDIA : has
+    USER ||--|{ CLAIM : has
+    %% entities
+    SERMON {
+        int id PK
+        string title
+        string messenger_name
+        date message_date
+        int media_id FK
+    }
+    MEDIA {
+        int id PK, FK
+        string name
+        string path
+        date upload_date
+    }
+    VIDEO {
+        int id PK, FK
+        string name
+        string platform_upload_name
+        string path
+        int media_id FK
+    }
+    AUDIO {
+        int id PK, FK
+        int media_id FK
+    }
+    USER {
+        int id PK, FK
+        string user_name
+        string password_hash
+        boolean is_locked_out
+    }
+    CLAIM {
+        int id PK
+        string name
+        string value
+        int user_id FK
+    }
