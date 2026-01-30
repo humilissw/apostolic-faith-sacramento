@@ -5,7 +5,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-    --breakpoint-xs: 20rem;
+    --breakpoint-2xs: 20rem;
+    --breakpoint-xs: 22rem;
 
     --font-playfair: var(--font-playfair), serif;
     --font-lora: var(--font-lora), serif;
