@@ -1,6 +1,4 @@
 from datetime import date, datetime
-from afcapp.models.base import Base
-from afcapp.models.test_model import Media, Test
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import Session
 

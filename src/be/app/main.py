@@ -1,5 +1,5 @@
 import sentry_sdk
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
 from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
 
@@ -20,7 +20,7 @@ print('--------------****************')
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    openapi_url=f"/{settings.API_V1_STR}/openapi.json",
     generate_unique_id_function=custom_generate_unique_id,
 )
 
@@ -34,4 +34,9 @@ app = FastAPI(
 #         allow_headers=["*"],
 #     )
 
-app.include_router(api_router, prefix=settings.API_V1_STR)
+route_prefix = f"/{settings.API_V1_STR}"
+
+print("-----------" + route_prefix)
+
+app.include_router(api_router, prefix=route_prefix)
+# app.include_router(api_router, prefix="/test")
