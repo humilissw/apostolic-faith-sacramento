@@ -3,6 +3,7 @@
  */
 const nextConfig = {
   output: 'export',
+  // output: 'standalone',
  images: { unoptimized: true },
   // Optional: Change links `/me` -> `/me/` and emit `/me.html` -> `/me/index.html`
   // trailingSlash: true,
