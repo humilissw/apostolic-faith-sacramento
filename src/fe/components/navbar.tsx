@@ -19,12 +19,9 @@ import {
 } from "@/components/ui/button"
 
 import { NavSidebar } from "@/components/nav-sidebar"
-import { Separator } from "@/components/ui/separator"
 import {
-  SidebarHeader,
   SidebarInset,
   SidebarProvider,
-  SidebarTrigger,
 } from "@/components/ui/sidebar"
 
 import CustomSidebarTrigger from "@/components/custom-sidebar-trigger"
@@ -65,7 +62,7 @@ export default function Navbar() {
         </NavigationMenuItem>
 
         <NavigationMenuItem className="hidden md:block">
-          <NavigationMenuTrigger className="">Resources</NavigationMenuTrigger>
+          <NavigationMenuTrigger>Resources</NavigationMenuTrigger>
           <NavigationMenuContent>
             <ul className="grid w-[150px] gap-4">
               <li>
@@ -89,9 +86,6 @@ export default function Navbar() {
        
       </NavigationMenuList>
     </NavigationMenu>
-
-    <Button className="hidden lg:block md:bg-zinc-800 md:ml-60 md:rounded-md md:font-noto-sans" variant="default">LOGIN</Button>
-  
     </div>
   )
 }
