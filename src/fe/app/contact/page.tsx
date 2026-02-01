@@ -5,7 +5,7 @@ import { IoLocationOutline, IoMailOutline } from "react-icons/io5";
 export default function Contact() {
   return (
     <div>
-        <div className="flex justify-center items-center h-80 bg-[url('../public/choir-edit.jpg')] bg-cover bg-center lg:h-75">
+        <div className="flex justify-center items-center h-50 bg-[url('../public/choir-edit.jpg')] bg-cover bg-center md:h-100 lg:h-100">
             <h1 className="text-white text-5xl md:text-7xl lg:text-8xl text-shadow-lg font-noto-sans p-3 rounded-xl">
                 Contact
             </h1>
