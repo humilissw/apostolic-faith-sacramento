@@ -4,7 +4,12 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import Image from 'next/image'
 
-
+interface sermonData {
+  videoUri: string;
+  sermonTitle: string;
+  speaker: string;
+  createDate: string;
+}
 
 
 export default function Media() {    
@@ -21,7 +26,9 @@ export default function Media() {
       const result = await response.json();
       setVideoData(result);
     } catch (error) {
-      console.error(error.message);
+      if (error instanceof Error) {
+        console.error(error.message);
+      }
     }
 }
 
@@ -38,27 +45,39 @@ export default function Media() {
                   Media
               </h1>
           </div>
-
+        <div className='flex justify-center pt-20'>
+          <h1 className='text-4xl md:text-6xl text-center tracking-wider'>Latest Services</h1>
+        </div>
         <div className='flex justify-center pt-15'>
-            {videoData.map((data, index) => 
+            {videoData.map((data: sermonData, index) => 
             <div key={index}>
               {index == 0 ?
-              <Link key={index} href="/sermon">
-                <h1>Latest Service</h1>
+              <Link 
+                key={index} 
+                href={{
+                pathname: '/sermon',
+                query: { 
+                  uri: data.videoUri,
+                  sermonTitle: data.sermonTitle,
+                  speaker: data.speaker,
+                  date: data.createDate 
+              },
+            }}
+            >
               <div className='rounded-xl shadow-xl/20'>
-              <div className='flex justify-center h-100 w-200'>
-                <div className='flex flex-col items-center w-75'>
+              <div className='flex xs:h-100 xs:w-60 md:h-75 md:w-150 lg:h-100 lg:w-200'>
+                <div className='flex flex-col md:flex-row items-center'>
                     <Image
                       src="/sacAFC.jpg"
                       width={500}
                       height={500}
-                      alt="Picture of the author"
-                      className='rounded-t-xl '
+                      alt="Picture of the Apostolic Faith Church"
+                      className='xs:h-50 md:h-75 xs:rounded-t-xl md:rounded-l-xl 2xl:h-100'
                     />
                       <div className='flex flex-col px-5 pt-3 w-full font-medium font-noto-sans'>
-                        <h1 className='text-xl'>{data.sermonTitle}</h1>
-                        <h1 className='text-xl'>{data.speaker}</h1>  
-                        <h1 className='text-black/40 font-normal'>Date</h1>
+                        <h1 className='xs:text-xl md:text-4xl'>{data.sermonTitle}</h1>
+                        <h1 className='text-black/40 font-normal'>{data.speaker}</h1>  
+                        <h1 className='text-black/40 font-normal'>{new Date(data.createDate).toLocaleDateString('en-US')}</h1>
                       </div>
 
                 </div>
@@ -71,7 +90,7 @@ export default function Media() {
         </div>
 
         <div className='flex flex-wrap gap-x-5 gap-y-5 justify-center py-15 sm:px-10 md:px-20 lg:px-40 xl:px-80'>
-          {videoData.map((data, index) => 
+          {videoData.map((data: sermonData, index) => 
           <Link 
             key={index} 
             href={{
@@ -86,20 +105,20 @@ export default function Media() {
             }}
             >
             {index > 0 ?
-          <div className='rounded-xl shadow-xl/20'>
-          <div className='flex justify-center h-90 w-70'>
-            <div className='flex flex-col items-center w-75'>
+          <div className='rounded-xl shadow-xl/10'>
+          <div className='flex xs:h-100 xs:w-60 md:h-60 md:w-140'>
+            <div className='flex flex-col md:flex-row items-center'>
                 <Image
                   src="/sacAFC.jpg"
-                  width={500}
-                  height={500}
-                  alt="Picture of the author"
-                  className='rounded-t-xl '
+                  width={300}
+                  height={300}
+                  alt="Picture of the Apostolic Faith Church"
+                  className='h-50 md:h-60 rounded-t-xl md:rounded-l-xl '
                 />
                   <div className='flex flex-col px-5 pt-3 w-full font-medium font-noto-sans'>
                     <h1 className='text-xl'>{data.sermonTitle}</h1>
-                    <h1 className='text-xl'>{data.speaker}</h1>  
-                    <h1 className='text-black/40 font-normal'>Date</h1>
+                    <h1 className='text-black/40 font-normal'>{data.speaker}</h1>  
+                    <h1 className='text-black/40 font-normal'>{new Date(data.createDate).toLocaleDateString('en-US')}</h1>
                   </div>
                 
             </div>
