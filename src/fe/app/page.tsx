@@ -5,7 +5,7 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="w-full flex justify-center bg-[url('../public/option2-copy.jpg')] h-screen bg-cover bg-center bg-fixed">
+    <div className="w-full flex justify-center bg-[url('../public/frontChurchCopy1.JPG')] h-screen bg-cover bg-center bg-fixed">
       <div className="font-noto-sans text-center text-shadow-lg/20 xs:pt-40 sm:pt-20 md:pt-60">
       <div /*className="bg-zinc-900/60 p-7 rounded-lg"*/>
         <h1 className="text-4xl text-white md:text-5xl lg:text-6xl md:pb-2 tracking-wider ">
