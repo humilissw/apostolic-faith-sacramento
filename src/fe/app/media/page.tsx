@@ -15,10 +15,9 @@ interface sermonData {
 export default function Media() {    
 
   const [videoData, setVideoData] = useState([]);
-
   const fetchData = async () => {
     try {
-      const response = await fetch('data.json');
+      const response = await fetch('/data.json');
       if (!response.ok) {
         throw new Error(`Response status: ${response.status}`);
       }
@@ -54,15 +53,7 @@ export default function Media() {
               {index == 0 ?
               <Link 
                 key={index} 
-                href={{
-                pathname: '/sermon',
-                query: { 
-                  uri: data.videoUri,
-                  sermonTitle: data.sermonTitle,
-                  speaker: data.speaker,
-                  date: data.createDate 
-              },
-            }}
+                href={data.videoUri}
             >
               <div className='rounded-xl shadow-xl/20'>
               <div className='flex xs:h-100 xs:w-60 md:h-75 md:w-150 lg:h-100 lg:w-200'>
@@ -93,16 +84,7 @@ export default function Media() {
           {videoData.map((data: sermonData, index) => 
           <Link 
             key={index} 
-            href={{
-              pathname: '/sermon',
-              query: { 
-                uri: data.videoUri,
-                sermonTitle: data.sermonTitle,
-                speaker: data.speaker,
-                date: data.createDate 
-                
-              },
-            }}
+            href={data.videoUri}
             >
             {index > 0 ?
           <div className='rounded-xl shadow-xl/10'>
