@@ -23,15 +23,8 @@ export default function Footer() {
                     <h1 className="font-bold text-[17px]"> Contact Us </h1>
                     <div className="flex flex-row items-center gap-2">
                         <IoLocationOutline size="15"/>
-                        <Link className="hover:underline" href="/">
+                        <Link className="hover:underline" href="https://www.google.com/maps/search/?api=1&query=7842%20Elmont%20Ave,%20Elverta,%20CA%2095626">
                             7842 Elmont Ave, Elverta, CA 95626
-                        </Link>
-                    </div>
-
-                    <div className="flex flex-row items-center gap-2">
-                        <BsTelephone size="15"/>
-                        <Link className="hover:underline" href="/">
-                            123-456-7890
                         </Link>
                     </div>
 
@@ -39,7 +32,7 @@ export default function Footer() {
                         <div className="pt-1">
                             <IoMailOutline size="15"/>
                         </div>
-                        <Link className="hover:underline" href="/">
+                        <Link className="hover:underline" href="mailto:info@afcsacramento.org">
                             info@afcsacramento.org
                         </Link>
                     </div>
@@ -49,7 +42,7 @@ export default function Footer() {
                     
                     <h1 className="font-bold text-[17px]">Quick Links</h1>
 
-                    <Link className="hover:underline" href="/about">
+                    <Link className="hover:underline" href="/doctrines">
                         About 
                     </Link>
 
@@ -57,16 +50,8 @@ export default function Footer() {
                         Media
                     </Link>
 
-                    <Link className="hover:underline" href="/events">
-                        Events
-                    </Link>
-
                     <Link className="hover:underline" href="/contact">
                         Contact
-                    </Link>
-
-                    <Link className="hover:underline" href="/give">
-                        Give
                     </Link>
                 </ul>
             </div>

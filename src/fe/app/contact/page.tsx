@@ -27,19 +27,16 @@ export default function Contact() {
                 <div>
                     <h1 className="text-2xl font-normal sm:text-3xl">Church Address</h1>
                     <div className="flex flex-row items-center gap-2 pt-3">
-                        <Link className="hover:underline font-light sm:text-xl" href="/contact">
+                        <Link className="hover:underline font-light sm:text-xl" href="https://www.google.com/maps/search/?api=1&query=7842%20Elmont%20Ave,%20Elverta,%20CA%2095626">
                             7842 Elmont Ave, Elverta, CA 95626
                         </Link>
                     </div>
                 </div>
-
                 <div>
                     <h1 className="text-2xl font-normal sm:text-3xl ">Mailing Address</h1>
                     <div className="flex flex-row items-center gap-2 pt-3">
-                        
-                        <Link className="hover:underline font-light sm:text-xl" href="/contact">
-                            1635 Wortell Drive
-                            Lincoln, CA 95648
+                        <Link className="hover:underline font-light sm:text-xl" href="https://www.google.com/maps/search/?api=1&query=1635%20Wortell%20Drive,%20Lincoln,%20CA%2095648">
+                            1635 Wortell Drive, Lincoln, CA 95648
                         </Link>
                     </div>
                 </div>
@@ -48,8 +45,8 @@ export default function Contact() {
                     <h1 className="text-2xl font-normal sm:text-3xl">Emails</h1>
                     <div className="flex flex-row items-center gap-2 pt-3">
                         <Link className="hover:underline font-light sm:text-xl" href="/contact">
-                            <b>Pastor:</b> pete@sferle.com <br/>
-                            <b>Media Team:</b> info@afcsacramento.org 
+                            <b>Pastor:</b> <Link href="mailto:pete@sferle.com">pete@sferle.com</Link><br/>
+                            <b>Media Team:</b><Link href="mailto:info@afcsacramento.org">info@afcsacramento.org</Link> 
                         </Link>
                     </div>
                 </div>

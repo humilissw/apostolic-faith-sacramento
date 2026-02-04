@@ -8,36 +8,36 @@ networks:
     external: true
 
 services:
-  mysql:
-    image: mysql:9.5.0
-    # NOTE: use of "mysql_native_password" is not recommended: https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html#upgrade-caching-sha2-password
-    # (this is just an example, not intended to be a production configuration)
-    # command: --default-authentication-plugin=mysql_native_password
-    # command: --default-authentication-plugin=caching_sha2_password
+  mariadb:
+    image: mariadb:12.1-ubi
     # restart: always
     env_file:
       - ./db.env
-    # environment:
-    #   # username -> root
-    #   MYSQL_ROOT_PASSWORD: DisIss3cur3br4h!
-    #   # caching_sha2_password: DisIss3cur3br4h!
     ports:
       - 3306:3306
       - 33060:33060
 
-  
+
+# docker run -d --name my-apache-app -p 8080:80 -v "$PWD":/usr/local/apache2/htdocs/ httpd:2.4
+# docker-compose -f .\compose.db.yml  up -d --build
   apache:
     image: httpd:2.4
     volumes:
       - ./public_app/:/usr/local/apache2/htdocs/
+      # - ./public_html/:/usr/local/apache2/htdocs/
     ports:
       - 8080:80
-
 
   adminer:
     image: adminer
     depends_on:
-      - mysql # has to be db because it is configured to look at db
+      - mariadb # has to be db because it is configured to look at db
     # restart: always
     ports:
       - 5080:8080
+
+  mailcatcher:
+    image: schickling/mailcatcher
+    ports:
+      - "1080:1080"
+      - "1025:1025"
