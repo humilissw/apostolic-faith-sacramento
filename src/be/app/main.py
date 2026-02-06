@@ -14,6 +14,10 @@ def custom_generate_unique_id(route: APIRoute) -> str:
 # if settings.SENTRY_DSN and settings.ENVIRONMENT != "local":
 #     sentry_sdk.init(dsn=str(settings.SENTRY_DSN), enable_tracing=True)
 
+print("---------------------")
+print(str(settings.SQLALCHEMY_DATABASE_URI))
+print("---------------------")
+
 print('--------------****************')
 print(settings.API_V1_STR)
 print('--------------****************')

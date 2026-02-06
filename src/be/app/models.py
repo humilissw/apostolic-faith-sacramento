@@ -42,7 +42,7 @@ class UpdatePassword(SQLModel):
 # Database model, database table inferred from class name
 class User(UserBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    hashed_password: str
+    hashed_password: str = Field(max_length=4000)
     items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
 
 
@@ -97,12 +97,12 @@ class HealthPublic():
 
 # Generic message
 class Message(SQLModel):
-    message: str
+    message: str = Field(default=None, min_length=8, max_length=4000)
 
 
 # JSON payload containing access token
 class Token(SQLModel):
-    access_token: str
+    access_token: str = Field(default=None, min_length=8, max_length=4000)
     token_type: str = "bearer"
 
 
