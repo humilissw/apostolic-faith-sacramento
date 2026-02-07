@@ -130,7 +130,7 @@ class NewPassword(SQLModel):
 
 
 class Media(SQLModel, table=True):
-    id: str = Field(default_factory=uuid.uuid4, primary_key=True)
+    id: str = Field(default_factory=uuid.uuid4, primary_key=True, max_length=36)
     name: str = Field(max_length=200)
     uploaded_on: datetime.datetime
     created_on: datetime.datetime
@@ -138,7 +138,7 @@ class Media(SQLModel, table=True):
 
 
 class Test(SQLModel, table=True):
-    id: str = Field(default_factory=uuid.uuid4, primary_key=True)
+    id: str = Field(default_factory=uuid.uuid4, primary_key=True, max_length=36)
     test1: int
     test2: int
     test3: int
