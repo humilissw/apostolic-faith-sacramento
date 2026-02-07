@@ -1,4 +1,5 @@
 import datetime
+from typing import Optional
 import uuid
 
 from pydantic import EmailStr
@@ -143,3 +144,39 @@ class Test(SQLModel, table=True):
     test2: int
     test3: int
     test4: int
+
+
+class DefaultBase(SQLModel):
+    id: str = Field(default_factory=uuid.uuid4, primary_key=True, max_length=36)
+    created_on: datetime.datetime = Field(
+        default=datetime.datetime.now(datetime.timezone.utc), nullable=False
+    )
+    updated_on: datetime.datetime = Field(nullable=True)
+
+
+class Member(DefaultBase, table=True):
+    first_name: str = Field(max_length=200, nullable=False)
+    last_name: str = Field(max_length=200, nullable=False)
+    birthday: datetime.datetime = Field(nullable=False)
+    wedding_anniversary: datetime.datetime = Field(nullable=True)
+    baptism_date: datetime.datetime
+
+
+class ChurchService(DefaultBase, table=True):
+    service_date: datetime.datetime = Field(nullable=False)
+    speaker: str = Field(max_length=200, nullable=True)
+    service_title: Optional[str] = Field(max_length=200, nullable=True)
+    file_location: str = Field(max_length=1000, nullable=True)
+    edited: bool = Field(nullable=False, default=False)
+    uploaded: bool = Field(nullable=False, default=False)
+
+
+class VideoUpload(DefaultBase, table=True):
+    upload_location: str = Field(max_length=1000)
+    upload_name: str = Field(max_length=1000)
+
+
+class Announcement(DefaultBase, table=True):
+    sender: str = Field(max_length=200)
+    recipients: str = Field(max_length=4000)
+    message: str = Field(max_length=4000)
