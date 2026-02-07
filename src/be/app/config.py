@@ -1,19 +1,10 @@
-import secrets
-import warnings
-from typing import Annotated, Any, Literal
+from typing import Any
 
 from pydantic import (
-    AnyUrl,
-    BeforeValidator,
-    EmailStr,
-    HttpUrl,
     MariaDBDsn,
-    PostgresDsn,
     computed_field,
-    model_validator,
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing_extensions import Self
 
 
 def parse_cors(v: Any) -> list[str] | str:
@@ -33,6 +24,7 @@ class Settings(BaseSettings):
         arbitrary_types_allowed = True
     )
     API_V1_STR: str
+    EMAIL_TEST_USER: str
     EMAILS_FROM_EMAIL: str
     EMAILS_FROM_NAME: str
     # SQLALCHEMY_DATABASE_URI: str

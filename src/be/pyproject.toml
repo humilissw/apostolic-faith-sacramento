@@ -31,7 +31,8 @@ dependencies = [
     "bcrypt==4.3.0",
     "pydantic-settings<3.0.0,>=2.2.1",
     "pyjwt<3.0.0,>=2.8.0",
-    "mariadb (>=1.1.14,<2.0.0)"
+    "mariadb (>=1.1.14,<2.0.0)",
+    "pytest-cov (>=7.0.0,<8.0.0)"
 ]
 
 

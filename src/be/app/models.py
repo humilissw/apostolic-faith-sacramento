@@ -166,7 +166,7 @@ class ChurchService(DefaultBase, table=True):
     service_date: datetime.datetime = Field(nullable=False)
     speaker: str = Field(max_length=200, nullable=True)
     service_title: Optional[str] = Field(max_length=200, nullable=True)
-    file_location: str = Field(max_length=1000, nullable=True)
+    file_location: Optional[str] = Field(max_length=1000, nullable=True)
     edited: bool = Field(nullable=False, default=False)
     uploaded: bool = Field(nullable=False, default=False)
 
