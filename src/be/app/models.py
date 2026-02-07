@@ -1,7 +1,8 @@
+import datetime
 import uuid
 
 from pydantic import EmailStr
-from sqlmodel import Date, Field, Relationship, SQLModel
+from sqlmodel import Column, Field, Relationship, SQLModel
 
 
 # Shared properties
@@ -92,8 +93,9 @@ class ItemsPublic(SQLModel):
     count: int
 
 
-class HealthPublic():
+class HealthPublic:
     is_healthy: bool
+
 
 # Generic message
 class Message(SQLModel):
@@ -115,15 +117,16 @@ class NewPassword(SQLModel):
     token: str
     new_password: str = Field(min_length=8, max_length=128)
 
-# class Media(SQLModel):
-#     # id: Mapped[int] = mapped_column(primary_key=True)
-#     name: str
-#     upload_date: Date
-    
-class Test(SQLModel):
-    #  id: int
-     test1: int
-     test2: int
-     test3: int
-     test4: int
-    
+
+# class Media(SQLModel, table=True):
+#     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+#     name: str = Field(max_length=200)
+#     # upload_date: datetime
+
+
+# class Test(SQLModel, table=True):
+#     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+#     test1: int
+#     test2: int
+#     test3: int
+#     test4: int

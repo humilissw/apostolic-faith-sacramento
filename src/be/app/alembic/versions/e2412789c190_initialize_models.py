@@ -5,8 +5,8 @@ Revises:
 Create Date: 2023-11-24 22:55:43.195942
 
 """
+from sqlalchemy.dialects import mysql
 import sqlalchemy as sa
-import sqlmodel.sql.sqltypes
 from alembic import op
 
 # revision identifiers, used by Alembic.
@@ -25,6 +25,7 @@ def upgrade():
         sa.Column("is_superuser", sa.Boolean(), nullable=False),
         sa.Column("full_name", sa.String(length=255), nullable=True),
         sa.Column("id", sa.Integer(), nullable=False),
+        sa.Column("new_id", sa.Column('new_id', mysql.VARCHAR(length=36), default=sa.text('UUID()'))),
         sa.Column(
             "hashed_password", sa.String(length=255), nullable=False
         ),
@@ -35,8 +36,10 @@ def upgrade():
         "item",
         sa.Column("description", sa.String(length=255), nullable=True),
         sa.Column("id", sa.Integer(), nullable=False),
+        sa.Column("new_id", sa.Column('new_id', mysql.VARCHAR(length=36), default=sa.text('UUID()'))),
         sa.Column("title", sa.String(length=255), nullable=False),
         sa.Column("owner_id", sa.Integer(), nullable=False),
+        sa.Column('new_owner_id', mysql.VARCHAR(length=36), nullable=False),
         sa.ForeignKeyConstraint(
             ["owner_id"],
             ["user.id"],
