@@ -28,6 +28,8 @@ def upgrade():
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("new_id", sa.String(length=36), default=sa.Function("UUID()"), nullable=False),
         sa.Column("hashed_password", sa.String(length=255), nullable=False),
+        sa.Column("created_on", sa.DateTime(), nullable=False),
+        sa.Column("updated_on", sa.DateTime()),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("new_id")
     )
@@ -40,6 +42,8 @@ def upgrade():
         sa.Column("title", sa.String(length=255), nullable=False),
         sa.Column("owner_id", sa.Integer(), nullable=False),
         sa.Column("new_owner_id", sa.String(length=36), nullable=False),
+        sa.Column("created_on", sa.DateTime(), nullable=False),
+        sa.Column("updated_on", sa.DateTime()),
         sa.ForeignKeyConstraint(["owner_id"], ["user.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("new_id"),
