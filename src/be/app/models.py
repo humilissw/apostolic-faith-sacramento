@@ -2,7 +2,7 @@ import datetime
 import uuid
 
 from pydantic import EmailStr
-from sqlmodel import Column, Field, Relationship, SQLModel
+from sqlmodel import Column, DateTime, Field, Relationship, SQLModel
 
 
 # Shared properties
@@ -42,14 +42,19 @@ class UpdatePassword(SQLModel):
 
 # Database model, database table inferred from class name
 class User(UserBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    id: int = Field(primary_key=True)
+    new_id: str = Field(default_factory=uuid.uuid4, max_length=36)
     hashed_password: str = Field(max_length=4000)
-    items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
+    created_on: datetime.datetime = Field(
+        default=datetime.datetime.now(datetime.timezone.utc), nullable=False
+    )
+    updated_on: datetime.datetime = Field(nullable=True)
+    # items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
 
 
 # Properties to return via API, id is always required
 class UserPublic(UserBase):
-    id: uuid.UUID
+    id: str
 
 
 class UsersPublic(SQLModel):
@@ -75,17 +80,23 @@ class ItemUpdate(ItemBase):
 
 # Database model, database table inferred from class name
 class Item(ItemBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    owner_id: uuid.UUID = Field(
-        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    id: int = Field(primary_key=True)
+    owner_id: int = Field()
+    new_owner_id: str = Field(
+        max_length=36,
+        nullable=False,
     )
-    owner: User | None = Relationship(back_populates="items")
+    created_on: datetime.datetime = Field(
+        default=datetime.datetime.now(datetime.timezone.utc), nullable=False
+    )
+    updated_on: datetime.datetime = Field(nullable=True)
+    # owner: User | None = Relationship(back_populates="items")
 
 
 # Properties to return via API, id is always required
 class ItemPublic(ItemBase):
-    id: uuid.UUID
-    owner_id: uuid.UUID
+    id: str
+    owner_id: str
 
 
 class ItemsPublic(SQLModel):
@@ -114,19 +125,21 @@ class TokenPayload(SQLModel):
 
 
 class NewPassword(SQLModel):
-    token: str
+    token: str = Field(max_length=4000)
     new_password: str = Field(min_length=8, max_length=128)
 
 
-# class Media(SQLModel, table=True):
-#     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-#     name: str = Field(max_length=200)
-#     # upload_date: datetime
+class Media(SQLModel, table=True):
+    id: str = Field(default_factory=uuid.uuid4, primary_key=True)
+    name: str = Field(max_length=200)
+    uploaded_on: datetime.datetime
+    created_on: datetime.datetime
+    updated_on: datetime.datetime
 
 
-# class Test(SQLModel, table=True):
-#     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-#     test1: int
-#     test2: int
-#     test3: int
-#     test4: int
+class Test(SQLModel, table=True):
+    id: str = Field(default_factory=uuid.uuid4, primary_key=True)
+    test1: int
+    test2: int
+    test3: int
+    test4: int

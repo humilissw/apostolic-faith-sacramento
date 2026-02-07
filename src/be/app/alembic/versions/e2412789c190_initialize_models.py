@@ -6,7 +6,6 @@ Create Date: 2023-11-24 22:55:43.195942
 
 """
 
-from sqlalchemy.dialects import mysql
 import sqlalchemy as sa
 from alembic import op
 
@@ -26,19 +25,29 @@ def upgrade():
         sa.Column("is_superuser", sa.Boolean(), nullable=False),
         sa.Column("full_name", sa.String(length=255), nullable=True),
         sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("new_id", sa.String(length=36), default=sa.Function("UUID()"), nullable=False),
-        sa.Column("hashed_password", sa.String(length=255), nullable=False),
-        sa.Column("created_on", sa.DateTime(), nullable=False),
+        sa.Column(
+            "new_id",
+            sa.String(length=36),
+            default=sa.Function("UUID()"),
+            nullable=False,
+        ),
+        sa.Column("hashed_password", sa.String(length=4000), nullable=False),
+        sa.Column("created_on", sa.DateTime(), nullable=False, default=sa.Function("UTC_DATE()")),
         sa.Column("updated_on", sa.DateTime()),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("new_id")
+        sa.UniqueConstraint("new_id"),
     )
     op.create_index(op.f("ix_user_email"), "user", ["email"], unique=True)
     op.create_table(
         "item",
         sa.Column("description", sa.String(length=255), nullable=True),
         sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("new_id", sa.String(length=36), default=sa.Function("UUID()"), nullable=False),
+        sa.Column(
+            "new_id",
+            sa.String(length=36),
+            default=sa.Function("UUID()"),
+            nullable=False,
+        ),
         sa.Column("title", sa.String(length=255), nullable=False),
         sa.Column("owner_id", sa.Integer(), nullable=False),
         sa.Column("new_owner_id", sa.String(length=36), nullable=False),
@@ -49,6 +58,7 @@ def upgrade():
         sa.UniqueConstraint("new_id"),
         sa.UniqueConstraint("new_owner_id"),
     )
+
     # op.create_foreign_key("fk_item_user__owner_id__id", 'item', 'user', ['owner_id'], ['id'], ondelete='CASCADE')
     # op.create_foreign_key("fk_item_user__new_owner_id__new_id", 'item', 'user', ['new_owner_id'], ['new_id'], ondelete='CASCADE')
     # ### end Alembic commands ###
