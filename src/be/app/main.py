@@ -46,7 +46,7 @@ app = FastAPI(
 # github = oauth.register("github", {...})
 # github = oauth.register("github", {...})
 
-app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
+# app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
 
 
 # @app.route("/githublogin")

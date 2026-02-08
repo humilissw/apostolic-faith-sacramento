@@ -55,7 +55,8 @@ class User(UserBase, table=True):
 
 # Properties to return via API, id is always required
 class UserPublic(UserBase):
-    id: str
+    id: int
+    email: EmailStr
 
 
 class UsersPublic(SQLModel):
