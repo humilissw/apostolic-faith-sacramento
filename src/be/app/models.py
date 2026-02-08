@@ -43,13 +43,13 @@ class UpdatePassword(SQLModel):
 
 # Database model, database table inferred from class name
 class User(UserBase, table=True):
-    id: int = Field(primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
     new_id: str = Field(default_factory=uuid.uuid4, max_length=36)
     hashed_password: str = Field(max_length=4000)
     created_on: datetime.datetime = Field(
         default=datetime.datetime.now(datetime.timezone.utc), nullable=False
     )
-    updated_on: datetime.datetime = Field(nullable=True)
+    updated_on: datetime.datetime | None = Field(nullable=True, default=None)
     # items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
 
 

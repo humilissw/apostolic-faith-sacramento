@@ -49,6 +49,7 @@ class Settings(BaseSettings):
     SMTP_PORT: str
     DOCKER_IMAGE_BACKEND: str
     DOCKER_IMAGE_FRONTEND: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
     
     @computed_field  # type: ignore[prop-decorator]
     @property

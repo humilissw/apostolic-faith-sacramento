@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flask + Auth0</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <img src="https://cdn.auth0.com/quantum-assets/dist/latest/logos/auth0/auth0-lockup-en-ondark.png"
+             alt="Auth0 Logo" class="logo">
+        <h1>Flask + Auth0</h1>
+        
+        {% if user %}
+            <div class="logged-in">
+                <p class="success">✅ Successfully logged in!</p>
+                <div class="user-info">
+                    {% if user.picture %}
+                    <img src="{{ user.picture }}" alt="Profile" class="profile-pic">
+                    {% endif %}
+                    <h2>{{ user.name }}</h2>
+                    <p>{{ user.email }}</p>
+                </div>
+                <a href="/profile" class="button">View Full Profile</a>
+                <a href="/logout" class="button logout">Log Out</a>
+            </div>
+        {% else %}
+            <div class="logged-out">
+                <p>Welcome! Please log in to access your protected content.</p>
+                <a href="/login" class="button">Log In</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+</body>
+</html>

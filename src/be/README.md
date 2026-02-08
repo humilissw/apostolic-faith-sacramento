@@ -58,8 +58,10 @@ pipx install poetry
 > Invoke-Expression (poetry env activate)
 # install the project dependencies
 > poetry install
-## run the app - 
-> poetry run uvicorn afcapp.main:app --reload
+## run the app - no ssl
+# > poetry run uvicorn app.main:app --reload 
+## run the app - with SSL (required now)
+> poetry run uvicorn app.main:app --reload --ssl-certfile=../../infrastructure/certs/cert.pem --ssl-keyfile=../../infrastructure/certs/key.pem
 ```
 
 ### Mac/Linux
@@ -72,3 +74,6 @@ pipx install poetry
 ## run the app
 > poetry run fastapi dev main.py
 ```
+
+# Housekeeping stuff
+

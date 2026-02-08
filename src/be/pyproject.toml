@@ -30,9 +30,13 @@ dependencies = [
     # Pin bcrypt until passlib supports the latest
     "bcrypt==4.3.0",
     "pydantic-settings<3.0.0,>=2.2.1",
-    "pyjwt<3.0.0,>=2.8.0",
+    "pyjwt[crypto] (>=2.11.0,<3.0.0)",
     "mariadb (>=1.1.14,<2.0.0)",
-    "pytest-cov (>=7.0.0,<8.0.0)"
+    "pytest-cov (>=7.0.0,<8.0.0)",
+    "pwdlib[argon2] (>=0.3.0,<0.4.0)",
+    "authlib (>=1.6.7,<2.0.0)",
+    "jq (>=1.11.0,<2.0.0)",
+    "auth0-server-python (>=1.0.0b8,<2.0.0)"
 ]
 
 
