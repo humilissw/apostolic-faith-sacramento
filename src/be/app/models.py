@@ -82,23 +82,20 @@ class ItemUpdate(ItemBase):
 
 # Database model, database table inferred from class name
 class Item(ItemBase, table=True):
-    id: int = Field(primary_key=True)
+    id: int | None = Field(primary_key=True, default=None)
     owner_id: int = Field()
-    new_owner_id: str = Field(
-        max_length=36,
-        nullable=False,
-    )
-    created_on: datetime.datetime = Field(
+    new_owner_id: str | None = Field(default_factory=uuid.uuid4, max_length=36, nullable=False)
+    created_on: datetime.datetime | None = Field(
         default=datetime.datetime.now(datetime.timezone.utc), nullable=False
     )
-    updated_on: datetime.datetime = Field(nullable=True)
+    updated_on: datetime.datetime | None = Field(nullable=True, default=None)
     # owner: User | None = Relationship(back_populates="items")
 
 
 # Properties to return via API, id is always required
 class ItemPublic(ItemBase):
-    id: str
-    owner_id: str
+    id: int
+    owner_id: int
 
 
 class ItemsPublic(SQLModel):
