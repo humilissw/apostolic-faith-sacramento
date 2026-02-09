@@ -75,13 +75,13 @@ export default function Navbar() {
             <ul className="grid w-[150px] gap-4">
               <li>
                 <NavigationMenuLink asChild>
-                  <Link href="https://www.youtube.com/@ApostolicFaithSacramento/streams">Sermons</Link>
+                  <Link target="_blank" href="https://www.youtube.com/@ApostolicFaithSacramento/streams">Sermons</Link>
                 </NavigationMenuLink>
                 <NavigationMenuLink asChild>
-                  <Link href="https://www.apostolicfaith.org/library/this-weeks-lessons">Sunday School Lessons</Link>
+                  <Link target="_blank" href="https://www.apostolicfaith.org/library/this-weeks-lessons">Sunday School Lessons</Link>
                 </NavigationMenuLink>
                 <NavigationMenuLink asChild>
-                  <Link href="https://www.apostolicfaith.org/apostolic-faith-magazine">Apostolic Faith Magazine</Link>
+                  <Link target="_blank" href="https://www.apostolicfaith.org/apostolic-faith-magazine">Apostolic Faith Magazine</Link>
                 </NavigationMenuLink>
               </li>
             </ul>
