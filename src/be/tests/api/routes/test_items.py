@@ -10,7 +10,7 @@ from tests.utils.item import create_random_item
 def test_create_item(
     client: TestClient, superuser_token_headers: dict[str, str]
 ) -> None:
-    data = {"title": "Foo", "description": "Fighters"}
+    data = {"title": "Foo", "description": "Fighters", "new_id": uuid.uuid4()}
     response = client.post(
         f"{settings.API_V1_STR}/items/",
         headers=superuser_token_headers,

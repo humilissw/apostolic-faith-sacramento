@@ -1,19 +1,10 @@
-import secrets
-import warnings
-from typing import Annotated, Any, Literal
+from typing import Any
 
 from pydantic import (
-    AnyUrl,
-    BeforeValidator,
-    EmailStr,
-    HttpUrl,
     MariaDBDsn,
-    PostgresDsn,
     computed_field,
-    model_validator,
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing_extensions import Self
 
 
 def parse_cors(v: Any) -> list[str] | str:
@@ -33,12 +24,13 @@ class Settings(BaseSettings):
         arbitrary_types_allowed = True
     )
     API_V1_STR: str
+    EMAIL_TEST_USER: str
     EMAILS_FROM_EMAIL: str
     EMAILS_FROM_NAME: str
-    SQLALCHEMY_DATABASE_URI: str
+    # SQLALCHEMY_DATABASE_URI: str
     SENTRY_DSN: str
     DB_SERVER: str
-    DB_PORT: str
+    DB_PORT: int
     DB_USER: str
     DB_PASSWORD: str
     DB_DB: str
@@ -57,6 +49,21 @@ class Settings(BaseSettings):
     SMTP_PORT: str
     DOCKER_IMAGE_BACKEND: str
     DOCKER_IMAGE_FRONTEND: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
+    emails_enabled: bool = False
+    
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def SQLALCHEMY_DATABASE_URI(self) -> MariaDBDsn:
+        return MariaDBDsn.build(
+            scheme="mariadb+mariadbconnector",
+            username=self.DB_USER,
+            password=self.DB_PASSWORD,
+            host=self.DB_SERVER,
+            port=self.DB_PORT,
+            path=self.DB_DB,
+        )
+
 
 
 settings = Settings()
