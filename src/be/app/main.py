@@ -21,10 +21,13 @@ from app.api.main import api_router
 from app.config import settings
 from app.core import db
 
-
 def custom_generate_unique_id(route: APIRoute) -> str:
     return f"{route.tags[0]}-{route.name}"
 
+async def main(app: FastAPI):
+    print("---------------------")
+    print(str(settings.SQLALCHEMY_DATABASE_URI))
+    print("---------------------")
 
 async def setup_db():
     # Initialize database
