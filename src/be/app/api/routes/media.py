@@ -12,6 +12,7 @@ from app.responses.media_response import MediaPublic, MediasPublic, MediaPublicW
 
 
 router = APIRouter(prefix="/media", tags=["media"])
+media_service = MediaService()
 
 
 @router.get("/liveness")
