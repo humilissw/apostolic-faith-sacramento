@@ -2,6 +2,7 @@ from typing import Any
 
 from pydantic import (
     MariaDBDsn,
+    MySQLDsn,
     computed_field,
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -54,9 +55,12 @@ class Settings(BaseSettings):
     
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def SQLALCHEMY_DATABASE_URI(self) -> MariaDBDsn:
-        return MariaDBDsn.build(
-            scheme="mariadb+mariadbconnector",
+    def SQLALCHEMY_DATABASE_URI(self) -> MySQLDsn:
+        return MySQLDsn.build(
+    # def SQLALCHEMY_DATABASE_URI(self) -> MariaDBDsn:
+    #     return MariaDBDsn.build(
+            # scheme="mariadb+mariadbconnector",
+            scheme="mysql+asyncmy",
             username=self.DB_USER,
             password=self.DB_PASSWORD,
             host=self.DB_SERVER,

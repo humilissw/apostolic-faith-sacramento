@@ -17,7 +17,8 @@ export default function Media() {
   const [videoData, setVideoData] = useState([]);
   const fetchData = async () => {
     try {
-      const response = await fetch('/data.json');
+      const response = await fetch('http://');
+      // const response = await fetch('/data.json');
       if (!response.ok) {
         throw new Error(`Response status: ${response.status}`);
       }
