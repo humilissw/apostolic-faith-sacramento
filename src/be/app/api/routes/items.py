@@ -61,7 +61,10 @@ def create_item(
     """
     Create new item.
     """
-    item = Item.model_validate(item_in, update={"owner_id": current_user.id})
+    item = Item.model_validate(
+        item_in,
+        update={"owner_id": current_user.id, "new_owner_id": current_user.new_id},
+    )
     session.add(item)
     session.commit()
     session.refresh(item)

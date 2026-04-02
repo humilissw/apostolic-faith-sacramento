@@ -1,7 +1,9 @@
+import datetime
+from typing import Optional
 import uuid
 
 from pydantic import EmailStr
-from sqlmodel import Date, Field, Relationship, SQLModel
+from sqlmodel import Column, DateTime, Field, Relationship, SQLModel
 
 
 # Shared properties
@@ -41,14 +43,20 @@ class UpdatePassword(SQLModel):
 
 # Database model, database table inferred from class name
 class User(UserBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    hashed_password: str
-    items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
+    id: int | None = Field(default=None, primary_key=True)
+    new_id: str = Field(default_factory=uuid.uuid4, max_length=36)
+    hashed_password: str = Field(max_length=4000)
+    created_on: datetime.datetime = Field(
+        default=datetime.datetime.now(datetime.timezone.utc), nullable=False
+    )
+    updated_on: datetime.datetime | None = Field(nullable=True, default=None)
+    # items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
 
 
 # Properties to return via API, id is always required
 class UserPublic(UserBase):
-    id: uuid.UUID
+    id: int
+    email: EmailStr
 
 
 class UsersPublic(SQLModel):
@@ -74,17 +82,20 @@ class ItemUpdate(ItemBase):
 
 # Database model, database table inferred from class name
 class Item(ItemBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    owner_id: uuid.UUID = Field(
-        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    id: int | None = Field(primary_key=True, default=None)
+    owner_id: int = Field()
+    new_owner_id: str | None = Field(default_factory=uuid.uuid4, max_length=36, nullable=False)
+    created_on: datetime.datetime | None = Field(
+        default=datetime.datetime.now(datetime.timezone.utc), nullable=False
     )
-    owner: User | None = Relationship(back_populates="items")
+    updated_on: datetime.datetime | None = Field(nullable=True, default=None)
+    # owner: User | None = Relationship(back_populates="items")
 
 
 # Properties to return via API, id is always required
 class ItemPublic(ItemBase):
-    id: uuid.UUID
-    owner_id: uuid.UUID
+    id: int
+    owner_id: int
 
 
 class ItemsPublic(SQLModel):
@@ -92,17 +103,18 @@ class ItemsPublic(SQLModel):
     count: int
 
 
-class HealthPublic():
+class HealthPublic:
     is_healthy: bool
+
 
 # Generic message
 class Message(SQLModel):
-    message: str
+    message: str = Field(default=None, min_length=8, max_length=4000)
 
 
 # JSON payload containing access token
 class Token(SQLModel):
-    access_token: str
+    access_token: str = Field(default=None, min_length=8, max_length=4000)
     token_type: str = "bearer"
 
 
@@ -112,18 +124,57 @@ class TokenPayload(SQLModel):
 
 
 class NewPassword(SQLModel):
-    token: str
+    token: str = Field(max_length=4000)
     new_password: str = Field(min_length=8, max_length=128)
 
-# class Media(SQLModel):
-#     # id: Mapped[int] = mapped_column(primary_key=True)
-#     name: str
-#     upload_date: Date
-    
-class Test(SQLModel):
-    #  id: int
-     test1: int
-     test2: int
-     test3: int
-     test4: int
-    
+
+class Media(SQLModel, table=True):
+    id: str = Field(default_factory=uuid.uuid4, primary_key=True, max_length=36)
+    name: str = Field(max_length=200)
+    uploaded_on: datetime.datetime
+    created_on: datetime.datetime
+    updated_on: datetime.datetime
+
+
+class Test(SQLModel, table=True):
+    id: str = Field(default_factory=uuid.uuid4, primary_key=True, max_length=36)
+    test1: int
+    test2: int
+    test3: int
+    test4: int
+
+
+class DefaultBase(SQLModel):
+    id: str = Field(default_factory=uuid.uuid4, primary_key=True, max_length=36)
+    created_on: datetime.datetime = Field(
+        default=datetime.datetime.now(datetime.timezone.utc), nullable=False
+    )
+    updated_on: datetime.datetime = Field(nullable=True)
+
+
+class Member(DefaultBase, table=True):
+    first_name: str = Field(max_length=200, nullable=False)
+    last_name: str = Field(max_length=200, nullable=False)
+    birthday: datetime.datetime = Field(nullable=False)
+    wedding_anniversary: datetime.datetime = Field(nullable=True)
+    baptism_date: datetime.datetime
+
+
+class ChurchService(DefaultBase, table=True):
+    service_date: datetime.datetime = Field(nullable=False)
+    speaker: str = Field(max_length=200, nullable=True)
+    service_title: Optional[str] = Field(max_length=200, nullable=True)
+    file_location: Optional[str] = Field(max_length=1000, nullable=True)
+    edited: bool = Field(nullable=False, default=False)
+    uploaded: bool = Field(nullable=False, default=False)
+
+
+class VideoUpload(DefaultBase, table=True):
+    upload_location: str = Field(max_length=1000)
+    upload_name: str = Field(max_length=1000)
+
+
+class Announcement(DefaultBase, table=True):
+    sender: str = Field(max_length=200)
+    recipients: str = Field(max_length=4000)
+    message: str = Field(max_length=4000)

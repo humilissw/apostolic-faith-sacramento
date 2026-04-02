@@ -17,8 +17,8 @@ services:
     env_file:
       - ./db.env
     volumes:
-      - ./cert.pem:/certs/cert.pem:ro
-      - ./key.pem:/certs/server.key:ro 
+      - ./infrastructure/certs/cert.pem:/certs/cert.pem:ro
+      - ./infrastructure/certs/key.pem:/certs/server.key:ro 
     ports:
       - 5432:5432
       - 5433:443
