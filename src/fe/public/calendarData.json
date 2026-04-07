@@ -22,5 +22,11 @@
     "date": "2026-03-22 11:00:00",
     "title": "Morning Worship Service", 
     "description": "This is a description of the event"
+  },
+  {
+    "id": 5,
+    "date": "2026-04-19 11:00:00",
+    "title": "Morning Worship Service", 
+    "description": "This is a description of the event"
   }
 ]

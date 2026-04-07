@@ -55,25 +55,27 @@ export default function Calendar() {
             <div className="mb-6">
                 <h2 className="text-4xl text-center">{format(currentDate, "MMMM yyyy")}</h2>
             </div>
-            <div className="grid grid-cols-7 content-center px-65">
+            <div className="grid grid-cols-7 content-center px-65 ">
                 {WEEKDAYS.map((day) => (
                     <div key={day} className="text-center text-xl p-2 bg-zinc-600 text-white">
                         {day}
                     </div>
                 ))}
                 {emptyDays.map((_, index) => (
-                    <div key={index} />
+                    <div className="border" key={index} />
                 ))}
                 {daysInMonth.map((day, index) => (
                    <div 
                     key={index} 
-                    className="border h-40 text-right pr-3 pt-2"> 
+                    className="border h-40 text-right"> 
                     {format(day, "d")} 
-                    <div className="text-sm text-left pl-3">
+                    <div className="text-sm font-bold text-left">
                         {calendarData
                             .filter((data: CalendarEvent) => isSameDay(new Date(data.date), day))
                             .map((data: CalendarEvent) => (
-                                <div key={data.id}>{data.title}</div>
+                                <div key={data.id} className="flex flex-row px-2">
+                                    <div className="text-white bg-zinc-500 pr-2">{new Date(data.date).toLocaleTimeString('en-US', { hour: "2-digit", minute: "2-digit" })} {data.title}</div>
+                                </div>
                             ))}
                         </div>
                    </div> 
