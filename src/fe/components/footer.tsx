@@ -8,7 +8,7 @@ import { IoLocationOutline, IoLogoYoutube, IoMailOutline } from "react-icons/io5
 
 export default function Footer() {
     return (
-      <footer className="flex flex-col md:items-center md:justify-center bg-zinc-700 text-white md:sticky md:top-[100vh] lg:bottom-0 lg:w-full md:t-20 mt-0">
+      <footer className="flex flex-col md:items-center md:justify-center bg-zinc-700 text-white mt-auto">
                 
             <div className="flex flex-col gap-10 pt-7 pl-5 pb-10 md:flex-row md:gap-20 ">
                 <div className="hidden md:flex md:flex-col">
