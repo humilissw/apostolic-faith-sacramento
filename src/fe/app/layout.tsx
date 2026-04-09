@@ -72,10 +72,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" >
-      <body>
+      <body className="flex flex-col min-h-dvh">
         <div className={`${playfair.variable} ${lora.variable} ${libre.variable} ${merriweather.variable} ${noto.variable} ${pt.variable} ${eb.variable} ${barlow_condensed.variable} ${roboto.variable} ${noto_sans.variable} ${work_sans.variable} ${epilogue.variable}`}> 
           <Navbar />
-          {children}
+          <main className="flex-1">{children}</main>
           <Footer />
           </div>
     
