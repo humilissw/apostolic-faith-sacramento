@@ -57,7 +57,7 @@ export default function Calendar() {
             </div>
             <div className="grid grid-cols-7 content-center px-65 ">
                 {WEEKDAYS.map((day) => (
-                    <div key={day} className="text-center text-xl p-2 bg-zinc-600 text-white">
+                    <div key={day} className="text-center text-xl p-2 bg-zinc-900 text-white">
                         {day}
                     </div>
                 ))}
@@ -68,13 +68,15 @@ export default function Calendar() {
                    <div 
                     key={index} 
                     className="border h-40 text-right"> 
-                    {format(day, "d")} 
+                    <span className="mr-2 mt-1 inline-block">{format(day, "d")}</span>
                     <div className="text-sm font-bold text-left">
                         {calendarData
                             .filter((data: CalendarEvent) => isSameDay(new Date(data.date), day))
                             .map((data: CalendarEvent) => (
                                 <div key={data.id} className="flex flex-row px-2">
-                                    <div className="text-white bg-zinc-500 pr-2">{new Date(data.date).toLocaleTimeString('en-US', { hour: "2-digit", minute: "2-digit" })} {data.title}</div>
+                                    <div className="inline-block max-w-full rounded-full bg-transparent px-2 py-1 text-sm font-semibold text-black overflow-hidden whitespace-nowrap text-ellipsis truncate">
+                                        <span className="text-zinc-300">{new Date(data.date).toLocaleTimeString('en-US', { hour: "2-digit", minute: "2-digit" })}</span> {data.title}
+                                    </div>
                                 </div>
                             ))}
                         </div>
