@@ -2,4 +2,5 @@ from pydantic import BaseModel
 
 
 class VideoRequest(BaseModel):
-    video_name: str
+    upload_name: str
+    upload_location: str

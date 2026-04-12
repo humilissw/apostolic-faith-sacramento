@@ -5,11 +5,6 @@ from app.requests.church_service_request import ChurchServiceRequest
 
 
 class MediaRepo:
-
-    def __init__(self, session: Session):
-        self.session = session
-        
-
     async def get_services(self, skip: int | None, takeAmt: int | None):
         mediaItems = await self.session.exec(
             select(Media).limit(takeAmt).offset(skip)
@@ -24,6 +19,9 @@ class MediaRepo:
     def delete_service(self):
         pass
 
-    def add_new_video(self, video: VideoRequest):
+    async def add_new_video(video: VideoRequest):
+        # session.add(video)
+        # await session.commit()
         
+        # statement = select(Media)
         pass
