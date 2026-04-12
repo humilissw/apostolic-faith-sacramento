@@ -1,0 +1,71 @@
+# Pre-commit configuration for Apostolic Faith Sacramento
+# Install with: pre-commit install
+
+repos:
+  # General checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+
+  # Python formatting
+  - repo: https://github.com/psf/black
+    rev: 24.10.0
+    hooks:
+      - id: black
+        language_version: python3.13
+        args: ['--line-length=100']
+
+  # Python linting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.7.1
+    hooks:
+      - id: ruff
+        args: ['--fix', '--exit-non-zero-on-fix']
+      - id: ruff-format
+
+  # Type checking
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.13.0
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - pydantic
+          - sqlmodel
+          - types-all
+        args: ['--ignore-missing-imports', '--warn-redundant-casts', '--warn-return-any']
+        files: ^src/be/app/
+
+  # Security
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.8.0
+    hooks:
+      - id: bandit
+        args: ['-c', 'pyproject.toml', '-r', 'app/']
+
+  # Documentation
+  - repo: https://github.com/editorconfig-checker/editorconfig-checker
+    rev: 2.7.3
+    hooks:
+      - id: editorconfig-checker
+        args: ['-exclude', '.git,.venv']
+
+  # Git hooks
+  - repo: local
+    hooks:
+      - id: validate-commit-message
+        name: Validate commit message
+        entry: bash -c 'if ! grep -E "^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\\(.+\\))?: .{1,}$" $1; then echo "Commit message must follow conventional commits format"; exit 1; fi'
+        language: system
+        files: ^COMMIT$
+        stages: [commit]
