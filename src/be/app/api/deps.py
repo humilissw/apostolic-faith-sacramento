@@ -9,8 +9,8 @@ from sqlmodel import select
 
 from app.core import security
 from app.config import settings
-from app.core.db import AsyncSessionLocal
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.db import AsyncSessionLocal
 from app.models import TokenPayload, User
 
 
@@ -18,14 +18,19 @@ reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token"
 )
 
+async def get_async_db_session() -> AsyncSession:
+    async with AsyncSessionLocal() as session:
+        yield session
+
 
 async def get_current_user(session: SessionDep, token: TokenDep) -> User:
     header_data = jwt.get_unverified_header(token)
-    
-    # public_key = open('.ssh/id_rsa.pub', 'r').read()
-    # key = serialization.load_ssh_public_key(public_key.encode())
-    # key = serialization.load_ssh_public_key(public_key.encode())
 
+    if header_data["alg"] != security.ALGORITHM:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Could not validate credentials",
+        )
 
     try:
         payload = jwt.decode(
