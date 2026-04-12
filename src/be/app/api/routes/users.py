@@ -34,28 +34,28 @@ router = APIRouter(prefix="/users", tags=["users"])
     dependencies=[Depends(get_current_active_superuser)],
     response_model=UsersPublic,
 )
-def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
+async def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
     """
     Retrieve users.
     """
 
     count_statement = select(func.count()).select_from(User)
-    count = session.exec(count_statement).one()
-
+    count_result = await session.execute(count_statement)
+    count = count_result.scalar()
     statement = select(User).offset(skip).limit(limit)
-    users = session.exec(statement).all()
-
+    users_result = await session.execute(statement)
+    users = users_result.scalars().all()
     return UsersPublic(data=users, count=count)
 
 
 @router.post(
     "/", dependencies=[Depends(get_current_active_superuser)], response_model=UserPublic
 )
-def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
+async def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
     """
     Create new user.
     """
-    user = crud.get_user_by_email(session=session, email=user_in.email)
+    user = await crud.get_user_by_email(session=session, email=user_in.email)
     if user:
         raise HTTPException(
             status_code=400,
