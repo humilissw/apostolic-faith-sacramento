@@ -2,7 +2,6 @@ import uuid
 from typing import Any
 
 from sqlalchemy import select
-from sqlmodel import Session
 
 from app.core.security import get_password_hash, verify_password
 from sqlalchemy.ext.asyncio import AsyncSession

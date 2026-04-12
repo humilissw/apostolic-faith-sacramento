@@ -4,4 +4,5 @@ from app.requests.church_service_request import ChurchServiceRequest
 
 
 class AddVideoResponse(BaseModel):
-    video_name: str
+    upload_name: str
+    id: str

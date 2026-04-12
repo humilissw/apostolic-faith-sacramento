@@ -1,5 +1,6 @@
 from typing import List
 from flask import request
+from app.api.deps import SessionDep
 from app.models import Media
 from app.requests.video_request import VideoRequest
 from app.responses.add_video_response import AddVideoResponse
@@ -20,9 +21,11 @@ async def health_check() -> str:
     return "Ready"
 
 
-@router.post("/", response_model=None)
-async def add_new_media(request: VideoRequest) -> AddVideoResponse:
-    response: AddVideoResponse = media_service.add_new_video(request)
+@router.post("/", response_model=AddVideoResponse)
+async def add_new_media(
+    *, session: SessionDep, request: VideoRequest
+) -> AddVideoResponse:
+    response: AddVideoResponse = await media_service.add_new_video(session, request)
 
     return response
 
