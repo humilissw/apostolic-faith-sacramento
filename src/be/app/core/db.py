@@ -8,7 +8,7 @@ from app.models import *
 
 engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
 async_engine = create_async_engine(
-        str(settings.SQLALCHEMY_DATABASE_URI), echo=True, future=True
+        str(settings.SQLALCHEMY_ASYNC_DATABASE_URI), echo=True, future=True
 )
 
 AsyncSessionLocal = async_sessionmaker(
