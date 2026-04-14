@@ -2,20 +2,13 @@ import uuid
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import func, select
+from sqlalchemy import func
 
-from app.api.deps import SessionDep, CurrentUser
-from app.crud import (
-    create_media,
-    get_media,
-    get_media_by_id,
-    update_media,
-    delete_media,
-    get_video_upload_by_id,
-)
+from app.api.deps import SessionDep
+from app.models import Message
+from app.repositories.media_repo import MediaRepository
 from app.requests.media_request import MediaCreate, MediaUpdate
 from app.responses.media_response import MediaPublic, MediasPublic
-from app.models import Message
 
 
 router = APIRouter(prefix="/media", tags=["media"])
@@ -42,13 +35,8 @@ async def read_media(
 
     Returns a list of all media entries with pagination.
     """
-    count_statement = select(func.count()).select_from(Media)
-    count_result = await session.execute(count_statement)
-    count = count_result.scalar()
-
-    statement = select(Media).offset(skip).limit(limit)
-    result = await session.execute(statement)
-    medias = result.scalars().all()
+    repository = MediaRepository(session=session)
+    medias, total_count = await repository.get_all(skip=skip, limit=limit)
 
     # Add download URLs (placeholder - should be implemented based on storage)
     media_data = [
@@ -63,7 +51,7 @@ async def read_media(
         for m in medias
     ]
 
-    return MediasPublic(data=media_data, count=count)
+    return MediasPublic(data=media_data, count=total_count)
 
 
 @router.get("/{media_id}", response_model=MediaPublic)
@@ -75,7 +63,8 @@ async def read_media_by_id(
 
     Returns a single media entry by its ID.
     """
-    media = await get_media_by_id(session=session, media_id=media_id)
+    repository = MediaRepository(session=session)
+    media = await repository.get_by_id(media_id=media_id)
     if not media:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -100,7 +89,8 @@ async def create_media_endpoint(
 
     Adds a new media entry to the database.
     """
-    media = await create_media(session=session, media_in=media_in)
+    repository = MediaRepository(session=session)
+    media = await repository.create(media_in=media_in)
     return MediaPublic(
         id=media.id,
         name=media.name,
@@ -122,14 +112,15 @@ async def update_media_endpoint(
 
     Updates an existing media entry by ID.
     """
-    media = await get_media_by_id(session=session, media_id=media_id)
+    repository = MediaRepository(session=session)
+    media = await repository.get_by_id(media_id=media_id)
     if not media:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Media not found",
         )
 
-    media = await update_media(session=session, db_media=media, media_in=media_in)
+    media = await repository.update(db_media=media, media_in=media_in)
     return MediaPublic(
         id=media.id,
         name=media.name,
@@ -148,14 +139,15 @@ async def delete_media_endpoint(
 
     Deletes a media entry by ID.
     """
-    media = await get_media_by_id(session=session, media_id=media_id)
+    repository = MediaRepository(session=session)
+    media = await repository.get_by_id(media_id=media_id)
     if not media:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Media not found",
         )
 
-    await delete_media(session=session, db_media=media)
+    await repository.delete(db_media=media)
     return Message(message="Media deleted successfully")
 
 

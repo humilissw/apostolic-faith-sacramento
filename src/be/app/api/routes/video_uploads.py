@@ -2,19 +2,13 @@ import uuid
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import func, select
+from sqlalchemy import func
 
-from app.api.deps import SessionDep, CurrentUser
-from app.crud import (
-    create_video_upload,
-    get_video_upload,
-    get_video_upload_by_id,
-    update_video_upload,
-    delete_video_upload,
-)
+from app.api.deps import SessionDep
+from app.models import Message
+from app.repositories.video_upload_repo import VideoUploadRepository
 from app.requests.video_upload_request import VideoUploadCreate, VideoUploadUpdate
 from app.responses.video_upload_response import VideoUploadPublic, VideoUploadsPublic
-from app.models import Message
 
 
 router = APIRouter(prefix="/video-uploads", tags=["video-uploads"])
@@ -41,13 +35,8 @@ async def read_video_uploads(
 
     Returns a list of all video uploads with pagination.
     """
-    count_statement = select(func.count()).select_from(VideoUpload)
-    count_result = await session.execute(count_statement)
-    count = count_result.scalar()
-
-    statement = select(VideoUpload).offset(skip).limit(limit)
-    result = await session.execute(statement)
-    video_uploads = result.scalars().all()
+    repository = VideoUploadRepository(session=session)
+    video_uploads, total_count = await repository.get_all(skip=skip, limit=limit)
 
     # Add download URLs (placeholder - should be implemented based on storage)
     video_upload_data = [
@@ -62,7 +51,7 @@ async def read_video_uploads(
         for v in video_uploads
     ]
 
-    return VideoUploadsPublic(data=video_upload_data, count=count)
+    return VideoUploadsPublic(data=video_upload_data, count=total_count)
 
 
 @router.get("/{video_upload_id}", response_model=VideoUploadPublic)
@@ -74,7 +63,8 @@ async def read_video_upload_by_id(
 
     Returns a single video upload entry by its ID.
     """
-    video_upload = await get_video_upload_by_id(session=session, video_upload_id=video_upload_id)
+    repository = VideoUploadRepository(session=session)
+    video_upload = await repository.get_by_id(video_upload_id=video_upload_id)
     if not video_upload:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -99,7 +89,8 @@ async def create_video_upload_endpoint(
 
     Adds a new video upload entry to the database.
     """
-    video_upload = await create_video_upload(session=session, video_upload_in=video_upload_in)
+    repository = VideoUploadRepository(session=session)
+    video_upload = await repository.create(video_upload_in=video_upload_in)
     return VideoUploadPublic(
         id=video_upload.id,
         upload_location=video_upload.upload_location,
@@ -121,14 +112,15 @@ async def update_video_upload_endpoint(
 
     Updates an existing video upload entry by ID.
     """
-    video_upload = await get_video_upload_by_id(session=session, video_upload_id=video_upload_id)
+    repository = VideoUploadRepository(session=session)
+    video_upload = await repository.get_by_id(video_upload_id=video_upload_id)
     if not video_upload:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Video upload not found",
         )
 
-    video_upload = await update_video_upload(session=session, db_video_upload=video_upload, video_upload_in=video_upload_in)
+    video_upload = await repository.update(db_video_upload=video_upload, video_upload_in=video_upload_in)
     return VideoUploadPublic(
         id=video_upload.id,
         upload_location=video_upload.upload_location,
@@ -147,14 +139,15 @@ async def delete_video_upload_endpoint(
 
     Deletes a video upload entry by ID.
     """
-    video_upload = await get_video_upload_by_id(session=session, video_upload_id=video_upload_id)
+    repository = VideoUploadRepository(session=session)
+    video_upload = await repository.get_by_id(video_upload_id=video_upload_id)
     if not video_upload:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Video upload not found",
         )
 
-    await delete_video_upload(session=session, db_video_upload=video_upload)
+    await repository.delete(db_video_upload=video_upload)
     return Message(message="Video upload deleted successfully")
 
 
