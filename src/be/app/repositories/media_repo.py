@@ -1,27 +1,117 @@
+from sqlalchemy import select, func
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import Media
-from app.requests.video_request import VideoRequest
-from sqlmodel import Session, select
-from app.requests.church_service_request import ChurchServiceRequest
+from app.requests.media_request import MediaCreate, MediaUpdate
+from datetime import datetime, timezone
 
 
-class MediaRepo:
-    async def get_services(self, skip: int | None, takeAmt: int | None):
-        mediaItems = await self.session.exec(
-            select(Media).limit(takeAmt).offset(skip)
-        ).fetchmany(100)
-        return mediaItems
+class MediaRepository:
+    """
+    Repository for Media entity operations.
+    Handles all database interactions for media entries.
+    """
 
-    async def update_services(self) -> int:
-        mediaItems = await self.session.exec(
-            select(Media).limit(takeAmt).offset(skip)
-        ).fetchmany(100)
+    def __init__(self, session: AsyncSession):
+        """
+        Initialize the repository with a database session.
 
-    def delete_service(self):
-        pass
+        Args:
+            session: AsyncSession for database operations
+        """
+        self.session = session
 
-    async def add_new_video(video: VideoRequest):
-        # session.add(video)
-        # await session.commit()
-        
-        # statement = select(Media)
-        pass
+    async def create(self, media_in: MediaCreate) -> Media:
+        """
+        Create a new media entry.
+
+        Args:
+            media_in: MediaCreate object containing media data
+
+        Returns:
+            Media: Created media object
+        """
+        media = Media(
+            name=media_in.name,
+            uploaded_on=datetime.now(timezone.utc),
+            created_on=datetime.now(timezone.utc),
+            updated_on=datetime.now(timezone.utc),
+        )
+        self.session.add(media)
+        await self.session.commit()
+        await self.session.refresh(media)
+        return media
+
+    async def get_by_id(self, media_id: str) -> Media | None:
+        """
+        Retrieve a media entry by ID.
+
+        Args:
+            media_id: UUID string of the media entry
+
+        Returns:
+            Media | None: Media object if found, None otherwise
+        """
+        statement = select(Media).where(Media.id == media_id)
+        result = await self.session.execute(statement)
+        return result.scalar_one_or_none()
+
+    async def get_all(
+        self, skip: int = 0, limit: int = 100
+    ) -> tuple[list[Media], int]:
+        """
+        Retrieve all media entries with pagination.
+
+        Args:
+            skip: Number of records to skip (pagination)
+            limit: Maximum number of records to return (pagination)
+
+        Returns:
+            tuple[list[Media], int]: Tuple of (media list, total count)
+        """
+        # Get total count
+        count_statement = select(func.count()).select_from(Media)
+        count_result = await self.session.execute(count_statement)
+        total_count = count_result.scalar()
+
+        # Get paginated results
+        statement = select(Media).offset(skip).limit(limit)
+        result = await self.session.execute(statement)
+        medias = result.scalars().all()
+
+        return medias, total_count
+
+    async def update(
+        self, db_media: Media, media_in: MediaUpdate
+    ) -> Media:
+        """
+        Update an existing media entry.
+
+        Args:
+            db_media: Media object to update
+            media_in: MediaUpdate object with update data
+
+        Returns:
+            Media: Updated media object
+        """
+        update_data = media_in.model_dump(exclude_unset=True)
+        update_data["updated_on"] = datetime.now(timezone.utc)
+
+        # Handle datetime fields - remove created_on if present
+        if "created_on" in update_data:
+            del update_data["created_on"]
+
+        db_media.sqlmodel_update(update_data)
+        self.session.add(db_media)
+        await self.session.commit()
+        await self.session.refresh(db_media)
+        return db_media
+
+    async def delete(self, db_media: Media) -> None:
+        """
+        Delete a media entry.
+
+        Args:
+            db_media: Media object to delete
+        """
+        self.session.delete(db_media)
+        await self.session.commit()
