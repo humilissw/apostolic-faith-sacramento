@@ -2,16 +2,15 @@ import uuid
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import col, delete, func, select
+from sqlalchemy import delete
 
-from app import crud
 from app.api.deps import (
     CurrentUser,
     SessionDep,
     get_current_active_superuser,
 )
 from app.config import settings
-from app.core.security import get_password_hash, verify_password
+from app.core.security import verify_password
 from app.models import (
     Item,
     Message,
@@ -24,6 +23,7 @@ from app.models import (
     UserUpdate,
     UserUpdateMe,
 )
+from app.repositories.user_repo import UserRepository
 from app.utils import generate_new_account_email, send_email
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -38,14 +38,9 @@ async def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> An
     """
     Retrieve users.
     """
-
-    count_statement = select(func.count()).select_from(User)
-    count_result = await session.execute(count_statement)
-    count = count_result.scalar()
-    statement = select(User).offset(skip).limit(limit)
-    users_result = await session.execute(statement)
-    users = users_result.scalars().all()
-    return UsersPublic(data=users, count=count)
+    repository = UserRepository(session=session)
+    users, total_count = await repository.get_all(skip=skip, limit=limit)
+    return UsersPublic(data=users, count=total_count)
 
 
 @router.post(
@@ -55,14 +50,15 @@ async def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
     """
     Create new user.
     """
-    user = await crud.get_user_by_email(session=session, email=user_in.email)
+    repository = UserRepository(session=session)
+    user = await repository.get_by_email(email=user_in.email)
     if user:
         raise HTTPException(
             status_code=400,
             detail="The user with this email already exists in the system.",
         )
 
-    user = await crud.create_user(session=session, user_create=user_in)
+    user = await repository.create(user_create=user_in)
     if settings.emails_enabled and user_in.email:
         email_data = generate_new_account_email(
             email_to=user_in.email, username=user_in.email, password=user_in.password
@@ -82,9 +78,10 @@ async def update_user_me(
     """
     Update own user.
     """
+    repository = UserRepository(session=session)
 
     if user_in.email:
-        existing_user = await crud.get_user_by_email(session=session, email=user_in.email)
+        existing_user = await repository.get_by_email(email=user_in.email)
         if existing_user and existing_user.new_id != current_user.new_id:
             raise HTTPException(
                 status_code=409, detail="User with this email already exists"
@@ -162,9 +159,8 @@ async def read_user_by_id(
     """
     Get a specific user by id.
     """
-    user_statement = select(User).where(User.new_id == user_id)
-    user_result = await session.execute(user_statement)
-    user = user_result.scalar()
+    repository = UserRepository(session=session)
+    user = await repository.get_by_id(user_id=user_id)
     if user == current_user:
         return user
     if not current_user.is_superuser:
@@ -189,25 +185,21 @@ async def update_user(
     """
     Update a user.
     """
-
-    db_user_statement = select(User).where(User.new_id == user_id)
-    db_result = await session.execute(db_user_statement)
-    db_user = db_result.scalar()
+    repository = UserRepository(session=session)
+    db_user = await repository.get_by_id(user_id=user_id)
     if not db_user:
         raise HTTPException(
             status_code=404,
             detail="The user with this id does not exist in the system",
         )
     if user_in.email:
-        existing_user = await crud.get_user_by_email(
-            session=session, email=user_in.email
-        )
+        existing_user = await repository.get_by_email(email=user_in.email)
         if existing_user and existing_user.id != user_id:
             raise HTTPException(
                 status_code=409, detail="User with this email already exists"
             )
 
-    db_user = await crud.update_user(session=session, db_user=db_user, user_in=user_in)
+    db_user = await repository.update(db_user=db_user, user_in=user_in)
     return db_user
 
 
@@ -218,9 +210,8 @@ async def delete_user(
     """
     Delete a user.
     """
-    user_statement = select(User).where(User.new_id == user_id)
-    user_result = await session.execute(user_statement)
-    user = user_result.scalar()
+    repository = UserRepository(session=session)
+    user = await repository.get_by_id(user_id=user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     if user == current_user:
