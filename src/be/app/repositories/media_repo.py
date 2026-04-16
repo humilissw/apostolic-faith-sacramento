@@ -1,5 +1,6 @@
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import HTTPException
 from app.models import Media
 from app.requests.media_request import MediaCreate, MediaUpdate
 from datetime import datetime, timezone
@@ -30,16 +31,19 @@ class MediaRepository:
         Returns:
             Media: Created media object
         """
-        media = Media(
-            name=media_in.name,
-            uploaded_on=datetime.now(timezone.utc),
-            created_on=datetime.now(timezone.utc),
-            updated_on=datetime.now(timezone.utc),
-        )
-        self.session.add(media)
-        await self.session.commit()
-        await self.session.refresh(media)
-        return media
+        try:
+            media = Media(
+                name=media_in.name,
+                uploaded_on=datetime.now(timezone.utc),
+                created_on=datetime.now(timezone.utc),
+                updated_on=datetime.now(timezone.utc),
+            )
+            self.session.add(media)
+            await self.session.commit()
+            await self.session.refresh(media)
+            return media
+        except Exception as e:
+            raise HTTPException(status_code=500, detail="Database error occurred while creating media")
 
     async def get_by_id(self, media_id: str) -> Media | None:
         """
@@ -51,9 +55,12 @@ class MediaRepository:
         Returns:
             Media | None: Media object if found, None otherwise
         """
-        statement = select(Media).where(Media.id == media_id)
-        result = await self.session.execute(statement)
-        return result.scalar_one_or_none()
+        try:
+            statement = select(Media).where(Media.id == media_id)
+            result = await self.session.execute(statement)
+            return result.scalar_one_or_none()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail="Database error occurred while retrieving media")
 
     async def get_all(
         self, skip: int = 0, limit: int = 100
@@ -68,15 +75,23 @@ class MediaRepository:
         Returns:
             tuple[list[Media], int]: Tuple of (media list, total count)
         """
-        # Get total count
-        count_statement = select(func.count()).select_from(Media)
-        count_result = await self.session.execute(count_statement)
-        total_count = count_result.scalar()
+        try:
+            # Get total count
+            count_statement = select(func.count()).select_from(Media)
+            count_result = await self.session.execute(count_statement)
+            total_count = count_result.scalar()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail="Database error occurred while counting media")
 
-        # Get paginated results
-        statement = select(Media).offset(skip).limit(limit)
-        result = await self.session.execute(statement)
-        medias = result.scalars().all()
+        try:
+            # Get paginated results
+            statement = select(Media).offset(skip).limit(limit)
+            result = await self.session.execute(statement)
+            medias = result.scalars().all()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail="Database error occurred while retrieving media list")
+
+        return medias, total_count
 
         return medias, total_count
 
@@ -93,6 +108,10 @@ class MediaRepository:
         Returns:
             Media: Updated media object
         """
+        # Check if media exists
+        if db_media is None:
+            raise HTTPException(status_code=404, detail="Media not found")
+
         update_data = media_in.model_dump(exclude_unset=True)
         update_data["updated_on"] = datetime.now(timezone.utc)
 
@@ -113,5 +132,10 @@ class MediaRepository:
         Args:
             db_media: Media object to delete
         """
-        self.session.delete(db_media)
+        # Check if media exists in the database
+        if db_media is None:
+            return
+
+        # Delete the media directly
+        await self.session.delete(db_media)
         await self.session.commit()

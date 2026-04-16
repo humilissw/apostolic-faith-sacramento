@@ -22,7 +22,7 @@ def custom_generate_unique_id(route: APIRoute) -> str:
 async def setup_db():
     await db.init_db_async(async_engine)
 
-def main_root(app: FastAPI):
+async def main_root(app: FastAPI):
     print("---------------------")
     print(str(settings.SQLALCHEMY_DATABASE_URI))
     print("---------------------")
@@ -42,13 +42,13 @@ def main_root(app: FastAPI):
     #     )
 
     route_prefix = f"/{settings.API_V1_STR}"
-    
-    setup_db()
+
+    await setup_db()
 
     # engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
     # with Session(engine) as session:
     #     db.init_db(session=session)
-    
+
     print("-----------" + route_prefix)
 
     app.include_router(api_router, prefix=route_prefix)

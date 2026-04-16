@@ -1,3 +1,5 @@
+import uuid
+
 from sqlalchemy import select, func, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import User, UserCreate, UserUpdate, UserUpdateMe
@@ -50,7 +52,7 @@ class UserRepository:
         """
         statement = select(User).where(User.email == email)
         session_user = await self.session.execute(statement)
-        return session_user.scalar()
+        return session_user.scalar_one_or_none()
 
     async def get_by_id(self, user_id: uuid.UUID) -> User | None:
         """
@@ -64,7 +66,7 @@ class UserRepository:
         """
         statement = select(User).where(User.new_id == user_id)
         result = await self.session.execute(statement)
-        return result.scalar()
+        return result.scalar_one_or_none()
 
     async def get_all(
         self, skip: int = 0, limit: int = 100
@@ -112,8 +114,8 @@ class UserRepository:
             extra_data["hashed_password"] = hashed_password
         db_user.sqlmodel_update(user_data, update=extra_data)
         self.session.add(db_user)
-        self.session.commit()
-        self.session.refresh(db_user)
+        await self.session.commit()
+        await self.session.refresh(db_user)
         return db_user
 
     async def delete(self, db_user: User) -> None:
@@ -123,5 +125,26 @@ class UserRepository:
         Args:
             db_user: User object to delete
         """
-        self.session.delete(db_user)
+        await self.session.delete(db_user)
         await self.session.commit()
+
+    async def update_password(self, db_user: User, new_password: str) -> User:
+        """
+        Update a user's password.
+
+        Args:
+            db_user: User object to update
+            new_password: New password to set
+
+        Returns:
+            User: Updated user object
+        """
+        # Hash the new password
+        hashed_password = get_password_hash(password=new_password)
+        # Update the password hash
+        db_user.hashed_password = hashed_password
+        # Add and commit the changes
+        self.session.add(db_user)
+        await self.session.commit()
+        await self.session.refresh(db_user)
+        return db_user

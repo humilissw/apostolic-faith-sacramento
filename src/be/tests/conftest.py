@@ -4,16 +4,18 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy import select, delete
+from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.orm import sessionmaker
 
 from app.config import settings
 from app.core.db import async_engine, init_db_async
 from app.main import app
-from app.models import Item, User
+from app.models import Item, User, Media, VideoUpload
 from tests.utils.user import authentication_token_from_email
 from tests.utils.utils import get_superuser_token_headers
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 async def db() -> Generator[AsyncSession, None, None]:
     """Session-scoped database fixture for all tests."""
     # Initialize database using async engine
@@ -33,6 +35,10 @@ async def db() -> Generator[AsyncSession, None, None]:
             statement = delete(Item)
             await session.execute(statement)
             statement = delete(User)
+            await session.execute(statement)
+            statement = delete(Media)
+            await session.execute(statement)
+            statement = delete(VideoUpload)
             await session.execute(statement)
             await session.commit()
         except Exception:
@@ -87,6 +93,10 @@ async def db_session(db: AsyncSession) -> AsyncSession:
             statement = delete(Item)
             await test_session.execute(statement)
             statement = delete(User)
+            await test_session.execute(statement)
+            statement = delete(Media)
+            await test_session.execute(statement)
+            statement = delete(VideoUpload)
             await test_session.execute(statement)
             await test_session.commit()
         except Exception:

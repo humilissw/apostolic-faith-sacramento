@@ -13,6 +13,7 @@ from app.core.db import get_db_session
 from app.core.security import get_password_hash
 from app.models import Message, NewPassword, Token, UserPublic
 from app.repositories.user_repo import UserRepository
+from app.services.auth_service import AuthService
 from app.utils import (
     generate_password_reset_token,
     generate_reset_password_email,
@@ -91,23 +92,19 @@ async def reset_password(session: SessionDep, body: NewPassword) -> Message:
     """
     Reset password
     """
-    repository = UserRepository(session=session)
-    email = verify_password_reset_token(token=body.token)
-    if not email:
-        raise HTTPException(status_code=400, detail="Invalid token")
-    user = await repository.get_user_by_email(email=email)
-    if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="The user with this email does not exist in the system.",
-        )
-    elif not user.is_active:
-        raise HTTPException(status_code=400, detail="Inactive user")
-    hashed_password = get_password_hash(password=body.new_password)
-    user.hashed_password = hashed_password
-    session.add(user)
-    session.commit()
-    return Message(message="Password updated successfully")
+    # Create user repository and service
+    user_repository = UserRepository(session=session)
+    auth_service = AuthService(user_repository=user_repository)
+
+    # Use the service to reset the password
+    result = await auth_service.reset_password(
+        token=body.token,
+        new_password=body.new_password,
+        session=session
+    )
+
+    # Return the success message
+    return Message(message=result["message"])
 
 
 @router.post(
@@ -119,19 +116,15 @@ async def recover_password_html_content(email: str, session: SessionDep) -> Any:
     """
     HTML Content for Password Recovery
     """
-    repository = UserRepository(session=session)
-    user = await repository.get_user_by_email(email=email)
+    # Create user repository and service
+    user_repository = UserRepository(session=session)
+    auth_service = AuthService(user_repository=user_repository)
 
-    if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="The user with this username does not exist in the system.",
-        )
-    password_reset_token = generate_password_reset_token(email=email)
-    email_data = generate_reset_password_email(
-        email_to=user.email, email=email, token=password_reset_token
-    )
+    # Use the service to initiate password recovery
+    await auth_service.initiate_password_recovery(email=email)
 
+    # Return HTML content
     return HTMLResponse(
-        content=email_data.html_content, headers={"subject:": email_data.subject}
+        content="Password recovery email sent successfully",
+        headers={"subject:": "Password Recovery"}
     )
