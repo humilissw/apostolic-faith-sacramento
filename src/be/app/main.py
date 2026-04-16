@@ -19,8 +19,40 @@ from app.core import db
 def custom_generate_unique_id(route: APIRoute) -> str:
     return f"{route.tags[0]}-{route.name}"
 
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    openapi_url=f"/{settings.API_V1_STR}/openapi.json",
+    generate_unique_id_function=custom_generate_unique_id,
+)
+
 async def setup_db():
-    await db.init_db_async(async_engine)
+    # Initialize database
+    async_engine = create_async_engine(
+        str(settings.SQLALCHEMY_ASYNC_DATABASE_URI), echo=False, future=True
+    )
+    async_session_maker = async_sessionmaker(
+        bind=async_engine,
+        expire_on_commit=False,
+        class_=AsyncSession,
+    )
+    async with AsyncSession(async_engine) as session:
+        try:
+            from app.models import User, UserCreate
+            from app import crud
+            statement = select(User).where(User.email == settings.FIRST_SUPERUSER)
+            user_result = await session.execute(statement)
+            user = user_result.scalar()
+            if user is None:
+                user_in = UserCreate(
+                    email=settings.FIRST_SUPERUSER,
+                    password=settings.FIRST_SUPERUSER_PASSWORD,
+                    is_superuser=True,
+                )
+                user = crud.create_user(session=session, user_create=user_in)
+        except Exception as error:
+            print(error)
+        finally:
+            await async_engine.dispose()
 
 async def main_root(app: FastAPI):
     print("---------------------")
@@ -53,19 +85,6 @@ async def main_root(app: FastAPI):
 
     app.include_router(api_router, prefix=route_prefix)
 
-# engine = create_async_engine(env.DATABASE_URL, echo=True)
-eg = db.async_engine
-app = FastAPI(
-    title=settings.PROJECT_NAME,
-    openapi_url=f"/{settings.API_V1_STR}/openapi.json",
-    generate_unique_id_function=custom_generate_unique_id,
-)
-
-local = db.AsyncSessionLocal
-
-print(__name__)
-main_root(app)
-# read(1, 1)
-# if __name__ == "__main__" or __name__ == "app.main":
-#     asyncio.run(main_root(app)) # Runs the main coroutine and manages the event loop
+if __name__ == "__main__" or __name__ == "app.main":
+    asyncio.run(main_root(app))
 
