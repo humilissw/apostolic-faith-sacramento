@@ -10,7 +10,7 @@ from app.core import security
 from app.config import settings
 from sqlalchemy.ext.asyncio import AsyncSession, async_session, async_sessionmaker, create_async_engine
 from app.core.db import get_db_session
-from app.core.security import get_password_hash
+from app.core.security import get_password_hash, verify_password
 from app.models import Message, NewPassword, Token, UserPublic
 from app.repositories.user_repo import UserRepository
 from app.services.auth_service import AuthService
@@ -31,7 +31,7 @@ async def login_access_token(
     OAuth2 compatible token login, get an access token for future requests
     """
     repository = UserRepository(session=session)
-    user = await repository.get_user_by_email(email=form_data.username)
+    user = await repository.get_by_email(email=form_data.username)
     if user is None:
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     if not verify_password(form_data.password, user.hashed_password):

@@ -10,7 +10,8 @@ from sqlmodel import select
 from app.core import security
 from app.config import settings
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.db import AsyncSessionLocal
+from sqlalchemy.orm import Session
+from app.core.db import get_db_session, SyncSessionLocal
 from app.models import TokenPayload, User
 
 
@@ -18,9 +19,11 @@ reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token"
 )
 
-async def get_async_db_session() -> AsyncSession:
-    async with AsyncSessionLocal() as session:
-        yield session
+def get_sync_db_session() -> Session:
+    """Synchronous database session for tests."""
+    session = SyncSessionLocal()
+    yield session
+    session.close()
 
 
 async def get_current_user(session: SessionDep, token: TokenDep) -> User:
@@ -95,6 +98,7 @@ async def get_current_active_superuser(current_user: CurrentUser) -> User:
         )
     return current_user
 
-SessionDep = Annotated[AsyncSession, Depends(get_async_db_session)]
+SessionDep = Annotated[AsyncSession, Depends(get_db_session)]
+SyncSessionDep = Annotated[Session, Depends(get_sync_db_session)]
 TokenDep = Annotated[str, Depends(reusable_oauth2)]
 CurrentUser = Annotated[User, Depends(get_current_user)]

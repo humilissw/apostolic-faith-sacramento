@@ -1,105 +1,125 @@
-from collections.abc import Generator
-
 import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-from sqlalchemy import select, delete
-from sqlalchemy.ext.asyncio import create_async_engine
-from sqlalchemy.orm import sessionmaker
+from httpx import ASGITransport
+import httpx
 
 from app.config import settings
-from app.core.db import async_engine, init_db_async
 from app.main import app
-from app.models import Item, User, Media, VideoUpload
-from tests.utils.user import authentication_token_from_email
-from tests.utils.utils import get_superuser_token_headers
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy import select, delete
+from app.models import User, UserCreate, Media
+from app import crud
 
 
-@pytest.fixture(scope="session")
-async def db() -> Generator[AsyncSession, None, None]:
-    """Session-scoped database fixture for all tests."""
-    # Initialize database using async engine
-    await init_db_async(async_engine)
+@pytest.fixture(scope="function")
+def event_loop():
+    """Create an instance of the default event loop for each test."""
+    loop = pytest.plugins.asyncio._get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
 
-    # Create async session
+
+@pytest.fixture(scope="function")
+async def db_session() -> AsyncSession:
+    """Function-scoped database session for individual tests."""
+    # Create async engine in the test's event loop
+    async_engine = create_async_engine(
+        str(settings.SQLALCHEMY_ASYNC_DATABASE_URI), echo=False, future=True
+    )
     async_session_maker = async_sessionmaker(
         bind=async_engine,
         expire_on_commit=False,
         class_=AsyncSession,
     )
+    session = async_session_maker()
 
-    async with async_session_maker() as session:
-        yield session
-        # Clean up after all tests
+    try:
+        # Clean up Media table
         try:
-            statement = delete(Item)
-            await session.execute(statement)
-            statement = delete(User)
-            await session.execute(statement)
-            statement = delete(Media)
-            await session.execute(statement)
-            statement = delete(VideoUpload)
-            await session.execute(statement)
+            media_statement = delete(Media)
+            await session.execute(media_statement)
             await session.commit()
         except Exception:
             await session.rollback()
 
-
-@pytest.fixture(scope="module")
-def client() -> Generator[TestClient, None, None]:
-    """Module-scoped test client."""
-    with TestClient(app) as c:
-        yield c
-
-
-@pytest.fixture(scope="module")
-def superuser_token_headers(client: TestClient) -> dict[str, str]:
-    """Superuser authentication headers."""
-    # Ensure superuser exists
-    import asyncio
-
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(init_db_async(async_engine))
-    loop.close()
-
-    return get_superuser_token_headers(client)
-
-
-@pytest.fixture(scope="module")
-def normal_user_token_headers(client: TestClient, db: AsyncSession) -> dict[str, str]:
-    """Normal user authentication headers."""
-    return authentication_token_from_email(
-        client=client, email=settings.EMAIL_TEST_USER, db=db
-    )
+        yield session
+    finally:
+        await session.close()
+        await async_engine.dispose()
 
 
 @pytest.fixture(scope="function")
-async def db_session(db: AsyncSession) -> AsyncSession:
-    """Function-scoped database session for individual tests."""
-    # Create a fresh session for each test
-    async_session_maker = async_sessionmaker(
-        bind=async_engine,
-        expire_on_commit=False,
-        class_=AsyncSession,
-    )
-    test_session = async_session_maker()
+async def client() -> httpx.AsyncClient:
+    """Function-scoped async test client."""
+    async with httpx.AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+        yield c
 
-    try:
-        yield test_session
-    finally:
-        # Clean up after each test
-        try:
-            statement = delete(Item)
-            await test_session.execute(statement)
-            statement = delete(User)
-            await test_session.execute(statement)
-            statement = delete(Media)
-            await test_session.execute(statement)
-            statement = delete(VideoUpload)
-            await test_session.execute(statement)
-            await test_session.commit()
-        except Exception:
-            await test_session.rollback()
-        finally:
-            await test_session.close()
+
+@pytest.fixture(scope="function")
+async def superuser_token_headers(client: httpx.AsyncClient, db_session: AsyncSession) -> dict[str, str]:
+    """Superuser authentication headers."""
+    # Ensure superuser exists
+    statement = select(User).where(User.email == settings.FIRST_SUPERUSER)
+    user_result = await db_session.execute(statement)
+    user = user_result.scalar()
+    print(f"Superuser user: {user}")
+
+    if not user:
+        user_in = UserCreate(
+            email=settings.FIRST_SUPERUSER,
+            password=settings.FIRST_SUPERUSER_PASSWORD,
+            is_superuser=True,
+        )
+        user = crud.create_user(session=db_session, user_create=user_in)
+        print(f"Created superuser: {user}")
+    elif not user.is_superuser:
+        # Update existing user to be a superuser
+        user.is_superuser = True
+        user.hashed_password = get_password_hash(settings.FIRST_SUPERUSER_PASSWORD)
+        db_session.add(user)
+        await db_session.commit()
+        print(f"Updated existing user to be superuser: {user}")
+
+    response = await client.post(
+        f"{settings.API_V1_STR}/login/access-token",
+        data={
+            "username": settings.FIRST_SUPERUSER,
+            "password": settings.FIRST_SUPERUSER_PASSWORD,
+        },
+    )
+    print(f"Login response status: {response.status_code}")
+    print(f"Login response: {response.text}")
+    tokens = response.json()
+    print(f"Tokens: {tokens}")
+    return {"Authorization": f"Bearer {tokens['access_token']}"}
+
+
+@pytest.fixture(scope="function")
+async def normal_user_token_headers(client: httpx.AsyncClient, db_session: AsyncSession) -> dict[str, str]:
+    """Normal user authentication headers."""
+    # Ensure normal user exists
+    statement = select(User).where(User.email == settings.EMAIL_TEST_USER)
+    user_result = await db_session.execute(statement)
+    user = user_result.scalar()
+    print(f"Normal user: {user}")
+
+    if not user:
+        user_in = UserCreate(
+            email=settings.EMAIL_TEST_USER,
+            password="testpassword123",
+        )
+        user = crud.create_user(session=db_session, user_create=user_in)
+        print(f"Created normal user: {user}")
+
+    response = await client.post(
+        f"{settings.API_V1_STR}/login/access-token",
+        data={
+            "username": settings.EMAIL_TEST_USER,
+            "password": "testpassword123",
+        },
+    )
+    tokens = response.json()
+    return {"Authorization": f"Bearer {tokens['access_token']}"}
+
+
+# Add missing import
+from app.core.security import get_password_hash

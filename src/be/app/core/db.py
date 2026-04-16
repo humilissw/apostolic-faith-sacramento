@@ -4,17 +4,15 @@ from sqlmodel import create_engine, select
 from app import crud
 from app.config import settings
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import sessionmaker
 from app.models import *
 
 engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
-async_engine = create_async_engine(
-        str(settings.SQLALCHEMY_ASYNC_DATABASE_URI), echo=True, future=True
-)
 
-AsyncSessionLocal = async_sessionmaker(
-    bind=async_engine,
-    expire_on_commit=False, # Recommended for async use
-    class_=AsyncSession,
+# Sync database session for tests
+SyncSessionLocal = sessionmaker(
+    bind=engine,
+    expire_on_commit=False,
 )
 
 # make sure all SQLModel models are imported (app.models) before initializing DB
@@ -23,18 +21,43 @@ AsyncSessionLocal = async_sessionmaker(
 
 # Dependency to inject the async database session
 async def get_db_session() -> AsyncSession:
-    async with AsyncSessionLocal() as session:
+    """Create a new async database session for each request."""
+    # Create a new async engine for each request to avoid event loop issues
+    async_engine = create_async_engine(
+        str(settings.SQLALCHEMY_ASYNC_DATABASE_URI), echo=False, future=True
+    )
+    async_session_maker = async_sessionmaker(
+        bind=async_engine,
+        expire_on_commit=False,
+        class_=AsyncSession,
+    )
+    session = async_session_maker()
+    try:
         yield session
+    finally:
+        await session.close()
+        await async_engine.dispose()
 
-async def init_db_async(async_engine: AsyncEngine) -> None:
-    # # 4. Create an async session maker
-    # AsyncSessionLocal = async_sessionmaker(
-    #     bind=async_engine,
-    #     class_=AsyncSession,
-    #     expire_on_commit=False,
-    # )
+# Sync database session for tests
+def get_sync_db_session():
+    """Synchronous database session for tests."""
+    session = SyncSessionLocal()
+    try:
+        yield session
+    finally:
+        session.close()
+
+
+async def init_db_async() -> None:
+    """Initialize database - creates superuser if it doesn't exist."""
+    # Get the async session maker (this will create the engine if it doesn't exist)
+    async_session_maker = _get_async_session_maker()
+
     async with AsyncSession(async_engine) as session:
-        try:            
+        try:
+            from app.models import User, UserCreate
+            from app import crud
+
             statement = select(User).where(User.email == settings.FIRST_SUPERUSER)
             user_result = await session.execute(statement)
             user = user_result.scalar()
@@ -51,23 +74,3 @@ async def init_db_async(async_engine: AsyncEngine) -> None:
                 user = crud.create_user(session=session, user_create=user_in)
         except Exception as error:
             print(error)
-
-async def init_db(session: AsyncSession) -> None:
-    # Tables should be created with Alembic migrations
-    # But if you don't want to use migrations, create
-    # the tables un-commenting the next lines
-    # from sqlmodel import SQLModel
-
-    # This works because the models are already imported and registered from app.models
-    # SQLModel.metadata.create_all(engine)
-
-    user = await session.execute(
-        select(User).where(User.email == settings.FIRST_SUPERUSER)
-    ).first()
-    if not user:
-        user_in = UserCreate(
-            email=settings.FIRST_SUPERUSER,
-            password=settings.FIRST_SUPERUSER_PASSWORD,
-            is_superuser=True,
-        )
-        user = await crud.create_user(session=session, user_create=user_in)

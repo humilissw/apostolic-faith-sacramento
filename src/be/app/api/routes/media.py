@@ -8,7 +8,7 @@ from app.api.deps import SessionDep
 from app.models import Message
 from app.repositories.media_repo import MediaRepository
 from app.requests.media_request import MediaCreate, MediaUpdate
-from app.responses.media_response import MediaPublic, MediasPublic
+from app.responses.media_response import MediaPublic, MediasPublic, MediaPublicWithUrl
 
 
 router = APIRouter(prefix="/media", tags=["media"])
@@ -40,18 +40,18 @@ async def read_media(
 
     # Add download URLs (placeholder - should be implemented based on storage)
     media_data = [
-        MediaPublicWithUrl(
-            id=m.id,
-            name=m.name,
-            uploaded_on=m.uploaded_on,
-            created_on=m.created_on,
-            updated_on=m.updated_on,
-            download_url=f"/media/{m.id}/download",
-        )
+        {
+            "id": m.id,
+            "name": m.name,
+            "uploaded_on": m.uploaded_on,
+            "created_on": m.created_on,
+            "updated_on": m.updated_on,
+            "download_url": f"/media/{m.id}/download",
+        }
         for m in medias
     ]
 
-    return MediasPublic(data=media_data, count=total_count)
+    return {"data": media_data, "count": total_count}
 
 
 @router.get("/{media_id}", response_model=MediaPublic)
