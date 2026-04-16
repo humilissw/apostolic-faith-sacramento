@@ -143,8 +143,9 @@ class UserRepository:
         hashed_password = get_password_hash(password=new_password)
         # Update the password hash
         db_user.hashed_password = hashed_password
-        # Add and commit the changes
+        # Add and flush the changes
         self.session.add(db_user)
+        await self.session.flush()
+        # Commit the changes to make them permanent
         await self.session.commit()
-        await self.session.refresh(db_user)
         return db_user
