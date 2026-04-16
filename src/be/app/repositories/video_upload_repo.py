@@ -113,5 +113,5 @@ class VideoUploadRepository:
         Args:
             db_video_upload: VideoUpload object to delete
         """
-        self.session.delete(db_video_upload)
+        await self.session.delete(db_video_upload)
         await self.session.commit()
