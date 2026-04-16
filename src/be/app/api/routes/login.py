@@ -1,7 +1,7 @@
 from datetime import timedelta
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import HTMLResponse
 from fastapi.security import OAuth2PasswordRequestForm
 
@@ -14,12 +14,7 @@ from app.core.security import get_password_hash, verify_password
 from app.models import Message, NewPassword, Token, UserPublic
 from app.repositories.user_repo import UserRepository
 from app.services.auth_service import AuthService
-from app.utils import (
-    generate_password_reset_token,
-    generate_reset_password_email,
-    send_email,
-    verify_password_reset_token,
-)
+from app.utils import generate_password_reset_token
 
 router = APIRouter(tags=["login"])
 
@@ -68,22 +63,12 @@ async def recover_password(email: str, session: SessionDep) -> Message:
     Password Recovery
     """
     repository = UserRepository(session=session)
-    user = await repository.get_user_by_email(email=email)
+    auth_service = AuthService(user_repository=repository)
 
-    if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="The user with this email does not exist in the system.",
-        )
-    password_reset_token = generate_password_reset_token(email=email)
-    email_data = generate_reset_password_email(
-        email_to=user.email, email=email, token=password_reset_token
-    )
-    send_email(
-        email_to=user.email,
-        subject=email_data.subject,
-        html_content=email_data.html_content,
-    )
+    # Use the service to initiate password recovery
+    # The service handles the case where user doesn't exist gracefully
+    await auth_service.initiate_password_recovery(email=email)
+
     return Message(message="Password recovery email sent")
 
 

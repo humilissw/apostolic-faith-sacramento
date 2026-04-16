@@ -51,6 +51,7 @@ class Settings(BaseSettings):
     DOCKER_IMAGE_BACKEND: str
     DOCKER_IMAGE_FRONTEND: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
+    EMAIL_RESET_TOKEN_EXPIRE_HOURS: int = 1
     emails_enabled: bool = False
     
     @computed_field  # type: ignore[prop-decorator]
