@@ -1,20 +1,19 @@
 from datetime import timedelta
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.api.deps import CurrentUser, SessionDep, get_current_active_superuser
 from app.core import security
 from app.config import settings
-from sqlalchemy.ext.asyncio import AsyncSession, async_session, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.db import get_db_session
-from app.core.security import get_password_hash, verify_password
+from app.core.security import verify_password
 from app.models import Message, NewPassword, Token, UserPublic
 from app.repositories.user_repo import UserRepository
 from app.services.auth_service import AuthService
-from app.utils import generate_password_reset_token
 
 router = APIRouter(tags=["login"])
 
