@@ -8,12 +8,11 @@ import HomepageParagraph from "@/components/homepage-paragraph"
 export default function Home() {
   return (
     <div>
-    <div className="w-full flex items-start justify-center xl:justify-start relative min-h-[100dvh] pb-20 sm:pb-32 md:pb-40 before:content-[''] before:absolute before:inset-0 before:bg-[url('../public/option2-copy.jpg')] before:bg-cover before:bg-center before:bg-fixed before:opacity-90 before:z-[-2] after:content-[''] after:absolute after:inset-0 after:bg-black/48 after:z-[-1]">
-      <div className="font-noto-sans 2xs:text-center xl:text-left text-shadow-lg/20 pb-16 2xs:landscape:pt-45 2xs:portrait:pt-50 lg:pt-56 xl:pl-24">
-      <div className="flex flex-col gap-4 font-light px-3">
-        <h1 className="2xs:leading-12 md:leading-17 lg:leading-20 text-4xl md:text-5xl text-white lg:text-6xl tracking-wider ">
-          WELCOME TO THE <br/>
-          APOSTOLIC FAITH CHURCH
+    <div className="w-full flex justify-center bg-[url('../public/frontChurchCopy1.JPG')] h-screen bg-cover bg-center bg-fixed pb-40">
+      <div className="font-noto-sans text-center text-shadow-lg/20 xs:pt-40 sm:pt-20 md:pt-30 lg:pt-60">
+      <div /*className="bg-zinc-900/60 p-7 rounded-lg"*/>
+        <h1 className="text-4xl text-white md:text-5xl lg:text-6xl md:pb-2 tracking-wider ">
+          WELCOME TO 
         </h1>
         <h1 className="text-4xl md:text-5xl md:pb-4 lg:text-6xl text-white tracking-wider ">
            APOSTOLIC FAITH CHURCH
@@ -22,7 +21,7 @@ export default function Home() {
            Sundays at 11:00 am & 5:00 pm
         </h1> 
       </div>
-        <div className="flex gap-8 2xs:justify-center xl:justify-start pt-5 items-center px-3">
+        <div className="flex gap-8 justify-center pt-5 items-center">
           <Link href="/doctrines">
               <Button className=" border-white bg-white/70 hover:text-white text-zinc-900" variant="default">About Us</Button>
           </Link>
