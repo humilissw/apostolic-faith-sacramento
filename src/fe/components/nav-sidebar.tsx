@@ -10,6 +10,7 @@ import {
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -24,6 +25,7 @@ import CustomSidebarTrigger from "@/components/custom-sidebar-trigger"
 import Link from "next/link"
 
 import { useSidebar } from "@/components/ui/sidebar"
+import { Button } from "./ui/button"
 
 const data = {
   navMain: [
@@ -86,6 +88,7 @@ export function NavSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader className="items-end">
         <CustomSidebarTrigger state={true}/>
       </SidebarHeader>
+      
       <SidebarContent className="pl-3">
         {/* We create a collapsible SidebarGroup for each parent. */}
         {data.navMain.map((item) => (
@@ -113,15 +116,31 @@ export function NavSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           <Link href={item.url} onClick={toggleSidebar}>{item.title}</Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
+                      
                     ))}
                   </SidebarMenu>
+                  
                 </SidebarGroupContent>
+                
               </CollapsibleContent>
+              
             </SidebarGroup>
+            
           </Collapsible>
+          
         ))}
+        
       </SidebarContent>
+
+      <SidebarFooter className="items-end mr-2 mb-2">
+        <Link href="/login">
+          <Button className="font-noto-sans bg-black text-white hover:bg-gray-700" size="default" variant="default">Login</Button>
+        </Link>
+      </SidebarFooter>
+
       <SidebarRail />
+
     </Sidebar>
+    
   )
 }
