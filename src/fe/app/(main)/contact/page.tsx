@@ -10,7 +10,6 @@ export default function Contact() {
                 Contact
             </h1>
         </div>
-    
 
         <div className="flex flex-col sm:flex-row justify-center px-10 py-15 sm:gap-15 sm:justify-center sm:py-30 sm:px-10">
             <iframe 
@@ -43,9 +42,11 @@ export default function Contact() {
                 
                 <div>
                     <h1 className="text-2xl font-normal sm:text-3xl">Emails</h1>
-                    <div className="flex flex-col gap-2 pt-3">
-                        <div className="sm:text-xl"> <b>Pastor: </b> <Link className="hover:underline font-light " href="mailto:pete@sferle.com">pete@sferle.com</Link> </div>
-                        <div className="sm:text-xl"> <b>Media Team: </b><Link className="hover:underline font-light " href="mailto:info@afcsacramento.org">info@afcsacramento.org</Link> </div>
+                    <div className="flex flex-row items-center gap-2 pt-3">
+                        <Link className="hover:underline font-light sm:text-xl" href="/contact">
+                            <b>Pastor:</b> <Link href="mailto:pete@sferle.com">pete@sferle.com</Link><br/>
+                            <b>Media Team:</b><Link href="mailto:info@afcsacramento.org">info@afcsacramento.org</Link> 
+                        </Link>
                     </div>
                 </div>
             </div>
