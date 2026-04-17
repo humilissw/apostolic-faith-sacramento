@@ -31,10 +31,18 @@ export default function Navbar() {
   const isMobile = useIsMobile()
 
   return (
-    <div className="flex justify-between items-center px-10 lg:px-22 py-2 md:py-5 text-black bg-white">
+    <div className="relative flex gap-35 justify-center items-center py-2 md:py-5 lg:gap-35 xl:gap-10 text-black bg-white">
 
-      <div className="shrink-0">
-        <AFCLogo width={140} height={125}/>
+    <div className="flex justify-center items-center xs:gap-40 sm:gap-110 md:gap-125 lg:mr-95 xl:mr-175 2xl:mr-275">
+      <AFCLogo width={125} height={125}/>
+      <div className="flex justify-center items-center lg:hidden">
+        <SidebarProvider className='' >
+        <NavSidebar />
+        <CustomSidebarTrigger state={false}/>
+        <SidebarInset className=''>
+        </SidebarInset>
+        
+      </SidebarProvider>
       </div>
 
     <div className="flex items-center lg:hidden">
@@ -87,9 +95,15 @@ export default function Navbar() {
         <NavigationMenuItem className="hidden md:block">
           <Link href="/contact" className='group inline-flex h-9 w-max items-center justify-center rounded-md cursor-pointer px-7 py-2 text-base tracking-[0.04em] font-medium hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 data-[state=open]:hover:bg-accent data-[state=open]:text-accent-foreground data-[state=open]:focus:bg-accent data-[state=open]:bg-accent/50 focus-visible:ring-ring/50 outline-none transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1"'>Contact Us</Link>
         </NavigationMenuItem>
-       
       </NavigationMenuList>
+
     </NavigationMenu>
+
+      <div className="absolute right-8 hidden lg:block">
+        <Link href="/login">
+          <Button className="font-noto-sans bg-black text-white hover:bg-gray-700" size="default" variant="default">Login</Button>
+        </Link>
+      </div>
     </div>
   )
 }
