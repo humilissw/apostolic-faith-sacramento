@@ -3,51 +3,85 @@
 exports[`renders homepage unchanged 1`] = `
 <div>
   <div
-    class="w-full flex justify-center bg-[url('../public/frontChurchCopy1.JPG')] h-screen bg-cover bg-center bg-fixed"
+    class=""
   >
     <div
-      class="font-noto-sans text-center text-shadow-lg/20 xs:pt-40 sm:pt-20 md:pt-60"
+      class="w-full flex justify-start relative min-h-screen pb-20 sm:pb-32 md:pb-40 before:content-[''] before:absolute before:inset-0 before:bg-[url('../public/option2-copy.jpg')] before:bg-cover before:bg-center before:bg-fixed before:opacity-90 before:z-[-2] after:content-[''] after:absolute after:inset-0 after:bg-black/40 after:z-[-1]"
     >
-      <div>
-        <h1
-          class="text-4xl text-white md:text-5xl lg:text-6xl md:pb-2 tracking-wider "
+      <div
+        class="font-noto-sans xs:text-center lg:text-left text-shadow-lg/20 pb-16 pt-32 sm:pt-40 md:pt-48 lg:pt-56 pl-5 pr-5 sm:pl-10 md:pl-16 lg:pl-24"
+      >
+        <div
+          class="space-y-4 font-light"
         >
-          WELCOME TO
-        </h1>
-        <h1
-          class="text-4xl md:text-5xl md:pb-4 lg:text-6xl text-white tracking-wider "
+          <h1
+            class="text-4xl text-white md:text-5xl lg:text-6xl tracking-wider "
+          >
+            WELCOME TO
+          </h1>
+          <h1
+            class="text-4xl md:text-5xl lg:text-6xl text-white tracking-wider "
+          >
+            APOSTOLIC FAITH CHURCH
+          </h1>
+          <h1
+            class="text-2xl text-white md:text-3xl lg:text-4xl tracking-wider"
+          >
+            Sundays at 11:00 am & 5:00 pm
+          </h1>
+        </div>
+        <div
+          class="flex gap-8 xs:justify-center lg:justify-start pt-5 items-center"
         >
-          APOSTOLIC FAITH CHURCH
-        </h1>
-        <h1
-          class="text-2xl pt-3 text-white md:text-3xl lg:text-4xl tracking-wider"
+          <a
+            href="/doctrines"
+          >
+            <button
+              class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 border-white bg-white/70 hover:text-white text-zinc-900"
+              data-slot="button"
+            >
+              About Us
+            </button>
+          </a>
+          <a
+            href="https://www.youtube.com/@ApostolicFaithSacramento/streams"
+          >
+            <button
+              class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 border-white bg-white/70 hover:text-white text-zinc-900"
+              data-slot="button"
+            >
+              Latest Sermon
+            </button>
+          </a>
+        </div>
+      </div>
+    </div>
+    <div
+      class="flex flex-col md:flex-row justify-center items-center gap-8 md:gap-20 bg-white px-6 md:px-16 py-12 md:py-15 rounded-t-2xl -mt-8"
+    >
+      <div
+        class="w-full md:w-2xl"
+      >
+        <p
+          class="font-noto-sans text-3xl sm:text-4xl md:text-5xl font-light pb-5"
         >
-          Sundays at 11:00 am & 5:00 pm
-        </h1>
+          Welcome!
+        </p>
+        <p
+          class="text-left sm:text-xl md:text-2xl font-light font-noto-sans tracking-wide"
+        >
+          The Apostolic Faith Church - Sacramento is part of a worldwide Christian organization, with headquarters in Portland, Oregon.
+        </p>
       </div>
       <div
-        class="flex gap-8 justify-center pt-5 items-center"
+        class="w-full md:w-auto flex md:block justify-center"
       >
-        <a
-          href="/doctrines"
+        <button
+          class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive text-white hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 bg-[#AA830E]"
+          data-slot="button"
         >
-          <button
-            class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 border-white bg-white/70 hover:text-white text-zinc-900"
-            data-slot="button"
-          >
-            About Us
-          </button>
-        </a>
-        <a
-          href="https://www.youtube.com/@ApostolicFaithSacramento/streams"
-        >
-          <button
-            class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 border-white bg-white/70 hover:text-white text-zinc-900"
-            data-slot="button"
-          >
-            Latest Sermon
-          </button>
-        </a>
+          Learn More
+        </button>
       </div>
     </div>
   </div>
