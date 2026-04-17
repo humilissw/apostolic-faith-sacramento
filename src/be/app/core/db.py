@@ -1,9 +1,7 @@
-from sqlalchemy import Row
 from sqlmodel import create_engine, select
 
-from app import crud
 from app.config import settings
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from app.models import *
 
@@ -51,9 +49,9 @@ def get_sync_db_session():
 async def init_db_async() -> None:
     """Initialize database - creates superuser if it doesn't exist."""
     # Get the async session maker (this will create the engine if it doesn't exist)
-    async_session_maker = _get_async_session_maker()
+    async_session_maker = get_db_session()
 
-    async with AsyncSession(async_engine) as session:
+    async with async_session_maker as session:
         try:
             from app.models import User, UserCreate
             from app import crud

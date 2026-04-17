@@ -5,8 +5,6 @@ from sqlalchemy import Engine
 from sqlmodel import select
 from tenacity import after_log, before_log, retry, stop_after_attempt, wait_fixed
 
-from app.core.db import AsyncSessionLocal, engine
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
