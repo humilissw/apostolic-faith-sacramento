@@ -33,7 +33,7 @@ export default function LoginForm() {
             <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">Forgot password?</Link>
           </div>
           <div className="relative">
-            <Input id="password" type={showPassword ? "text" : "password"} placeholder="Enter your password" className="pr-12" />
+            <Input id="password" type={showPassword ? "text" : "password"} placeholder="Enter your password" className="pr-12"/>
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
