@@ -4,8 +4,13 @@ from os import read
 import sentry_sdk
 from fastapi import APIRouter, FastAPI
 from fastapi.routing import APIRoute
-from sqlmodel import Session, create_engine
-from sqlalchemy.ext.asyncio import AsyncSession, async_session, async_sessionmaker, create_async_engine
+from sqlmodel import Session, create_engine, select
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    async_session,
+    async_sessionmaker,
+    create_async_engine,
+)
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -16,14 +21,17 @@ from app.api.main import api_router
 from app.config import settings
 from app.core import db
 
+
 def custom_generate_unique_id(route: APIRoute) -> str:
     return f"{route.tags[0]}-{route.name}"
+
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"/{settings.API_V1_STR}/openapi.json",
     generate_unique_id_function=custom_generate_unique_id,
 )
+
 
 async def setup_db():
     # Initialize database
@@ -39,6 +47,7 @@ async def setup_db():
         try:
             from app.models import User, UserCreate
             from app import crud
+
             statement = select(User).where(User.email == settings.FIRST_SUPERUSER)
             user_result = await session.execute(statement)
             user = user_result.scalar()
@@ -53,6 +62,7 @@ async def setup_db():
             print(error)
         finally:
             await async_engine.dispose()
+
 
 async def main_root(app: FastAPI):
     print("---------------------")
@@ -85,6 +95,12 @@ async def main_root(app: FastAPI):
 
     app.include_router(api_router, prefix=route_prefix)
 
-if __name__ == "__main__" or __name__ == "app.main":
-    asyncio.run(main_root(app))
 
+# if __name__ == "__main__" or __name__ == "app.main":
+#     asyncio.run(main_root(app))
+
+# main_root(app)
+
+
+route_prefix = f"/{settings.API_V1_STR}"
+app.include_router(api_router, prefix=route_prefix)

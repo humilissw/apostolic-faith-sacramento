@@ -20,7 +20,7 @@ wait_seconds = 1
 )
 async def init(db_engine: Engine) -> None:
     try:
-        with AsyncSessionLocal() as session:
+        with get_async_session() as session:
             # Try to create session to check if DB is awake
             await session.execute(select(1))
     except Exception as e:

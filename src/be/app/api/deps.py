@@ -11,19 +11,25 @@ from app.core import security
 from app.config import settings
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
-from app.core.db import get_db_session, SyncSessionLocal
 from app.models import TokenPayload, User
+from app.core.db import SyncSessionLocal, get_db_session
 
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token"
 )
 
+TokenDep = Annotated[str, Depends(reusable_oauth2)]
+SessionDep = Annotated[AsyncSession, Depends(get_db_session)]
+
+
 def get_sync_db_session() -> Session:
     """Synchronous database session for tests."""
     session = SyncSessionLocal()
     yield session
     session.close()
+    
+SyncSessionDep = Annotated[Session, Depends(get_sync_db_session)]
 
 
 async def get_current_user(session: SessionDep, token: TokenDep) -> User:
@@ -55,7 +61,7 @@ async def get_current_user(session: SessionDep, token: TokenDep) -> User:
     db_user_result = await session.execute(statement)
     db_user = db_user_result.scalar()
     user = await session.get(User, db_user.id)
-    
+
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     if not user.is_active:
@@ -91,14 +97,12 @@ async def get_current_active_user(
     return current_user
 
 
+CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
 async def get_current_active_superuser(current_user: CurrentUser) -> User:
     if not current_user.is_superuser:
         raise HTTPException(
             status_code=403, detail="The user doesn't have enough privileges"
         )
     return current_user
-
-SessionDep = Annotated[AsyncSession, Depends(get_db_session)]
-SyncSessionDep = Annotated[Session, Depends(get_sync_db_session)]
-TokenDep = Annotated[str, Depends(reusable_oauth2)]
-CurrentUser = Annotated[User, Depends(get_current_user)]
