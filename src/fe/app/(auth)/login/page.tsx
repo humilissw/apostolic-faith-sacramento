@@ -9,6 +9,10 @@ import AFCLogo from "@/components/afc-logo"
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
 
+  function handleLoginClick() {
+    alert("Login Button Clicked!")
+  }
+
   return (
     <div className="font-noto-sans bg-zinc-300 flex justify-center items-center p-6 min-h-dvh">
       <div className="bg-white border border-zinc-200 rounded-xl p-10 w-full max-w-lg shadow-sm">
@@ -44,7 +48,7 @@ export default function LoginForm() {
           </div>
         </div>
 
-        <Button className="w-full text-base py-5">Login</Button>
+        <Button onClick={handleLoginClick} className="w-full text-base py-5">Login</Button>
       </div>
     </div>
   )
