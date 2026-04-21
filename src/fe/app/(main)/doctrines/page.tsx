@@ -176,24 +176,6 @@ export default function Doctrines() {
         </AccordionContent>
       </AccordionItem>
 
-      <AccordionItem value="item-10">
-        <AccordionTrigger className="flex text-2xl lg:text-3xl cursor-pointer">
-            THE GREAT TRIBULATION
-        </AccordionTrigger>
-        <p className="pb-10">The Great Tribulation will occur between Christ's coming for His Bride and His return in judgment. (Isaiah 26:20-21; Revelation 9 and 16)</p>
-        <AccordionContent className="flex flex-col gap-4 text-balance">
-          <p>
-            The Great Tribulation is a short interval of time immediately preceding the Revelation of Christ and the beginning of the Millennial Reign of Christ on earth. Its total length is thought to be no longer than seven years (Daniel 9:27). At or near its beginning, the Rapture of the Church will take place. At its ending, the Revelation of Christ will occur, which is when Jesus returns to earth with ten thousands of His saints. The period of time between the Rapture and the Revelation, The Great Tribulation, is also called the "time of Jacob's trouble" (Jeremiah 30:7) because the Jews will suffer in a greater measure than ever before. The severity of their suffering will cause them to cry out for their Messiah to come and deliver them. See Zechariah 13:9.
-
-            The dominant figure of the Tribulation will be the Antichrist, a personal being with supernatural, satanic powers, who will take his seat at Jerusalem. All who dwell upon the earth whose names are not written in the Book of Life will worship him (Revelation 13:8).
-
-            Great plagues will be sent upon the earth during this terrible time. These will include wars, civil uprisings, riots, famine, death, pestilences, rending of the universe, earthquakes, and geographical upheavals. The wrath of God will be poured out upon this earth in a time of fear and terror, and of darkness and torment beyond description. During this time, a huge portion of the earth's population will be destroyed.
-
-            Revelation 6:1-17; 8:6-13; 9:1-21; 16:1-21
-          </p>
-        </AccordionContent>
-      </AccordionItem>
-
       <AccordionItem value="item-11">
         <AccordionTrigger className="flex text-2xl lg:text-3xl cursor-pointer">
             THE GREAT WHITE THRONE JUDGMENT
@@ -318,10 +300,6 @@ export default function Doctrines() {
           </p>
         </AccordionContent>
       </AccordionItem>
-
-
-
-
       
         </Accordion>
       </div>
