@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from app.api.routes import (
     announcements,
     church_services,
+    google,
     health,
     items,
     login,
@@ -26,6 +27,7 @@ api_router.include_router(media.router)
 api_router.include_router(members.router)
 api_router.include_router(video_uploads.router)
 api_router.include_router(announcements.router)
+api_router.include_router(google.router)
 
 
 if settings.ENVIRONMENT == "local":

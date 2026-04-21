@@ -1,13 +1,8 @@
-import uuid
-
 import pytest
-from httpx import AsyncClient
-
-from tests.utils.item import create_random_item
 
 
-async def test_read_media_empty(client: AsyncClient, superuser_token_headers: dict[str, str]) -> None:
-    """Test reading media when the database is empty."""
+@pytest.mark.asyncio
+async def test_read_media_empty(client, superuser_token_headers) -> None:
     response = await client.get("/api/v1/media/", headers=superuser_token_headers)
     assert response.status_code == 200
     content = response.json()
@@ -15,8 +10,8 @@ async def test_read_media_empty(client: AsyncClient, superuser_token_headers: di
     assert content["data"] == []
 
 
-async def test_create_media(client: AsyncClient, superuser_token_headers: dict[str, str]) -> None:
-    """Test creating a new media entry."""
+@pytest.mark.asyncio
+async def test_create_media(client, superuser_token_headers) -> None:
     response = await client.post(
         "/api/v1/media/",
         headers=superuser_token_headers,
@@ -31,13 +26,11 @@ async def test_create_media(client: AsyncClient, superuser_token_headers: dict[s
     assert content["updated_on"] is not None
 
 
-async def test_read_media(client: AsyncClient, superuser_token_headers: dict[str, str]) -> None:
-    """Test reading all media entries."""
-    # Create some media entries
+@pytest.mark.asyncio
+async def test_read_media(client, superuser_token_headers) -> None:
     await client.post("/api/v1/media/", headers=superuser_token_headers, json={"name": "First Media"})
     await client.post("/api/v1/media/", headers=superuser_token_headers, json={"name": "Second Media"})
 
-    # Read all media
     response = await client.get("/api/v1/media/", headers=superuser_token_headers)
     assert response.status_code == 200
     content = response.json()
@@ -48,15 +41,13 @@ async def test_read_media(client: AsyncClient, superuser_token_headers: dict[str
     assert "Second Media" in media_names
 
 
-async def test_read_media_by_id(client: AsyncClient, superuser_token_headers: dict[str, str]) -> None:
-    """Test reading a single media entry by ID."""
-    # Create a media entry
+@pytest.mark.asyncio
+async def test_read_media_by_id(client, superuser_token_headers) -> None:
     create_response = await client.post(
         "/api/v1/media/", headers=superuser_token_headers, json={"name": "Unique Media"}
     )
     media_id = create_response.json()["id"]
 
-    # Read by ID
     response = await client.get(f"/api/v1/media/{media_id}", headers=superuser_token_headers)
     assert response.status_code == 200
     content = response.json()
@@ -65,22 +56,20 @@ async def test_read_media_by_id(client: AsyncClient, superuser_token_headers: di
     assert content["uploaded_on"] is not None
 
 
-async def test_read_media_by_id_not_found(client: AsyncClient, superuser_token_headers: dict[str, str]) -> None:
-    """Test reading a non-existent media entry."""
+@pytest.mark.asyncio
+async def test_read_media_by_id_not_found(client, superuser_token_headers) -> None:
     response = await client.get("/api/v1/media/00000000-0000-0000-0000-000000000000", headers=superuser_token_headers)
     assert response.status_code == 404
     assert "not found" in response.json()["detail"].lower()
 
 
-async def test_update_media(client: AsyncClient, superuser_token_headers: dict[str, str]) -> None:
-    """Test updating a media entry."""
-    # Create a media entry
+@pytest.mark.asyncio
+async def test_update_media(client, superuser_token_headers) -> None:
     create_response = await client.post(
         "/api/v1/media/", headers=superuser_token_headers, json={"name": "Original Name"}
     )
     media_id = create_response.json()["id"]
 
-    # Update the media entry
     update_data = {"name": "Updated Name"}
     response = await client.patch(
         f"/api/v1/media/{media_id}",
@@ -93,8 +82,8 @@ async def test_update_media(client: AsyncClient, superuser_token_headers: dict[s
     assert content["updated_on"] is not None
 
 
-async def test_update_media_not_found(client: AsyncClient, superuser_token_headers: dict[str, str]) -> None:
-    """Test updating a non-existent media entry."""
+@pytest.mark.asyncio
+async def test_update_media_not_found(client, superuser_token_headers) -> None:
     response = await client.patch(
         "/api/v1/media/00000000-0000-0000-0000-000000000000",
         headers=superuser_token_headers,
@@ -103,53 +92,46 @@ async def test_update_media_not_found(client: AsyncClient, superuser_token_heade
     assert response.status_code == 404
 
 
-async def test_delete_media(client: AsyncClient, superuser_token_headers: dict[str, str]) -> None:
-    """Test deleting a media entry."""
-    # Create a media entry
+@pytest.mark.asyncio
+async def test_delete_media(client, superuser_token_headers) -> None:
     create_response = await client.post(
         "/api/v1/media/", headers=superuser_token_headers, json={"name": "To Be Deleted"}
     )
     media_id = create_response.json()["id"]
 
-    # Delete the media entry
     response = await client.delete(f"/api/v1/media/{media_id}", headers=superuser_token_headers)
     assert response.status_code == 200
     assert response.json()["message"] == "Media deleted successfully"
 
-    # Verify it's deleted
     get_response = await client.get(f"/api/v1/media/{media_id}", headers=superuser_token_headers)
     assert get_response.status_code == 404
 
 
-async def test_delete_media_not_found(client: AsyncClient, superuser_token_headers: dict[str, str]) -> None:
-    """Test deleting a non-existent media entry."""
+@pytest.mark.asyncio
+async def test_delete_media_not_found(client, superuser_token_headers) -> None:
     response = await client.delete("/api/v1/media/00000000-0000-0000-0000-000000000000", headers=superuser_token_headers)
     assert response.status_code == 404
 
 
-async def test_pagination(client: AsyncClient, superuser_token_headers: dict[str, str]) -> None:
-    """Test pagination of media entries."""
-    # Create 10 media entries
+@pytest.mark.asyncio
+async def test_pagination(client, superuser_token_headers) -> None:
     for i in range(10):
         await client.post(
             "/api/v1/media/", headers=superuser_token_headers, json={"name": f"Media {i}"}
         )
 
-    # Test default limit
     response = await client.get("/api/v1/media/", headers=superuser_token_headers)
     assert response.status_code == 200
     content = response.json()
     assert content["count"] == 10
     assert len(content["data"]) == 10
 
-    # Test with skip
     response = await client.get("/api/v1/media/?skip=5&limit=3", headers=superuser_token_headers)
     assert response.status_code == 200
     content = response.json()
     assert content["count"] == 10
     assert len(content["data"]) == 3
 
-    # Test with limit less than total
     response = await client.get("/api/v1/media/?limit=2", headers=superuser_token_headers)
     assert response.status_code == 200
     content = response.json()
@@ -157,32 +139,27 @@ async def test_pagination(client: AsyncClient, superuser_token_headers: dict[str
     assert len(content["data"]) == 2
 
 
-async def test_media_duplicate_names(client: AsyncClient, superuser_token_headers: dict[str, str]) -> None:
-    """Test creating media entries with the same name."""
-    # Create two entries with the same name
+@pytest.mark.asyncio
+async def test_media_duplicate_names(client, superuser_token_headers) -> None:
     await client.post("/api/v1/media/", headers=superuser_token_headers, json={"name": "Same Name"})
     await client.post("/api/v1/media/", headers=superuser_token_headers, json={"name": "Same Name"})
 
-    # Read all media
     response = await client.get("/api/v1/media/", headers=superuser_token_headers)
     assert response.status_code == 200
     content = response.json()
     assert content["count"] == 2
-    # All entries should have the same name
     for media in content["data"]:
         assert media["name"] == "Same Name"
 
 
-async def test_media_validation(client: AsyncClient, superuser_token_headers: dict[str, str]) -> None:
-    """Test validation for media creation."""
-    # Test name too long
+@pytest.mark.asyncio
+async def test_media_validation(client, superuser_token_headers) -> None:
     long_name = "a" * 201
     response = await client.post(
         "/api/v1/media/", headers=superuser_token_headers, json={"name": long_name}
     )
-    assert response.status_code == 422  # Validation error
+    assert response.status_code == 422
 
-    # Test empty name is allowed
     response = await client.post(
         "/api/v1/media/", headers=superuser_token_headers, json={"name": ""}
     )

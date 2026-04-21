@@ -20,29 +20,29 @@ async def read_items(
 
     if current_user.is_superuser:
         count_statement = select(func.count()).select_from(Item)
-        count = await session.exec(count_statement).one()
+        count = (await session.execute(count_statement)).scalar_one()
         statement = select(Item).offset(skip).limit(limit)
-        items = await session.exec(statement).all()
+        items = (await session.execute(statement)).scalars().all()
     else:
         count_statement = (
             select(func.count())
             .select_from(Item)
             .where(Item.owner_id == current_user.id)
         )
-        count = await session.exec(count_statement).one()
+        count = (await session.execute(count_statement)).scalar_one()
         statement = (
             select(Item)
             .where(Item.owner_id == current_user.id)
             .offset(skip)
             .limit(limit)
         )
-        items = await session.exec(statement).all()
+        items = (await session.execute(statement)).scalars().all()
 
     return ItemsPublic(data=items, count=count)
 
 
 @router.get("/{id}", response_model=ItemPublic)
-async def read_item(session: SessionDep, current_user: CurrentUser, id: uuid.UUID) -> Any:
+async def read_item(session: SessionDep, current_user: CurrentUser, id: int) -> Any:
     """
     Get item by ID.
     """
@@ -67,7 +67,7 @@ async def create_item(
     )
     session.add(item)
     await session.commit()
-    session.refresh(item)
+    await session.refresh(item)
     return item
 
 
@@ -76,7 +76,7 @@ async def update_item(
     *,
     session: SessionDep,
     current_user: CurrentUser,
-    id: uuid.UUID,
+    id: int,
     item_in: ItemUpdate,
 ) -> Any:
     """
@@ -91,13 +91,12 @@ async def update_item(
     item.sqlmodel_update(update_dict)
     session.add(item)
     await session.commit()
-    session.refresh(item)
+    await session.refresh(item)
     return item
-
 
 @router.delete("/{id}")
 async def delete_item(
-    session: SessionDep, current_user: CurrentUser, id: uuid.UUID
+    session: SessionDep, current_user: CurrentUser, id: int
 ) -> Message:
     """
     Delete an item.
@@ -107,6 +106,6 @@ async def delete_item(
         raise HTTPException(status_code=404, detail="Item not found")
     if not current_user.is_superuser and (item.owner_id != current_user.id):
         raise HTTPException(status_code=400, detail="Not enough permissions")
-    session.delete(item)
+    await session.delete(item)
     await session.commit()
     return Message(message="Item deleted successfully")

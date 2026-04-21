@@ -239,9 +239,9 @@ class TestMediaRepositoryGetAll:
         mock_count_result = MagicMock()
         mock_count_result.scalar.return_value = 5
 
-        # Mock results to return all medias (but pagination will limit)
+        # Mock results - return list so slicing works
         mock_results = MagicMock()
-        mock_results.scalars.return_value.all.return_value = mock_medias
+        mock_results.scalars.return_value.all.return_value = mock_medias[2:4]
 
         mock_execute = AsyncMock()
         mock_execute.side_effect = [mock_count_result, mock_results]

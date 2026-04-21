@@ -228,19 +228,15 @@ class TestMediaRepositoryPagination:
 
         # Mock count
         mock_count_result = MagicMock()
-        mock_count_result.scalar = MagicMock(return_value=5)
+        mock_count_result.scalar.return_value = 5
 
-        # Mock results
-        mock_result_scalars = MagicMock()
-        mock_result_scalars.all = MagicMock(return_value=mock_medias)
+        # Mock results - return list so slicing works
         mock_results = MagicMock()
-        mock_results.scalars = MagicMock(return_value=mock_result_scalars)
+        mock_results.scalars.return_value.all.return_value = mock_medias[1:3]
 
-        # Create mock execute that returns different values for each call
-        mock_count_execute = AsyncMock(return_value=mock_count_result)
-        mock_results_execute = AsyncMock(return_value=mock_results)
-
-        mock_async_session.execute.side_effect = [mock_count_execute, mock_results_execute]
+        mock_execute = AsyncMock()
+        mock_execute.side_effect = [mock_count_result, mock_results]
+        mock_async_session.execute = mock_execute
 
         # Test pagination
         medias, total_count = await repository.get_all(skip=1, limit=2)
