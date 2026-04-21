@@ -18,9 +18,9 @@ export default function Home() {
         <h1 className="leading-none pb-4 text-4xl md:text-5xl lg:text-6xl text-white tracking-wider ">
            APOSTOLIC FAITH CHURCH
         </h1>
-        <h1 className="text-2xl text-white lg:text-4xl tracking-wider">
+        <h2 className="text-2xl text-white lg:text-4xl tracking-wider">
            Sundays at 11:00 am & 5:00 pm
-        </h1> 
+        </h2> 
         
       </div>
         <div className="flex gap-8 xs:justify-center xl:justify-start pt-5 items-center px-3">
@@ -36,11 +36,11 @@ export default function Home() {
     </div>
     <div className="flex flex-col md:flex-row justify-center items-center gap-8 md:gap-20 bg-white px-6 md:px-16 py-12 md:py-15 -mt-8">
       <div className="w-full md:w-2xl">
-        <p className="font-noto-sans text-3xl sm:text-4xl md:text-5xl font-light pb-5">Welcome!</p>
+        <h1 className="font-noto-sans text-3xl sm:text-4xl md:text-5xl font-light pb-5">Welcome!</h1>
         <HomepageParagraph />
       </div>
       <div className="w-full md:w-auto flex md:block justify-center">
-        <Button className="rounded-sm h-10 bg-[#C4921A] hover:bg-[#9A7214]">Learn More</Button>
+        <Button className="rounded-sm h-10 bg-[#7A5C10] hover:bg-[#5C450C]">Learn More</Button>
       </div>
     </div>
     </div>

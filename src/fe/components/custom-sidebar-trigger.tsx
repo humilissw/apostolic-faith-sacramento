@@ -12,7 +12,7 @@ export default function CustomSidebarTrigger(props: TriggerProps) {
   const { toggleSidebar } = useSidebar()
   
   return (
-    <button onClick={toggleSidebar}>
+    <button aria-label={props.state ? "Close Menu" : "Open Menu"} onClick={toggleSidebar}>
         {props.state ? (<IoMdClose size="30"/>) : (<AiOutlineMenu size="30"/>)}
     </button>
   )
