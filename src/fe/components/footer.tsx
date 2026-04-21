@@ -14,8 +14,8 @@ export default function Footer() {
                 <div className="hidden md:flex md:flex-col">
                     <AFCLogo width={175} height={175}/>
                     <div className="flex flex-row items-center justify-center gap-5 md:gap-5">
-                        <Link href="https://www.facebook.com/p/Sacramento-AFC-100064440229528/"> <FaFacebookSquare size="25"/> </Link>
-                        <Link href="https://www.youtube.com/@ApostolicFaithSacramento"> <IoLogoYoutube size="25"/> </Link>
+                        <Link href="https://www.facebook.com/p/Sacramento-AFC-100064440229528/" aria-label="Go to Apostolic Faith Church - Sacramento Facebook Page" target="_blank" rel="noopener noreferrer"> <FaFacebookSquare size="25"/> </Link>
+                        <Link href="https://www.youtube.com/@ApostolicFaithSacramento" aria-label="Go to Apostolic Faith Church - Sacramento YouTube Channel" target="_blank" rel="noopener noreferrer"> <IoLogoYoutube size="25"/> </Link>
                     </div>
                 </div>
                 
@@ -57,8 +57,13 @@ export default function Footer() {
             </div>
 
             <div className="flex flex-row items-center pl-5 gap-5 pb-5 md:hidden">
-                <Link href="https://www.facebook.com/p/Sacramento-AFC-100064440229528/"> <FaFacebookSquare size="25"/> </Link>
-                <Link href="https://www.youtube.com/@ApostolicFaithSacramento"> <IoLogoYoutube size="25"/> </Link>
+                <Link href="https://www.facebook.com/p/Sacramento-AFC-100064440229528/" aria-label="Go to Apostolic Faith Church - Sacramento Facebook Page" target="_blank" rel="noopener noreferrer"> 
+                    <FaFacebookSquare aria-hidden="true"size="25"/> 
+    
+                </Link>
+                <Link href="https://www.youtube.com/@ApostolicFaithSacramento" aria-label="Go to Apostolic Faith Church - Sacramento YouTube Channel" target="_blank" rel="noopener noreferrer"> 
+                    <IoLogoYoutube aria-hidden="true" size="25"/> 
+                </Link>
             </div>
             
             <div className="items-center justify-center pt-3 pb-4 bg-zinc-800 md:bottom-0 md:w-full md:flex md:gap-100">
