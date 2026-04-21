@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main, develop ]
 
+env:
+  POETRY_VERSION: "2.2.1"
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -17,10 +20,8 @@ jobs:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_ROOT_PASSWORD: test_root_password
-          MYSQL_DATABASE: test_database
-          MYSQL_USER: test_user
-          MYSQL_PASSWORD: test_password
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: test_db
         ports:
           - 3306:3306
         options: >-
@@ -42,30 +43,39 @@ jobs:
       - name: Install Poetry
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          poetry --version
+
+      - name: Copy CI env file
+        working-directory: src/be
+        run: cp .env.ci .env
+
+      - name: Wait for MySQL
+        run: |
+          for i in $(seq 1 30); do
+            if mysql -h 127.0.0.1 -u root -proot -e "SELECT 1" 2>/dev/null; then
+              echo "MySQL is ready"
+              exit 0
+            fi
+            echo "Waiting for MySQL... ($i)"
+            sleep 1
+          done
+          exit 1
 
       - name: Install dependencies
-        working-directory: ./src/be
+        working-directory: src/be
         run: |
-          poetry install --no-interaction
+          poetry install
 
-      - name: Run tests
-        working-directory: ./src/be
-        env:
-          DB_SERVER: localhost
-          DB_PORT: 3306
-          DB_USER: test_user
-          DB_PASSWORD: test_password
-          DB_DB: test_database
-          ENVIRONMENT: test
-          SECRET_KEY: test_secret_key_for_ci
-          ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      - name: Run tests with coverage
+        working-directory: src/be
         run: |
-          poetry run pytest --cov=app --cov-report=xml --cov-report=term
+          poetry run pytest --cov=app --cov-report=xml --cov-report=term -v
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
-          file: ./src/be/coverage.xml
+          file: src/be/coverage.xml
           flags: backend
           name: codecov-backend
           fail_ci_if_error: false
@@ -89,14 +99,16 @@ jobs:
       - name: Install Poetry
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          poetry --version
 
       - name: Install dependencies
-        working-directory: ./src/be
+        working-directory: src/be
         run: |
-          poetry install --no-interaction
+          poetry install
 
       - name: Run linters
-        working-directory: ./src/be
+        working-directory: src/be
         run: |
           poetry run bash scripts/lint.sh
 
@@ -114,19 +126,35 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'poetry'
 
       - name: Install Poetry
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          poetry --version
 
       - name: Install dependencies
-        working-directory: ./src/be
+        working-directory: src/be
         run: |
-          poetry install --no-interaction
+          poetry install
 
-      - name: Run security checks
-        working-directory: ./src/be
+      - name: Install security tools
         run: |
-          poetry run safety check --json || true
-          poetry run bandit -r app/ || true
+          pip install safety bandit
+
+      - name: Run dependency vulnerability check (safety)
+        working-directory: src/be
+        run: |
+          poetry run safety check --full-report
+
+      - name: Run code security scan (bandit)
+        working-directory: src/be
+        run: |
+          bandit -r app/ -f xml -o src/be/bandit-report.xml --skip B101
+
+      - name: Upload bandit report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bandit-report
+          path: src/be/bandit-report.xml
