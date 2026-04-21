@@ -10,7 +10,7 @@ from app.api.deps import (
     get_current_active_superuser,
 )
 from app.config import settings
-from app.core.security import verify_password
+from app.core.security import verify_password, get_password_hash
 from app.models import (
     Item,
     Message,
@@ -23,6 +23,7 @@ from app.models import (
     UserUpdate,
     UserUpdateMe,
 )
+from app import crud
 from app.repositories.user_repo import UserRepository
 from app.utils import generate_new_account_email, send_email
 
@@ -131,7 +132,7 @@ async def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
         raise HTTPException(
             status_code=403, detail="Super users are not allowed to delete themselves"
         )
-    session.delete(current_user)
+    await session.delete(current_user)
     await session.commit()
     return Message(message="User deleted successfully")
 
@@ -154,7 +155,7 @@ async def register_user(session: SessionDep, user_in: UserRegister) -> Any:
 
 @router.get("/{user_id}", response_model=UserPublic)
 async def read_user_by_id(
-    user_id: uuid.UUID, session: SessionDep, current_user: CurrentUser
+    user_id: int, session: SessionDep, current_user: CurrentUser
 ) -> Any:
     """
     Get a specific user by id.
@@ -179,7 +180,7 @@ async def read_user_by_id(
 async def update_user(
     *,
     session: SessionDep,
-    user_id: uuid.UUID,
+    user_id: int,
     user_in: UserUpdate,
 ) -> Any:
     """
@@ -205,7 +206,7 @@ async def update_user(
 
 @router.delete("/{user_id}", dependencies=[Depends(get_current_active_superuser)])
 async def delete_user(
-    session: SessionDep, current_user: CurrentUser, user_id: uuid.UUID
+    session: SessionDep, current_user: CurrentUser, user_id: int
 ) -> Message:
     """
     Delete a user.
@@ -218,8 +219,8 @@ async def delete_user(
         raise HTTPException(
             status_code=403, detail="Super users are not allowed to delete themselves"
         )
-    statement = delete(Item).where(col(Item.owner_id) == user_id)
+    statement = delete(Item).where(Item.owner_id == user_id)
     await session.execute(statement)  # type: ignore
-    session.delete(user)
+    await session.delete(user)
     await session.commit()
     return Message(message="User deleted successfully")

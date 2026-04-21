@@ -1,11 +1,10 @@
-import asyncio
-from typing import Annotated, AsyncGenerator
 from unittest.mock import patch
 
 import pytest
 import httpx
 from httpx import ASGITransport
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import delete, select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.config import settings
 from app.crud import create_user
@@ -16,20 +15,7 @@ from tests.utils.utils import random_email, random_lower_string
 
 
 @pytest.fixture(scope="function")
-def event_loop():
-    """Create an instance of the default event loop for each test."""
-    loop = pytest.plugins.asyncio._get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
-
-
-@pytest.fixture(scope="function")
-async def db_session() -> AsyncSession:
-    """Function-scoped database session for individual tests."""
-    # Create async engine in the test's event loop
-    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-    from sqlalchemy import delete
-
+async def login_db_session() -> AsyncSession:
     async_engine = create_async_engine(
         str(settings.SQLALCHEMY_ASYNC_DATABASE_URI), echo=False, future=True
     )
@@ -41,7 +27,6 @@ async def db_session() -> AsyncSession:
     session = async_session_maker()
 
     try:
-        # Clean up User table
         try:
             user_statement = delete(UserCreate)
             await session.execute(user_statement)
@@ -56,8 +41,7 @@ async def db_session() -> AsyncSession:
 
 
 @pytest.fixture(scope="function")
-async def client() -> httpx.AsyncClient:
-    """Function-scoped async test client."""
+async def login_client() -> httpx.AsyncClient:
     from app.main import app
 
     async with httpx.AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
@@ -65,13 +49,9 @@ async def client() -> httpx.AsyncClient:
 
 
 @pytest.fixture(scope="function")
-async def superuser_token_headers(client: httpx.AsyncClient, db_session: AsyncSession) -> dict[str, str]:
-    """Superuser authentication headers."""
-    from sqlalchemy import select
-
-    # Ensure superuser exists
+async def login_superuser_token_headers(login_client, login_db_session) -> dict[str, str]:
     statement = select(User).where(User.email == settings.FIRST_SUPERUSER)
-    user_result = await db_session.execute(statement)
+    user_result = await login_db_session.execute(statement)
     user = user_result.scalar_one_or_none()
 
     if not user:
@@ -81,9 +61,9 @@ async def superuser_token_headers(client: httpx.AsyncClient, db_session: AsyncSe
             is_active=True,
             is_superuser=True,
         )
-        user = create_user(session=db_session, user_create=user_in)
+        user = create_user(session=login_db_session, user_create=user_in)
 
-    response = await client.post(
+    response = await login_client.post(
         f"{settings.API_V1_STR}/login/access-token",
         data={
             "username": settings.FIRST_SUPERUSER,
@@ -95,16 +75,12 @@ async def superuser_token_headers(client: httpx.AsyncClient, db_session: AsyncSe
 
 
 @pytest.fixture(scope="function")
-async def normal_user_token_headers(client: httpx.AsyncClient, db_session: AsyncSession) -> dict[str, str]:
-    """Normal user authentication headers."""
-    from sqlalchemy import select
-
-    # Ensure normal user exists
+async def login_normal_user_token_headers(login_client, login_db_session) -> dict[str, str]:
     email = random_email()
     password = random_lower_string()
 
     statement = select(User).where(User.email == email)
-    user_result = await db_session.execute(statement)
+    user_result = await login_db_session.execute(statement)
     user = user_result.scalar_one_or_none()
 
     if not user:
@@ -115,9 +91,9 @@ async def normal_user_token_headers(client: httpx.AsyncClient, db_session: Async
             is_active=True,
             is_superuser=False,
         )
-        user = await create_user(session=db_session, user_create=user_in)
+        user = await create_user(session=login_db_session, user_create=user_in)
 
-    response = await client.post(
+    response = await login_client.post(
         f"{settings.API_V1_STR}/login/access-token",
         data={
             "username": email,
@@ -128,66 +104,68 @@ async def normal_user_token_headers(client: httpx.AsyncClient, db_session: Async
     return {"Authorization": f"Bearer {tokens['access_token']}"}
 
 
-async def test_get_access_token(client: httpx.AsyncClient) -> None:
+@pytest.mark.asyncio
+async def test_get_access_token(login_client) -> None:
     login_data = {
         "username": settings.FIRST_SUPERUSER,
         "password": settings.FIRST_SUPERUSER_PASSWORD,
     }
-    r = await client.post(f"{settings.API_V1_STR}/login/access-token", data=login_data)
+    r = await login_client.post(f"{settings.API_V1_STR}/login/access-token", data=login_data)
     tokens = r.json()
     assert r.status_code == 200
     assert "access_token" in tokens
     assert tokens["access_token"]
 
 
-async def test_get_access_token_incorrect_password(client: httpx.AsyncClient) -> None:
+@pytest.mark.asyncio
+async def test_get_access_token_incorrect_password(login_client) -> None:
     login_data = {
         "username": settings.FIRST_SUPERUSER,
         "password": "incorrect",
     }
-    r = await client.post(f"{settings.API_V1_STR}/login/access-token", data=login_data)
+    r = await login_client.post(f"{settings.API_V1_STR}/login/access-token", data=login_data)
     assert r.status_code == 400
 
 
-async def test_use_access_token(
-    client: httpx.AsyncClient, superuser_token_headers: dict[str, str]
-) -> None:
-    r = await client.post(
+@pytest.mark.asyncio
+async def test_use_access_token(login_client, login_superuser_token_headers) -> None:
+    r = await login_client.post(
         f"{settings.API_V1_STR}/login/test-token",
-        headers=superuser_token_headers,
+        headers=login_superuser_token_headers,
     )
     result = r.json()
     assert r.status_code == 200
     assert "email" in result
 
 
-async def test_recovery_password(
-    client: httpx.AsyncClient, normal_user_token_headers: dict[str, str]
-) -> None:
-    with patch("app.config.settings.SMTP_HOST", "smtp.example.com"):
+@pytest.mark.asyncio
+async def test_recovery_password(login_client, login_normal_user_token_headers) -> None:
+    with (
+        patch("app.config.settings.SMTP_HOST", "smtp.example.com"),
+        patch("app.services.auth_service.send_email", return_value=None),
+    ):
         email = "test@example.com"
-        r = await client.post(
+        r = await login_client.post(
             f"{settings.API_V1_STR}/password-recovery/{email}",
-            headers=normal_user_token_headers,
+            headers=login_normal_user_token_headers,
         )
         assert r.status_code == 200
         assert r.json() == {"message": "Password recovery email sent"}
 
 
-async def test_recovery_password_user_not_exits(
-    client: httpx.AsyncClient, normal_user_token_headers: dict[str, str]
-) -> None:
+@pytest.mark.asyncio
+async def test_recovery_password_user_not_exits(login_client, login_normal_user_token_headers) -> None:
     email = "jVgQr@example.com"
-    r = await client.post(
+    r = await login_client.post(
         f"{settings.API_V1_STR}/password-recovery/{email}",
-        headers=normal_user_token_headers,
+        headers=login_normal_user_token_headers,
     )
-    # Security: don't reveal if user exists, return 200 OK
     assert r.status_code == 200
     assert r.json() == {"message": "Password recovery email sent"}
 
 
-async def test_reset_password(client: httpx.AsyncClient, db_session: AsyncSession) -> None:
+@pytest.mark.asyncio
+async def test_reset_password(login_client, login_db_session) -> None:
     email = random_email()
     password = random_lower_string()
     new_password = random_lower_string()
@@ -199,12 +177,12 @@ async def test_reset_password(client: httpx.AsyncClient, db_session: AsyncSessio
         is_active=True,
         is_superuser=False,
     )
-    await create_user(session=db_session, user_create=user_create)
+    await create_user(session=login_db_session, user_create=user_create)
     token = generate_password_reset_token(email=email)
-    headers = await user_authentication_headers(client=client, email=email, password=password)
+    headers = await user_authentication_headers(client=login_client, email=email, password=password)
     data = {"new_password": new_password, "token": token}
 
-    r = await client.post(
+    r = await login_client.post(
         f"{settings.API_V1_STR}/reset-password/",
         headers=headers,
         json=data,
@@ -213,9 +191,8 @@ async def test_reset_password(client: httpx.AsyncClient, db_session: AsyncSessio
     assert r.status_code == 200
     assert r.json() == {"message": "Password updated successfully"}
 
-    # Re-authenticate with the new password to verify it works
-    auth_headers = await user_authentication_headers(client=client, email=email, password=new_password)
-    r2 = await client.post(
+    auth_headers = await user_authentication_headers(client=login_client, email=email, password=new_password)
+    r2 = await login_client.post(
         f"{settings.API_V1_STR}/login/test-token",
         headers=auth_headers,
     )
@@ -224,13 +201,12 @@ async def test_reset_password(client: httpx.AsyncClient, db_session: AsyncSessio
     assert "email" in result
 
 
-async def test_reset_password_invalid_token(
-    client: httpx.AsyncClient, superuser_token_headers: dict[str, str]
-) -> None:
+@pytest.mark.asyncio
+async def test_reset_password_invalid_token(login_client, login_superuser_token_headers) -> None:
     data = {"new_password": "changethis", "token": "invalid"}
-    r = await client.post(
+    r = await login_client.post(
         f"{settings.API_V1_STR}/reset-password/",
-        headers=superuser_token_headers,
+        headers=login_superuser_token_headers,
         json=data,
     )
     response = r.json()

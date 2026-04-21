@@ -13,6 +13,14 @@ SyncSessionLocal = sessionmaker(
     expire_on_commit=False,
 )
 
+# Async database session for production use
+async_engine = create_async_engine(str(settings.SQLALCHEMY_ASYNC_DATABASE_URI), echo=False, future=True)
+AsyncSessionLocal = async_sessionmaker(
+    bind=async_engine,
+    expire_on_commit=False,
+    class_=AsyncSession,
+)
+
 # make sure all SQLModel models are imported (app.models) before initializing DB
 # otherwise, SQLModel might fail to initialize relationships properly
 # for more details: https://github.com/fastapi/full-stack-fastapi-template/issues/28
@@ -40,6 +48,15 @@ async def get_db_session() -> AsyncSession:
 def get_sync_db_session():
     """Synchronous database session for tests."""
     session = SyncSessionLocal()
+    try:
+        yield session
+    finally:
+        session.close()
+
+
+def get_async_session():
+    """Async database session for pre-start checks."""
+    session = AsyncSessionLocal()
     try:
         yield session
     finally:

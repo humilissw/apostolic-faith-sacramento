@@ -54,17 +54,16 @@ class UserRepository:
         session_user = await self.session.execute(statement)
         return session_user.scalar_one_or_none()
 
-    async def get_by_id(self, user_id: uuid.UUID) -> User | None:
+    async def get_by_id(self, user_id: int | str) -> User | None:
         """
-        Retrieve a user entry by new_id.
-
-        Args:
-            user_id: UUID of the user's new_id
-
-        Returns:
-            User | None: User object if found, None otherwise
+        Retrieve a user entry by id or new_id.
         """
-        statement = select(User).where(User.new_id == user_id)
+        statement = select(User).where(User.id == user_id)
+        result = await self.session.execute(statement)
+        user = result.scalar_one_or_none()
+        if user:
+            return user
+        statement = select(User).where(User.new_id == str(user_id))
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()
 

@@ -6,7 +6,7 @@ from app.config import settings
 from app.main import app
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy import select, delete
-from app.models import User, UserCreate, Media
+from app.models import User, UserCreate, Media, VideoUpload
 from app import crud
 
 
@@ -21,7 +21,6 @@ def event_loop():
 @pytest.fixture(scope="function")
 async def db_session() -> AsyncSession:
     """Function-scoped database session for individual tests."""
-    # Create async engine in the test's event loop
     async_engine = create_async_engine(
         str(settings.SQLALCHEMY_ASYNC_DATABASE_URI), echo=False, future=True
     )
@@ -33,10 +32,9 @@ async def db_session() -> AsyncSession:
     session = async_session_maker()
 
     try:
-        # Clean up Media table
         try:
-            media_statement = delete(Media)
-            await session.execute(media_statement)
+            await session.execute(delete(VideoUpload))
+            await session.execute(delete(Media))
             await session.commit()
         except Exception:
             await session.rollback()
@@ -49,7 +47,7 @@ async def db_session() -> AsyncSession:
 
 @pytest.fixture(scope="function")
 async def client() -> httpx.AsyncClient:
-    """Function-scoped async test client."""
+    """Function-scoped async test client for ASGI app."""
     async with httpx.AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
         yield c
 
@@ -57,11 +55,11 @@ async def client() -> httpx.AsyncClient:
 @pytest.fixture(scope="function")
 async def superuser_token_headers(client: httpx.AsyncClient, db_session: AsyncSession) -> dict[str, str]:
     """Superuser authentication headers."""
-    # Ensure superuser exists
     statement = select(User).where(User.email == settings.FIRST_SUPERUSER)
     user_result = await db_session.execute(statement)
     user = user_result.scalar()
-    print(f"Superuser user: {user}")
+
+    from app.core.security import get_password_hash
 
     if not user:
         user_in = UserCreate(
@@ -69,15 +67,12 @@ async def superuser_token_headers(client: httpx.AsyncClient, db_session: AsyncSe
             password=settings.FIRST_SUPERUSER_PASSWORD,
             is_superuser=True,
         )
-        user = crud.create_user(session=db_session, user_create=user_in)
-        print(f"Created superuser: {user}")
-    elif not user.is_superuser:
-        # Update existing user to be a superuser
+        user = await crud.create_user(session=db_session, user_create=user_in)
+    else:
         user.is_superuser = True
         user.hashed_password = get_password_hash(settings.FIRST_SUPERUSER_PASSWORD)
         db_session.add(user)
         await db_session.commit()
-        print(f"Updated existing user to be superuser: {user}")
 
     response = await client.post(
         f"{settings.API_V1_STR}/login/access-token",
@@ -86,29 +81,28 @@ async def superuser_token_headers(client: httpx.AsyncClient, db_session: AsyncSe
             "password": settings.FIRST_SUPERUSER_PASSWORD,
         },
     )
-    print(f"Login response status: {response.status_code}")
-    print(f"Login response: {response.text}")
     tokens = response.json()
-    print(f"Tokens: {tokens}")
     return {"Authorization": f"Bearer {tokens['access_token']}"}
 
 
 @pytest.fixture(scope="function")
 async def normal_user_token_headers(client: httpx.AsyncClient, db_session: AsyncSession) -> dict[str, str]:
     """Normal user authentication headers."""
-    # Ensure normal user exists
     statement = select(User).where(User.email == settings.EMAIL_TEST_USER)
     user_result = await db_session.execute(statement)
     user = user_result.scalar()
-    print(f"Normal user: {user}")
 
     if not user:
         user_in = UserCreate(
             email=settings.EMAIL_TEST_USER,
             password="testpassword123",
         )
-        user = crud.create_user(session=db_session, user_create=user_in)
-        print(f"Created normal user: {user}")
+        user = await crud.create_user(session=db_session, user_create=user_in)
+    else:
+        from app.core.security import get_password_hash
+        user.hashed_password = get_password_hash("testpassword123")
+        db_session.add(user)
+        await db_session.commit()
 
     response = await client.post(
         f"{settings.API_V1_STR}/login/access-token",
@@ -119,7 +113,3 @@ async def normal_user_token_headers(client: httpx.AsyncClient, db_session: Async
     )
     tokens = response.json()
     return {"Authorization": f"Bearer {tokens['access_token']}"}
-
-
-# Add missing import
-from app.core.security import get_password_hash

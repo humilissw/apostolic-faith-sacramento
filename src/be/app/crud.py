@@ -38,8 +38,8 @@ async def update_user(*, session: AsyncSession, db_user: User, user_in: UserUpda
         extra_data["hashed_password"] = hashed_password
     db_user.sqlmodel_update(user_data, update=extra_data)
     session.add(db_user)
-    session.commit()
-    session.refresh(db_user)
+    await session.commit()
+    await session.refresh(db_user)
     return db_user
 
 
