@@ -1,6 +1,5 @@
 
 @import "tailwindcss";
-@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -58,7 +57,9 @@
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-ring: var(--sidebar-ring);
 
-    --color-church-logo: var(--church-logo);}
+    --color-church-logo: var(--church-logo);
+    --color-sky: var(--color-sky);
+  }
 
 :root {
     --radius: 0.625rem;
@@ -93,7 +94,8 @@
     --sidebar-accent-foreground: oklch(0.216 0.006 56.043);
     --sidebar-border: oklch(0.923 0.003 48.717);
     --sidebar-ring: oklch(0.709 0.01 56.259);
-    --church-logo: oklch(0.9336 0.0868 102.23);}
+    --church-logo: oklch(0.9336 0.0868 102.23);
+    --sky: oklch(0.45 0.05 250);}
 
 .dark {
     --background: oklch(0.147 0.004 49.25);

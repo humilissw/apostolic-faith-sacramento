@@ -5,9 +5,10 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 
-export default function Doctrines() {    
+export default function Doctrines() {   
+
   return (
-    <div className="flex flex-col justify-center bg-white">
+    <div>
         <div className="flex justify-center items-center h-80 bg-[url('../public/bible-vertical.jpg')] lg:bg-[url('../public/bible-edit.jpg')] bg-cover bg-center md:h-100 lg:h-100">
             <h1 className="text-white text-5xl md:text-7xl lg:text-8xl text-shadow-lg font-noto-sans p-3 rounded-xl">
                 Our Beliefs

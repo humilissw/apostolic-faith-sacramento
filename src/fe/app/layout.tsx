@@ -1,64 +1,6 @@
 import type { Metadata } from "next";
 import { Barlow_Condensed, EB_Garamond, Libre_Baskerville, Lora, Merriweather, Noto_Serif, Playfair_Display, PT_Serif, Roboto, Noto_Sans, Work_Sans, Epilogue } from 'next/font/google';
 import "./globals.css";
-import Footer from "@/components/footer";
-import Navbar from "@/components/navbar";
-
-const roboto = Roboto({
-  weight: ['100', '300', '400', '500', '700', '900'],
-  variable: '--font-roboto'
-});
-
-const noto_sans = Noto_Sans({
-  weight: ['100', '300', '400', '500', '700', '900'],
-  variable: '--font-noto_sans'
-});
-
-const work_sans = Work_Sans({
-  weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
-  variable: '--font-work_sans'
-});
-
-const epilogue = Epilogue({
-  weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
-  variable: '--font-epilogue'
-});
-
-const playfair = Playfair_Display({
-  variable: '--font-playfair'
-})
-
-const lora = Lora({
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-lora'
-})
-
-const libre = Libre_Baskerville({
-  weight: ['400', '700'],
-  variable: '--font-libre'
-})
-
-const merriweather = Merriweather({
-  variable: '--font-merriweather'
-})
-
-const noto = Noto_Serif({
-  variable: '--font-noto'
-})
-
-const pt = PT_Serif({
-  weight: ['400', '700'],
-  variable: '--font-pt'
-})
-
-const eb = EB_Garamond({
-  variable: '--font-gara'
-})
-
-const barlow_condensed = Barlow_Condensed({
-  weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
-  variable: '--font-barlow_condensed'
-})
 
 export const metadata: Metadata = {
   title: "Apostolic Faith Church Sacramento",
@@ -72,13 +14,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" >
-      <body>
-        <div className={`${playfair.variable} ${lora.variable} ${libre.variable} ${merriweather.variable} ${noto.variable} ${pt.variable} ${eb.variable} ${barlow_condensed.variable} ${roboto.variable} ${noto_sans.variable} ${work_sans.variable} ${epilogue.variable}`}> 
-          <Navbar />
-          {children}
-          <Footer />
-          </div>
-    
+      <body className="flex flex-col min-h-dvh">
+        {children}
       </body>
     </html>
   )
