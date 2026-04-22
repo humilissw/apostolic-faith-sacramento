@@ -26,13 +26,6 @@ def custom_generate_unique_id(route: APIRoute) -> str:
     return f"{route.tags[0]}-{route.name}"
 
 
-app = FastAPI(
-    title=settings.PROJECT_NAME,
-    openapi_url=f"/{settings.API_V1_STR}/openapi.json",
-    generate_unique_id_function=custom_generate_unique_id,
-)
-
-
 async def setup_db():
     # Initialize database
     async_engine = create_async_engine(
@@ -100,6 +93,12 @@ async def main_root(app: FastAPI):
 #     asyncio.run(main_root(app))
 
 # main_root(app)
+
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    openapi_url=f"/{settings.API_V1_STR}/openapi.json",
+    generate_unique_id_function=custom_generate_unique_id,
+)
 
 
 route_prefix = f"/{settings.API_V1_STR}"

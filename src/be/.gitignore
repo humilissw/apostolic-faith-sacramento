@@ -1,4 +1,6 @@
 __pycache__
+.env
+.env.local
 app.egg-info
 *.pyc
 .mypy_cache
@@ -6,3 +8,5 @@ app.egg-info
 htmlcov
 .cache
 .venv
+
+!security_keys/*.pem

@@ -17,8 +17,8 @@
       "args": [
         "app.main:app",
         "--reload",
-        "--ssl-certfile=../../infrastructure/certs/cert.pem",
-        "--ssl-keyfile=../../infrastructure/certs/key.pem"
+        "--ssl-certfile=security_keys/cert.pem",
+        "--ssl-keyfile=security_keys/cert_key.pem"
       ],
       "jinja": true
     }
