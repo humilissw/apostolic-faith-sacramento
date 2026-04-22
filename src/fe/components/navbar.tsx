@@ -54,7 +54,7 @@ export default function Navbar() {
       </div>
 
     <NavigationMenu className="hidden lg:block " viewport={isMobile}>
-      <NavigationMenuList className="flex-wrap font-noto-sans">
+      <NavigationMenuList className="flex-wrap font-noto-sans mr-10">
       
         <NavigationMenuItem className="hidden md:block">
           <NavigationMenuTrigger>About</NavigationMenuTrigger>
