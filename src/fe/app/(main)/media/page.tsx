@@ -14,7 +14,9 @@ interface sermonData {
 
 export default function Media() {    
 
+
   const [videoData, setVideoData] = useState([]);
+
   const fetchData = async () => {
     try {
       const response = await fetch('/data.json');
@@ -24,6 +26,7 @@ export default function Media() {
 
       const result = await response.json();
       setVideoData(result);
+
     } catch (error) {
       if (error instanceof Error) {
         console.error(error.message);
@@ -48,10 +51,11 @@ export default function Media() {
           <h1 className='text-4xl md:text-6xl text-center tracking-wider'>Latest Services</h1>
         </div>
         <div className='flex justify-center pt-15'>
-            {videoData.map((data: sermonData, index) => 
+            {videoData.slice(0, 1).map((data: sermonData, index) => 
             <div key={index}>
               {index == 0 ?
               <Link 
+                target="_blank"
                 key={index} 
                 href={data.videoUri}
             >
@@ -80,13 +84,16 @@ export default function Media() {
             )}
         </div>
 
+
         <div className='flex flex-wrap gap-x-5 gap-y-5 justify-center py-15 sm:px-10 md:px-20 lg:px-40 xl:px-80'>
-          {videoData.map((data: sermonData, index) => 
+          {videoData.slice(1).map((data: sermonData, index) => 
+          <div key={index}>
+       
           <Link 
-            key={index} 
             href={data.videoUri}
+            target="_blank"
             >
-            {index > 0 ?
+           
           <div className='rounded-xl shadow-xl/10'>
           <div className='flex xs:h-100 xs:w-60 md:h-60 md:w-140'>
             <div className='flex flex-col md:flex-row items-center'>
@@ -105,12 +112,15 @@ export default function Media() {
                 
             </div>
           </div>
-          </div> : <></>
-          }
+          </div> 
           </Link> 
+
+          
+          </div>
           
           )}
         </div>
+        
 
 
       </div>

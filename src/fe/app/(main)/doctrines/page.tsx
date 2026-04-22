@@ -176,6 +176,7 @@ export default function Doctrines() {
         </AccordionContent>
       </AccordionItem>
 
+<<<<<<< HEAD:src/fe/app/doctrines/page.tsx
       <AccordionItem value="item-10">
         <AccordionTrigger className="flex text-2xl lg:text-3xl cursor-pointer">
             <h1>THE GREAT TRIBULATION</h1>
@@ -194,6 +195,8 @@ export default function Doctrines() {
         </AccordionContent>
       </AccordionItem>
 
+=======
+>>>>>>> main:src/fe/app/(main)/doctrines/page.tsx
       <AccordionItem value="item-11">
         <AccordionTrigger className="flex text-2xl lg:text-3xl cursor-pointer">
             <h1>THE GREAT WHITE THRONE JUDGMENT</h1>
@@ -318,10 +321,6 @@ export default function Doctrines() {
           </p>
         </AccordionContent>
       </AccordionItem>
-
-
-
-
       
         </Accordion>
       </div>

@@ -75,7 +75,7 @@ export default function Footer() {
             <div className="items-center justify-center pt-3 pb-4 bg-zinc-800 md:bottom-0 md:w-full md:flex md:gap-100">
                 <div className="flex flex-row items-center justify-center gap-3">
                     <FaRegCopyright size="15"/>
-                    <p>2025 Apostolic Faith Church</p>
+                    <p>{new Date().getFullYear()} Apostolic Faith Church</p>
                 </div>
             </div>
         </footer>

@@ -10,6 +10,7 @@ import {
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -24,6 +25,7 @@ import CustomSidebarTrigger from "@/components/custom-sidebar-trigger"
 import Link from "next/link"
 
 import { useSidebar } from "@/components/ui/sidebar"
+import { Button } from "./ui/button"
 
 const data = {
   navMain: [
@@ -35,6 +37,7 @@ const data = {
         {
           title: "Our Beliefs",
           url: "/doctrines",
+          target: "_self",
           isActive: true,
         },
       ],
@@ -47,20 +50,33 @@ const data = {
         {
           title: "Sermons",
           url: "https://www.youtube.com/@ApostolicFaithSacramento/streams",
+          target: "_blank"
         },
         {
           title: "Sunday School Lessons",
           url: "https://www.apostolicfaith.org/library/this-weeks-lessons",
+          target: "_blank"
         },
         {
           title: "Apostolic Faith Magazine",
           url: "https://www.apostolicfaith.org/apostolic-faith-magazine",
+          target: "_blank"
         },
+      ],
+    },
+    {
+      title: "Media",
+      url: "/media",
+      target: "_self",
+      empty: true,
+      items: [
+
       ],
     },
     {
       title: "Contact Us",
       url: "/contact",
+      target: "_self",
       empty: true,
       items: [
 
@@ -86,6 +102,7 @@ export function NavSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader className="items-end">
         <CustomSidebarTrigger state={true}/>
       </SidebarHeader>
+      
       <SidebarContent className="pl-3">
         {/* We create a collapsible SidebarGroup for each parent. */}
         {data.navMain.map((item) => (
@@ -99,10 +116,11 @@ export function NavSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 asChild
                 className="group/label font-normal text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-2xl"
               >
+                
+                {item.empty ? <Link onClick={toggleSidebar} href={item.url}>{item.title}</Link> : 
                 <CollapsibleTrigger className="">
-                  {item.empty ? <Link onClick={toggleSidebar} href={item.url}>{item.title}</Link> : item.title}
-                  {item.empty ? <></> : (<ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90"/>)}
-                </CollapsibleTrigger>
+                  {item.title} <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90"/>
+                </CollapsibleTrigger>}
               </SidebarGroupLabel>
               <CollapsibleContent className="pl-5 pt-3">
                 <SidebarGroupContent>
@@ -110,18 +128,34 @@ export function NavSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     {item.items.map((item) => (
                       <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton className="text-xl" asChild>
-                          <Link href={item.url} onClick={toggleSidebar}>{item.title}</Link>
+                          <Link target={item.target} href={item.url} onClick={toggleSidebar}>{item.title}</Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
+                      
                     ))}
                   </SidebarMenu>
+                  
                 </SidebarGroupContent>
+                
               </CollapsibleContent>
+              
             </SidebarGroup>
+            
           </Collapsible>
+          
         ))}
+        
       </SidebarContent>
+
+      <SidebarFooter className="items-end mr-2 mb-2">
+        <Link href="/login">
+          <Button className="font-noto-sans bg-black text-white hover:bg-gray-700" size="default" variant="default">Login</Button>
+        </Link>
+      </SidebarFooter>
+
       <SidebarRail />
+
     </Sidebar>
+    
   )
 }

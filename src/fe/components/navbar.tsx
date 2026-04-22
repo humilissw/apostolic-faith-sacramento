@@ -67,13 +67,13 @@ export default function Navbar() {
             <ul className="grid w-[150px] gap-4">
               <li>
                 <NavigationMenuLink asChild>
-                  <Link href="https://www.youtube.com/@ApostolicFaithSacramento/streams">Sermons</Link>
+                  <Link target="_blank" href="https://www.youtube.com/@ApostolicFaithSacramento/streams">Sermons</Link>
                 </NavigationMenuLink>
                 <NavigationMenuLink asChild>
-                  <Link href="https://www.apostolicfaith.org/library/this-weeks-lessons">Sunday School Lessons</Link>
+                  <Link target="_blank" href="https://www.apostolicfaith.org/library/this-weeks-lessons">Sunday School Lessons</Link>
                 </NavigationMenuLink>
                 <NavigationMenuLink asChild>
-                  <Link href="https://www.apostolicfaith.org/apostolic-faith-magazine">Apostolic Faith Magazine</Link>
+                  <Link target="_blank" href="https://www.apostolicfaith.org/apostolic-faith-magazine">Apostolic Faith Magazine</Link>
                 </NavigationMenuLink>
               </li>
             </ul>
@@ -87,9 +87,15 @@ export default function Navbar() {
         <NavigationMenuItem className="hidden md:block">
           <Link href="/contact" className='group inline-flex h-9 w-max items-center justify-center rounded-md cursor-pointer px-7 py-2 text-base tracking-[0.04em] font-medium hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 data-[state=open]:hover:bg-accent data-[state=open]:text-accent-foreground data-[state=open]:focus:bg-accent data-[state=open]:bg-accent/50 focus-visible:ring-ring/50 outline-none transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1"'>Contact Us</Link>
         </NavigationMenuItem>
-       
       </NavigationMenuList>
+
     </NavigationMenu>
+
+      <div className="absolute right-8 hidden lg:block">
+        <Link href="/login">
+          <Button className="font-noto-sans bg-black text-white hover:bg-gray-700" size="default" variant="default">Login</Button>
+        </Link>
+      </div>
     </div>
   )
 }
