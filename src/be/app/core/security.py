@@ -11,6 +11,7 @@ import app
 from app.config import settings
 from app.models import User
 
+
 password_hash = PasswordHash.recommended()
 # pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -39,21 +40,31 @@ ALGORITHM = "RS256"
 #         # Handle all other token validation errors
 #         return None
 
-directories = os.listdir("../../infrastructure")
+directories = os.listdir("security_keys/")
 
 for directory in directories:
     print(directory)
 
-PUBLIC_KEY = open("../../infrastructure/security_keys/public.pem", "r").read()
-PRIVATE_KEY = open("../../infrastructure/security_keys/private.pem", "r").read()
+PRIVATE_KEY = open("security_keys/private_dec.pem", "r").read()
+PUBLIC_KEY = open("security_keys/public_key.pem", "r").read()
+print(PUBLIC_KEY, PRIVATE_KEY)
 ALGORITHM = "RS256"
 
+# pem = public_key.public_bytes(
+#     encoding=serialization.Encoding.PEM,
+#     format=serialization.PublicFormat.SubjectPublicKeyInfo
+# )
+
 def create_access_token(subject: str | Any, expires_delta: timedelta) -> str:
-    expire = datetime.now(timezone.utc) + expires_delta
-    to_encode = {"exp": expire, "sub": str(subject)}
-    encoded_jwt = jwt.encode(to_encode, PRIVATE_KEY, algorithm=ALGORITHM)
-    verify_access_token(encoded_jwt)
-    return encoded_jwt
+    try:    
+        expire = datetime.now(timezone.utc) + expires_delta
+        to_encode = {"exp": expire, "sub": str(subject)}
+        encoded_jwt = jwt.encode(payload=to_encode, key=PRIVATE_KEY, algorithm=ALGORITHM)
+        verify_access_token(encoded_jwt)
+        return encoded_jwt
+    except Exception as err:
+        print(err)
+        raise err
 
 
 def verify_password(plain_password, hashed_password):
