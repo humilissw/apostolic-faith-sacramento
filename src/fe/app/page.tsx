@@ -10,13 +10,11 @@ export default function Home() {
   return (
     <div className="">
     <div className="w-full flex justify-center xl:justify-start relative min-h-[100dvh] pb-20 sm:pb-32 md:pb-40 before:content-[''] before:absolute before:inset-0 before:bg-[url('../public/option2-copy.jpg')] before:bg-cover before:bg-center before:bg-fixed before:opacity-90 before:z-[-2] after:content-[''] after:absolute after:inset-0 after:bg-black/48 after:z-[-1]">
-      <div className="font-noto-sans xs:text-center xl:text-left text-shadow-lg/20 pb-16 xs:pt-20 lg:pt-56 lg:pl-24">
-      <div className="font-light px-3">
-        <h1 className="leading-none pb-4 text-4xl md:text-5xl text-white lg:text-6xl tracking-wider ">
-          WELCOME TO THE
-        </h1>
-        <h1 className="leading-none pb-4 text-4xl md:text-5xl lg:text-6xl text-white tracking-wider ">
-           APOSTOLIC FAITH CHURCH
+      <div className="font-noto-sans xs:text-center xl:text-left text-shadow-lg/20 pb-16 xs:pt-50 lg:pt-56 lg:pl-24">
+      <div className="flex flex-col gap-4 font-light px-3">
+        <h1 className="leading-tight text-4xl md:text-5xl text-white lg:text-6xl tracking-wider ">
+          WELCOME TO THE <br/>
+          APOSTOLIC FAITH CHURCH
         </h1>
         <h2 className="text-2xl text-white lg:text-4xl tracking-wider">
            Sundays at 11:00 am & 5:00 pm
@@ -40,7 +38,9 @@ export default function Home() {
         <HomepageParagraph />
       </div>
       <div className="w-full md:w-auto flex md:block justify-center">
-        <Button className="rounded-sm h-10 bg-[#7A5C10] hover:bg-[#5C450C]">Learn More</Button>
+        <Link href="/doctrines">
+          <Button className="rounded-sm h-10 bg-[#7A5C10] hover:bg-[#5C450C]">Learn More</Button>
+        </Link>
       </div>
     </div>
     </div>

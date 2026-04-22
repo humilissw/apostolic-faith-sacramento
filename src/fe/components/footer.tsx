@@ -3,8 +3,10 @@
 import AFCLogo from "@/components/afc-logo";
 import Link from "next/link";
 import { BsTelephone } from "react-icons/bs";
-import { FaFacebookSquare, FaRegCopyright } from "react-icons/fa";
+import { FaFacebookSquare, FaInstagramSquare, FaRegCopyright } from "react-icons/fa";
 import { IoLocationOutline, IoLogoYoutube, IoMailOutline } from "react-icons/io5";
+import { RiInstagramFill } from "react-icons/ri";
+
 
 export default function Footer() {
     return (
@@ -16,6 +18,7 @@ export default function Footer() {
                     <div className="flex flex-row items-center justify-center gap-5 md:gap-5">
                         <Link href="https://www.facebook.com/p/Sacramento-AFC-100064440229528/" aria-label="Go to Apostolic Faith Church - Sacramento Facebook Page" target="_blank" rel="noopener noreferrer"> <FaFacebookSquare size="25"/> </Link>
                         <Link href="https://www.youtube.com/@ApostolicFaithSacramento" aria-label="Go to Apostolic Faith Church - Sacramento YouTube Channel" target="_blank" rel="noopener noreferrer"> <IoLogoYoutube size="25"/> </Link>
+                        <Link href="https://www.instagram.com/p/DWfxFHDlRfO/" aria-label="Go to Apostolic Faith Church - Sacramento Instagram Page" target="_blank" rel="noopener noreferrer"> <RiInstagramFill size="25"/> </Link>
                     </div>
                 </div>
                 
@@ -63,6 +66,9 @@ export default function Footer() {
                 </Link>
                 <Link href="https://www.youtube.com/@ApostolicFaithSacramento" aria-label="Go to Apostolic Faith Church - Sacramento YouTube Channel" target="_blank" rel="noopener noreferrer"> 
                     <IoLogoYoutube aria-hidden="true" size="25"/> 
+                </Link>
+                <Link href="https://www.instagram.com/p/DWfxFHDlRfO/" aria-label="Go to Apostolic Faith Church - Sacramento Instagram Page" target="_blank" rel="noopener noreferrer"> 
+                    <RiInstagramFill aria-hidden="true" size="25"/> 
                 </Link>
             </div>
             
