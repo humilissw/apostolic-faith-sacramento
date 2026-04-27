@@ -10,3 +10,4 @@ htmlcov
 .venv
 
 !security_keys/*.pem
+!.env.ci
