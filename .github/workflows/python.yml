@@ -1,109 +1,102 @@
-# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# This workflow installs Python dependencies, runs tests and lint with a single version of Python
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
 
 name: Python application
 
 on:
   push:
-    branches: [ $default-branch ]
+    branches: [ main ]
   pull_request:
-    branches: [ $default-branch ]
+    branches: [ main ]
   workflow_call:
-
 
 permissions:
   contents: read
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        #poetry requires at least 3.13
-        python-version: ["3.13", "3.13.5"]
-        # python-version: ["pypy3.10", "3.9", "3.10", "3.11", "3.12", "3.13", "3.13.5"]
+        python-version: ["3.13"]
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: test_db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
 
     steps:
     - uses: actions/checkout@v5
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-  # - name: Restore cached package install
-    #   id: cache-restore
-    #   uses: actions/cache/restore@v4
-    #   with:
-    #     path: |
-    #       ~/.bun/install/cache
-    #     key: ${{ runner.os }}-nextjs-${{ hashFiles('**/bun.lockb') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
-    # - name: Setup cache configuration
-    #   uses: actions/cache@v4
-    #   id: cache
-    #   with:
-    #     path: |
-    #       ~/.bun/install/cache
-    #     key: ${{ runner.os }}-nextjs-${{ hashFiles('**/bun.lockb') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
-    #     restore-keys: |
-    #       ${{ runner.os }}-nextjs-${{ hashFiles('**/bun.lockb') }}-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install flake8 pytest
+        cache: 'poetry'
 
-    - name: Setup Poetry
-      working-directory: src/be/afcapp_root
+    - name: Install Poetry
       run: |
-        python -m pip install --user pipx
-        python -m pipx ensurepath
-        pipx install poetry
-        poetry env activate
+        curl -sSL https://install.python-poetry.org | python3 -
+        echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+        poetry --version
+
+    - name: Wait for MySQL
+      run: |
+        for i in {1..30}; do
+          if mysql -h 127.0.0.1 -u root -proot -e "SELECT 1" 2>/dev/null; then
+            echo "MySQL is ready"
+            exit 0
+          fi
+          echo "Waiting for MySQL... ($i)"
+          sleep 1
+        done
+        echo "MySQL failed to start"
+        exit 1
+
+    - name: Copy CI env file
+      working-directory: src/be
+      run: cp .env.ci .env
+
+    - name: Install dependencies
+      working-directory: src/be
+      run: |
         poetry install
-        # Add the pipx binary directory to the PATH for the current shell session
-        export PATH="$PATH:$HOME/.local/bin"
 
     - name: Lint with flake8
+      working-directory: src/be
       run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Test with pytest
-      # working-directory: src/be/afcapp_root
-      run: |
-        cd src/be/afcapp_root
-        poetry run pytest
+        poetry run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        poetry run flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-    - name: Run build
-      # working-directory: src/be/afcapp_root
+    - name: Test with pytest
+      working-directory: src/be
       run: |
-        cd src/be/afcapp_root
+        poetry run pytest --tb=short -v
+
+    - name: Build Python package
+      working-directory: src/be
+      run: |
         poetry build
-    # - name: Save packages
-    #   id: cache-package-save
-    #   uses: actions/cache/save@v4
-    #   with:
-    #     path: |
-    #       ~/.bun/install/cache
-    #     key: ${{ steps.cache-restore.outputs.cache-primary-key }}
-    - name: save files to build dir
-      # working-directory: src/be/afcapp_root
-      run: |
-        cd src/be/afcapp_root
-        mkdir ${{ github.workspace }}/build
-        mkdir ${{ github.workspace }}/build/py
-        cp -a dist/. ${{ github.workspace }}/build/py
+
     - name: Upload pytest test results
       uses: actions/upload-artifact@v4
       with:
         name: pytest-results-${{ matrix.python-version }}
-        path: ${{ github.workspace }}/build/py/junit/test-results-${{ matrix.python-version }}.xml
-      # Use always() to always run this step to publish test results when there are test failures
-      if: ${{ always() }}
-    - name: Upload dist dir
+        path: src/be/tests/**/*.xml
+      if: ${{ failure() }}
+
+    - name: Upload dist artifact
       uses: actions/upload-artifact@v4
       with:
         name: python-dist-${{ matrix.python-version }}
-        path: ${{ github.workspace }}/build/py
-      # Use always() to always run this step to publish test results when there are test failures
-      if: ${{ always() }}
+        path: src/be/dist/
+      if: ${{ success() }}

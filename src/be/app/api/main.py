@@ -1,6 +1,19 @@
 from fastapi import APIRouter
 
-from app.api.routes import church_services, health, items, login, media, members, private, users, utils, video_uploads
+from app.api.routes import (
+    announcements,
+    church_services,
+    google,
+    health,
+    items,
+    login,
+    media,
+    members,
+    private,
+    users,
+    utils,
+    video_uploads,
+)
 from app.config import settings
 
 api_router = APIRouter()
@@ -13,6 +26,8 @@ api_router.include_router(church_services.router)
 api_router.include_router(media.router)
 api_router.include_router(members.router)
 api_router.include_router(video_uploads.router)
+api_router.include_router(announcements.router)
+api_router.include_router(google.router)
 
 
 if settings.ENVIRONMENT == "local":

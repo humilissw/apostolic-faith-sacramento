@@ -5,33 +5,30 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app import crud
 from app.api.deps import CurrentUser, SessionDep, get_current_active_superuser
 from app.core import security
 from app.config import settings
-from app.core.security import get_password_hash
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.db import get_db_session
+from app.core.security import verify_password
 from app.models import Message, NewPassword, Token, UserPublic
-from app.utils import (
-    generate_password_reset_token,
-    generate_reset_password_email,
-    send_email,
-    verify_password_reset_token,
-)
+from app.repositories.user_repo import UserRepository
+from app.services.auth_service import AuthService
 
 router = APIRouter(tags=["login"])
 
-
 @router.post("/login/access-token")
-def login_access_token(
-    session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
+async def login_access_token(
+    *, form_data: Annotated[OAuth2PasswordRequestForm, Depends()], session: AsyncSession = Depends(get_db_session)
 ) -> Token:
     """
     OAuth2 compatible token login, get an access token for future requests
     """
-    user = crud.authenticate(
-        session=session, email=form_data.username, password=form_data.password
-    )
-    if not user:
+    repository = UserRepository(session=session)
+    user = await repository.get_by_email(email=form_data.username)
+    if user is None:
+        raise HTTPException(status_code=400, detail="Incorrect email or password")
+    if not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     elif not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
@@ -60,50 +57,38 @@ def test_token(current_user: CurrentUser) -> Any:
 
 
 @router.post("/password-recovery/{email}")
-def recover_password(email: str, session: SessionDep) -> Message:
+async def recover_password(email: str, session: SessionDep) -> Message:
     """
     Password Recovery
     """
-    user = crud.get_user_by_email(session=session, email=email)
+    repository = UserRepository(session=session)
+    auth_service = AuthService(user_repository=repository)
 
-    if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="The user with this email does not exist in the system.",
-        )
-    password_reset_token = generate_password_reset_token(email=email)
-    email_data = generate_reset_password_email(
-        email_to=user.email, email=email, token=password_reset_token
-    )
-    send_email(
-        email_to=user.email,
-        subject=email_data.subject,
-        html_content=email_data.html_content,
-    )
+    # Use the service to initiate password recovery
+    # The service handles the case where user doesn't exist gracefully
+    await auth_service.initiate_password_recovery(email=email)
+
     return Message(message="Password recovery email sent")
 
 
 @router.post("/reset-password/")
-def reset_password(session: SessionDep, body: NewPassword) -> Message:
+async def reset_password(session: SessionDep, body: NewPassword) -> Message:
     """
     Reset password
     """
-    email = verify_password_reset_token(token=body.token)
-    if not email:
-        raise HTTPException(status_code=400, detail="Invalid token")
-    user = crud.get_user_by_email(session=session, email=email)
-    if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="The user with this email does not exist in the system.",
-        )
-    elif not user.is_active:
-        raise HTTPException(status_code=400, detail="Inactive user")
-    hashed_password = get_password_hash(password=body.new_password)
-    user.hashed_password = hashed_password
-    session.add(user)
-    session.commit()
-    return Message(message="Password updated successfully")
+    # Create user repository and service
+    user_repository = UserRepository(session=session)
+    auth_service = AuthService(user_repository=user_repository)
+
+    # Use the service to reset the password
+    result = await auth_service.reset_password(
+        token=body.token,
+        new_password=body.new_password,
+        session=session
+    )
+
+    # Return the success message
+    return Message(message=result["message"])
 
 
 @router.post(
@@ -111,22 +96,19 @@ def reset_password(session: SessionDep, body: NewPassword) -> Message:
     dependencies=[Depends(get_current_active_superuser)],
     response_class=HTMLResponse,
 )
-def recover_password_html_content(email: str, session: SessionDep) -> Any:
+async def recover_password_html_content(email: str, session: SessionDep) -> Any:
     """
     HTML Content for Password Recovery
     """
-    user = crud.get_user_by_email(session=session, email=email)
+    # Create user repository and service
+    user_repository = UserRepository(session=session)
+    auth_service = AuthService(user_repository=user_repository)
 
-    if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="The user with this username does not exist in the system.",
-        )
-    password_reset_token = generate_password_reset_token(email=email)
-    email_data = generate_reset_password_email(
-        email_to=user.email, email=email, token=password_reset_token
-    )
+    # Use the service to initiate password recovery
+    await auth_service.initiate_password_recovery(email=email)
 
+    # Return HTML content
     return HTMLResponse(
-        content=email_data.html_content, headers={"subject:": email_data.subject}
+        content="Password recovery email sent successfully",
+        headers={"subject:": "Password Recovery"}
     )

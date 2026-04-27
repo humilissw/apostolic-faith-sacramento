@@ -31,18 +31,26 @@ dependencies = [
     "bcrypt==4.3.0",
     "pydantic-settings<3.0.0,>=2.2.1",
     "pyjwt[crypto] (>=2.11.0,<3.0.0)",
-    "mariadb (>=1.1.14,<2.0.0)",
+    "mariadb[binary,pool] (>=1.1.14,<2.0.0)",
     "pytest-cov (>=7.0.0,<8.0.0)",
     "pwdlib[argon2] (>=0.3.0,<0.4.0)",
     "authlib (>=1.6.7,<2.0.0)",
     "jq (>=1.11.0,<2.0.0)",
-    "auth0-server-python (>=1.0.0b8,<2.0.0)"
+    "auth0-server-python (>=1.0.0b8,<2.0.0)",
+    "asyncmy (>=0.2.11,<0.3.0)",
+    "pytest-asyncio (>=1.3.0,<2.0.0)"
 ]
 
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 
 
 [tool.alembic]

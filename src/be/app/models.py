@@ -1,9 +1,20 @@
 import datetime
-from typing import Optional
+from typing import Annotated, Optional
 import uuid
 
-from pydantic import EmailStr
+from pydantic import BaseModel, EmailStr
 from sqlmodel import Column, DateTime, Field, Relationship, SQLModel
+
+# notes for future self:
+# pydantic expects the model tree to be as follows when working with objects.
+#  Root model -> SQLModel
+#     Build a type with this model if you want to return a subset of properties from a given SQL model.
+#     Example: Model has field A, B, C, but I only want to return A.  Create a subclass from the class with the SQLModel-sublcass
+#     (see UserBase as an example and UserPublic as an example)
+# Then you can subclass stuff as expected.
+# Don't forget that the type has to have overlapping properties from a store, so if you are trying to return a type
+# that doesn't have stuff that is in the store, it won't work as expected.
+# You need to make sure that the subclass somehow maps back to the base class with the SQLModel type
 
 
 # Shared properties
@@ -54,9 +65,12 @@ class User(UserBase, table=True):
 
 
 # Properties to return via API, id is always required
-class UserPublic(UserBase):
-    id: int
+class UserPublic(SQLModel):
     email: EmailStr
+    is_active: bool
+    is_superuser: bool
+    new_id: str
+    full_name: Annotated[str | None, Field(exclude=True)]
 
 
 class UsersPublic(SQLModel):
@@ -84,7 +98,9 @@ class ItemUpdate(ItemBase):
 class Item(ItemBase, table=True):
     id: int | None = Field(primary_key=True, default=None)
     owner_id: int = Field()
-    new_owner_id: str | None = Field(default_factory=uuid.uuid4, max_length=36, nullable=False)
+    new_owner_id: str | None = Field(
+        default_factory=uuid.uuid4, max_length=36, nullable=False
+    )
     created_on: datetime.datetime | None = Field(
         default=datetime.datetime.now(datetime.timezone.utc), nullable=False
     )
@@ -172,6 +188,17 @@ class ChurchService(DefaultBase, table=True):
 class VideoUpload(DefaultBase, table=True):
     upload_location: str = Field(max_length=1000)
     upload_name: str = Field(max_length=1000)
+
+
+class VideoUploadBase(SQLModel):
+    id: Annotated[str, Field(exclude=True)]
+    created_on: Annotated[datetime.datetime, Field(exclude=True)]
+    updated_on: Annotated[datetime.datetime, Field(exclude=True)]
+    upload_location: Annotated[str, Field(exclude=True)]
+
+
+class VideoUploadRequest(BaseModel):
+    upload_name: str
 
 
 class Announcement(DefaultBase, table=True):

@@ -10,7 +10,6 @@ export default function Contact() {
                 Contact
             </h1>
         </div>
-    
 
         <div className="flex flex-col sm:flex-row justify-center px-10 py-15 sm:gap-15 sm:justify-center sm:py-30 sm:px-10">
             <iframe 
