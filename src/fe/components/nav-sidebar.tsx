@@ -108,7 +108,7 @@ export function NavSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {data.navMain.map((item) => (
           <Collapsible
             key={item.title}
-            title={item.title}
+            //title={item.title}
             className="group/collapsible"
           >
             <SidebarGroup>

@@ -31,23 +31,22 @@ export default function Navbar() {
   const isMobile = useIsMobile()
 
   return (
-    <div className="relative flex gap-35 justify-center items-center py-2 md:py-5 lg:gap-35 xl:gap-10 text-black bg-white">
+    <div className="flex justify-between items-center px-10 lg:px-22 py-2 md:py-5 text-black bg-white">
 
-    <div className="flex justify-center items-center xs:gap-40 sm:gap-110 md:gap-125 lg:mr-95 xl:mr-175 2xl:mr-275">
-      <AFCLogo width={125} height={125}/>
-      <div className="flex justify-center items-center lg:hidden">
-        <SidebarProvider className='' >
-        <NavSidebar />
-        <CustomSidebarTrigger state={false}/>
-        <SidebarInset className=''>
-        </SidebarInset>
-        
-      </SidebarProvider>
+      <div className="shrink-0">
+        <AFCLogo width={140} height={125}/>
       </div>
-    </div>
 
-    <NavigationMenu className="hidden lg:block absolute" viewport={isMobile}>
-      <NavigationMenuList className="flex-wrap font-noto-sans">
+    <div className="flex items-center lg:hidden">
+        <SidebarProvider>
+          <NavSidebar />
+          <CustomSidebarTrigger state={false}/>
+          <SidebarInset />
+        </SidebarProvider>
+      </div>
+
+    <NavigationMenu className="hidden lg:block " viewport={isMobile}>
+      <NavigationMenuList className="flex-wrap font-noto-sans mr-10">
       
         <NavigationMenuItem className="hidden md:block">
           <NavigationMenuTrigger>About</NavigationMenuTrigger>
