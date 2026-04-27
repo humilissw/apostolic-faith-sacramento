@@ -53,6 +53,10 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     EMAIL_RESET_TOKEN_EXPIRE_HOURS: int = 1
     emails_enabled: bool = False
+    cert_file: str
+    cert_key: str
+    rsa_pub_key: str
+    rsa_private_key: str
     
     @computed_field  # type: ignore[prop-decorator]
     @property
