@@ -40,14 +40,14 @@ ALGORITHM = "RS256"
 #         # Handle all other token validation errors
 #         return None
 
-directories = os.listdir("security_keys/")
+# directories = os.listdir("security_keys/")
 
-for directory in directories:
-    print(directory)
+# for directory in directories:
+#     print(directory)
 
-PRIVATE_KEY = open("security_keys/private_dec.pem", "r").read()
-PUBLIC_KEY = open("security_keys/public_key.pem", "r").read()
-print(PUBLIC_KEY, PRIVATE_KEY)
+PRIVATE_KEY = open(settings.rsa_private_key, "r").read()
+PUBLIC_KEY = open(settings.rsa_pub_key, "r").read()
+# print(PUBLIC_KEY, PRIVATE_KEY)
 ALGORITHM = "RS256"
 
 # pem = public_key.public_bytes(
