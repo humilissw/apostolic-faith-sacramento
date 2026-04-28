@@ -103,6 +103,11 @@ jobs:
         working-directory: src/be
         run: cp .env.ci .env
 
+      - name: Run data migrations
+        working-directory: src/be
+        run: |
+          alembic upgrade head
+
       - name: Test with pytest
         working-directory: src/be
         run: |
