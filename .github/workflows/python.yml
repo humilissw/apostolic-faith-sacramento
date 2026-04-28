@@ -70,12 +70,12 @@ jobs:
       run: |
         python -m pip install --user pipx
         python -m pipx ensurepath
+        sudo apt-get install -y libmariadb-dev
         pipx install poetry
         poetry env activate
         poetry install
         # Add the pipx binary directory to the PATH for the current shell session
         export PATH="$PATH:$HOME/.local/bin"
-        sudo apt-get install -y libmariadb-dev
         
 
     - name: Lint with flake8
