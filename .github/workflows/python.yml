@@ -131,12 +131,16 @@ jobs:
       #     path: |
       #       ~/.bun/install/cache
       #     key: ${{ steps.cache-restore.outputs.cache-primary-key }}
-      - name: save files to build dir
-        # working-directory: src/be/app
+      
+      - name: gen build dirs
+        working-directory: src/be/app
         run: |
-          cd src/be/app
           mkdir ${{ github.workspace }}/build
           mkdir ${{ github.workspace }}/build/py
+      
+      - name: save files to build dir
+        working-directory: src/be
+        run: |
           cp -a dist/. ${{ github.workspace }}/build/py
 
       - name: Upload pytest test results
