@@ -31,7 +31,7 @@ async def db_session() -> AsyncSession:
     )
     session = async_session_maker()
     
-    print(f'Test Settings: {settings}')
+    # print(f'Test Settings: {settings}')
 
     try:
         try:
