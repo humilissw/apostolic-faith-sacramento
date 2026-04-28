@@ -101,16 +101,16 @@ jobs:
       - name: Copy CI env file
         working-directory: src/be
         run: cp .env.ci .env
+
       - name: Test with pytest
-        # working-directory: src/be/app
+        working-directory: src/be
         run: |
-          cd src/be/app
-          poetry run pytest
+          poetry run pytest --tb=short -v
 
       - name: Run build
         # working-directory: src/be/app
         run: |
-          cd src/be/app
+          cd src/be
           poetry build
       # - name: Save packages
       #   id: cache-package-save
@@ -126,6 +126,7 @@ jobs:
           mkdir ${{ github.workspace }}/build
           mkdir ${{ github.workspace }}/build/py
           cp -a dist/. ${{ github.workspace }}/build/py
+
       - name: Upload pytest test results
         uses: actions/upload-artifact@v4
         with:
