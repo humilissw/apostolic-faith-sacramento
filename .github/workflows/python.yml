@@ -104,10 +104,15 @@ jobs:
         working-directory: src/be
         run: cp .env.ci .env
 
+      - name: Copy Alembic cfg file
+        working-directory: src/be
+        run: cp alembic.test.ini alembic.ini
+
+
       - name: Run data migrations
-        working-directory: src/be/alembic
+        working-directory: src/be
         run: |
-          alembic upgrade head
+          poetry run alembic upgrade head
 
       - name: Test with pytest
         working-directory: src/be
