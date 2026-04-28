@@ -30,6 +30,8 @@ async def db_session() -> AsyncSession:
         class_=AsyncSession,
     )
     session = async_session_maker()
+    
+    print(f'Test Settings: {settings}')
 
     try:
         try:
