@@ -28,7 +28,7 @@ jobs:
         image: mariadb:12.1-ubi
         env:
           MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: test_db
+          MYSQL_DATABASE: test
         ports:
           - 3306:3306
         options: >-
