@@ -105,7 +105,7 @@ jobs:
         run: cp .env.ci .env
 
       - name: Run data migrations
-        working-directory: src/be
+        working-directory: src/be/alembic
         run: |
           alembic upgrade head
 
