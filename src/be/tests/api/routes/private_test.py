@@ -18,6 +18,7 @@ async def private_client() -> httpx.AsyncClient:
 @pytest.mark.asyncio
 async def test_create_user(private_client: httpx.AsyncClient, superuser_token_headers, db_session: AsyncSession) -> None:
     import uuid
+    print(superuser_token_headers)
     test_email = f"pollo_{uuid.uuid4().hex[:8]}@listo.com"
     r = await private_client.post(
         f"{settings.API_V1_STR}/private/users/",
