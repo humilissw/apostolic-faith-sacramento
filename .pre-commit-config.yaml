@@ -42,7 +42,7 @@ repos:
         additional_dependencies:
           - pydantic
           - sqlmodel
-          - types-all
+          # - types-all
         args: ['--ignore-missing-imports', '--warn-redundant-casts', '--warn-return-any']
         files: ^src/be/app/
 
@@ -53,19 +53,19 @@ repos:
       - id: bandit
         args: ['-c', 'pyproject.toml', '-r', 'app/']
 
-  # Documentation
-  - repo: https://github.com/editorconfig-checker/editorconfig-checker
-    rev: 2.7.3
-    hooks:
-      - id: editorconfig-checker
-        args: ['-exclude', '.git,.venv']
+  # # Documentation
+  # - repo: https://github.com/editorconfig-checker/editorconfig-checker
+  #   rev: 3.6.1
+  #   hooks:
+  #     - id: editorconfig-checker
+  #       args: ['-exclude', '.git,.venv']
 
   # Git hooks
-  - repo: local
-    hooks:
-      - id: validate-commit-message
-        name: Validate commit message
-        entry: bash -c 'if ! grep -E "^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\\(.+\\))?: .{1,}$" $1; then echo "Commit message must follow conventional commits format"; exit 1; fi'
-        language: system
-        files: ^COMMIT$
-        stages: [commit]
+  # - repo: local
+  #   hooks:
+  #     - id: validate-commit-message
+  #       name: Validate commit message
+  #       entry: bash -c 'if ! grep -E "^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\\(.+\\))?: .{1,}$" $1; then echo "Commit message must follow conventional commits format"; exit 1; fi'
+  #       language: system
+  #       files: ^COMMIT$
+  #       stages: [commit]

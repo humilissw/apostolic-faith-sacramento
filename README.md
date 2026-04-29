@@ -1,5 +1,5 @@
 # apostolic-faith-sacramento
-Mono Repo for AFC Sacramento 
+Mono Repo for AFC Sacramento
 
 # Generate an SSL-cert
 
@@ -44,3 +44,9 @@ mkcert -install
 ```pwsh
 mkcert -key-file key.pem -cert-file cert.pem example.com *.example.com localhost
 ```
+
+# setup precommit
+
+`pipx install pre-commit`
+
+`pre-commit install`
