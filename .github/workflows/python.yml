@@ -21,20 +21,6 @@ jobs:
       matrix:
         #poetry requires at least 3.13
         python-version: [ "3.13.5", "3.14" ]
-        # python-version: [ "3.13", "3.13.5", "3.14" ]
-        # python-version: ["pypy3.10", "3.9", "3.10", "3.11", "3.12", "3.13", "3.13.5"]
-
-    services:
-      mysql:
-        image: mariadb:12.1-ubi
-        env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: test
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping" --health-interval=10s
-          --health-timeout=5s --health-retries=3
 
     steps:
       - uses: actions/checkout@v5
@@ -42,24 +28,6 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
-          cache: "poetry" # Automatically caches global npm cache
-
-      # - name: Restore cached package install
-      #   id: cache-restore
-      #   uses: actions/cache/restore@v4
-      #   with:
-      #     path: |
-      #       ~/.bun/install/cache
-      #     key: ${{ runner.os }}-nextjs-${{ hashFiles('**/bun.lockb') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
-      # - name: Setup cache configuration
-      #   uses: actions/cache@v4
-      #   id: cache
-      #   with:
-      #     path: |
-      #       ~/.bun/install/cache
-      #     key: ${{ runner.os }}-nextjs-${{ hashFiles('**/bun.lockb') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-nextjs-${{ hashFiles('**/bun.lockb') }}-
 
       - name: Install dependencies
         run: |
@@ -88,6 +56,34 @@ jobs:
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+  test:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        #poetry requires at least 3.13
+        python-version: [ "3.13.5", "3.14" ]
+
+    services:
+      mysql:
+        image: mariadb:12.1-ubi
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping" --health-interval=10s
+          --health-timeout=5s --health-retries=3
+
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "poetry" # Automatically caches global npm cache
 
       - name: Wait for MySQL
         run: |
@@ -120,28 +116,28 @@ jobs:
         run: |
           poetry run pytest --tb=short -v
 
+  Build-Artifacts:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        #poetry requires at least 3.13
+        python-version: [ "3.13.5", "3.14" ]
+
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "poetry"
+
       - name: Run build
         working-directory: src/be
         run: |
           poetry build
 
-      # - name: Save packages
-      #   id: cache-package-save
-      #   uses: actions/cache/save@v4
-      #   with:
-      #     path: |
-      #       ~/.bun/install/cache
-      #     key: ${{ steps.cache-restore.outputs.cache-primary-key }}
-
-      # - name: Cache dependencies
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: ~/.cache/pip
-      #     key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-pip-
-
-      - name: gen build dirs
+      - name: Generate output build dirs
         working-directory: src/be/app
         run: |
           mkdir ${{ github.workspace }}/build
