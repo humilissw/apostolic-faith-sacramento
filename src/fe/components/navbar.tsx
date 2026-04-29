@@ -28,14 +28,6 @@ export default function Navbar() {
     <div className="relative flex gap-35 justify-center items-center py-2 md:py-5 lg:gap-35 xl:gap-10 text-black bg-white">
       <div className="flex justify-center items-center">
         <AFCLogo width={125} height={125} />
-        <div className="flex justify-center items-center lg:hidden">
-          <SidebarProvider className="">
-            <NavSidebar />
-            <CustomSidebarTrigger state={false} />
-            <SidebarInset className=""></SidebarInset>
-          </SidebarProvider>
-        </div>
-
         <div className="flex items-center lg:hidden">
           <SidebarProvider>
             <NavSidebar />

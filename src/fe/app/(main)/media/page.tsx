@@ -20,10 +20,10 @@ export default function Media() {
 
   const fetchData = async () => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL!;
-      console.log("🚀 ~ fetchData ~ apiUrl:", apiUrl)
+      // const apiUrl = process.env.NEXT_PUBLIC_API_URL!;
+      // console.log("🚀 ~ fetchData ~ apiUrl:", apiUrl)
       // const apiUrl = apiConfig.host!;
-      // const response = await fetch('http://');
+      // const response = await fetch(apiUrl);
       const response = await fetch('/data.json');
       if (!response.ok) {
         throw new Error(`Response status: ${response.status}`);
