@@ -63,7 +63,8 @@ jobs:
     strategy:
       matrix:
         #poetry requires at least 3.13
-        python-version: [ "3.13.5", "3.14" ]
+        python-version: [ "3.13.5"]
+        # python-version: [ "3.13.5", "3.14" ]
 
     services:
       mysql:
