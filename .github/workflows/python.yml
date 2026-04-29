@@ -141,6 +141,7 @@ jobs:
       - name: save files to build dir
         working-directory: src/be
         run: |
+          ls -l
           cp -a dist/. ${{ github.workspace }}/build/py
 
       - name: Upload pytest test results
