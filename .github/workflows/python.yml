@@ -58,7 +58,7 @@ jobs:
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
   test:
-
+    needs: [build]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -117,7 +117,7 @@ jobs:
           poetry run pytest --tb=short -v
 
   Build-Artifacts:
-
+    needs: [build, test]
     runs-on: ubuntu-latest
     strategy:
       matrix:
