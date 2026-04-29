@@ -84,6 +84,7 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
+          cache: "poetry"
 
       - name: Install dependencies
         run: |
@@ -137,16 +138,16 @@ jobs:
         run: |
           poetry run pytest --tb=short -v
 
-  Build-Artifacts:
-    needs: [ build, test ]
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        #poetry requires at least 3.13
-        python-version: [ "3.13.5" ]
+  # Build-Artifacts:
+  #   needs: [ build, test ]
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     matrix:
+  #       #poetry requires at least 3.13
+  #       python-version: [ "3.13.5" ]
 
-    steps:
-      - uses: actions/checkout@v5
+    # steps:
+    #   - uses: actions/checkout@v5
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
         with:
