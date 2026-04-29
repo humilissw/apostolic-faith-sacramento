@@ -20,23 +20,21 @@ jobs:
     strategy:
       matrix:
         #poetry requires at least 3.13
-        python-version: [ 3.13.5 ]
-        poetry-version: [ 2.2.1 ]
+        python-version: [ "3.13.5" ]
+        poetry-version: [ "2.2.1" ]
 
     steps:
       - uses: actions/checkout@v5
-      # - name: Set up Python ${{ matrix.python-version }}
-      #   uses: actions/setup-python@v6
-      #   with:
-      #     python-version: ${{ matrix.python-version }}
-      #     poetry-version: ${{ matrix.poetry-version }}
 
-      - name: "Setup Python, Poetry and Dependencies"
-        uses: dsoftwareinc/setup-python-poetry-action@v1
+      - name: Install Poetry
+        run: pipx install poetry
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
-          poetry-version: ${{ matrix.poetry-version }}
-          poetry-install-additional-args: '-E flag' # Optional      
+          cache: "poetry" # Automatically caches global pip cache
+          # cache: "pip" # Automatically caches global pip cache
 
       - name: Install dependencies
         run: |
@@ -65,6 +63,14 @@ jobs:
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
   test:
     needs: [ build ]
