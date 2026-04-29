@@ -5,9 +5,9 @@ name: Python application
 
 on:
   push:
-    branches: [ feature/fix-errors ]
+    branches: [ main, feature/* ]
   pull_request:
-    branches: [ feature/fix-errors ]
+    branches: [ main, feature/* ]
   workflow_call:
 
 permissions:
