@@ -29,18 +29,26 @@ jobs:
       - name: Install Poetry
         run: pipx install poetry
 
+      - name: Configure Poetry
+        run: poetry config virtualenvs.in-project true
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           cache: "poetry" # Automatically caches global pip cache
 
-      - name: Install dependencies
+      - name: Install required pip dependencies
+        if: steps.cache-venv.outputs.cache-hit != 'true'
         run: |
           python -m pip install --upgrade pip
           pip install flake8 pytest
 
-      - name: Setup Required dependencies
+      - name: Install Poetry dependencies
+        run: |
+          poetry install
+
+      - name: Setup Required Prerequisite dependencies
         working-directory: src/be/app
         run: |
           sudo apt-get install -y libmariadb-dev
@@ -53,6 +61,7 @@ jobs:
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
       - name: Cache pip
+        id: cache-pip
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
@@ -62,6 +71,7 @@ jobs:
 
       - name: Cache Poetry dependencies
         uses: actions/cache@v4
+        id: cache-venv
         with:
           path: .venv
           key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
@@ -105,34 +115,15 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
       - name: Install Poetry
-        run: pipx install poetry              
+        run: pipx install poetry
 
+      - name: Configure Poetry
+        run: poetry config virtualenvs.in-project true
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           cache: "poetry"
-
-      # - name: Install dependencies
-      #   run: |
-      #     python -m pip install --upgrade pip
-      #     pip install flake8 pytest
-
-      # - name: Setup Required dependencies
-      #   working-directory: src/be/app
-      #   run: |
-      #     sudo apt-get install -y libmariadb-dev
-
-      # - name: Setup Poetry
-      #   working-directory: src/be/app
-      #   run: |
-      #     python -m pip install --user pipx
-      #     python -m pipx ensurepath
-      #     pipx install poetry
-      #     poetry env activate
-      #     poetry install
-      #     # Add the pipx binary directory to the PATH for the current shell session
-      #     export PATH="$PATH:$HOME/.local/bin"
 
       - name: Wait for MySQL
         run: |
