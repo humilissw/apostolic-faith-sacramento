@@ -1,6 +1,7 @@
 import uuid
 from typing import Any
 
+from app.services.media_service import MediaService
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func
 

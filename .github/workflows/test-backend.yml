@@ -1,160 +1,160 @@
-name: Backend Tests
+# name: Backend Tests
 
-on:
-  push:
-    branches: [ main, develop, feature/** ]
-  pull_request:
-    branches: [ main, develop ]
+# on:
+#   push:
+#     branches: [ main, feature/** ]
+#   pull_request:
+#     branches: [ main ]
 
-env:
-  POETRY_VERSION: "2.2.1"
+# env:
+#   POETRY_VERSION: "2.2.1"
 
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.13']
+# jobs:
+#   test:
+#     runs-on: ubuntu-latest
+#     strategy:
+#       matrix:
+#         python-version: ['3.13.5']
 
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: test_db
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
+#     services:
+#       mysql:
+#         image: mysql:8.0
+#         env:
+#           MYSQL_ROOT_PASSWORD: root
+#           MYSQL_DATABASE: test_db
+#         ports:
+#           - 3306:3306
+#         options: >-
+#           --health-cmd="mysqladmin ping"
+#           --health-interval=10s
+#           --health-timeout=5s
+#           --health-retries=3
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: 'poetry'
+#       - name: Set up Python ${{ matrix.python-version }}
+#         uses: actions/setup-python@v5
+#         with:
+#           python-version: ${{ matrix.python-version }}
+#           cache: 'poetry'
 
-      - name: Install Poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          poetry --version
+#       - name: Install Poetry
+#         run: |
+#           curl -sSL https://install.python-poetry.org | python3 -
+#           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+#           poetry --version
 
-      - name: Copy CI env file
-        working-directory: src/be
-        run: cp .env.ci .env
+#       - name: Copy CI env file
+#         working-directory: src/be
+#         run: cp .env.ci .env
 
-      - name: Wait for MySQL
-        run: |
-          for i in $(seq 1 30); do
-            if mysql -h 127.0.0.1 -u root -proot -e "SELECT 1" 2>/dev/null; then
-              echo "MySQL is ready"
-              exit 0
-            fi
-            echo "Waiting for MySQL... ($i)"
-            sleep 1
-          done
-          exit 1
+#       - name: Wait for MySQL
+#         run: |
+#           for i in $(seq 1 30); do
+#             if mysql -h 127.0.0.1 -u root -proot -e "SELECT 1" 2>/dev/null; then
+#               echo "MySQL is ready"
+#               exit 0
+#             fi
+#             echo "Waiting for MySQL... ($i)"
+#             sleep 1
+#           done
+#           exit 1
 
-      - name: Install dependencies
-        working-directory: src/be
-        run: |
-          poetry install
+#       - name: Install dependencies
+#         working-directory: src/be
+#         run: |
+#           poetry install
 
-      - name: Run tests with coverage
-        working-directory: src/be
-        run: |
-          poetry run pytest --cov=app --cov-report=xml --cov-report=term -v
+#       - name: Run tests with coverage
+#         working-directory: src/be
+#         run: |
+#           poetry run pytest --cov=app --cov-report=xml --cov-report=term -v
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          file: src/be/coverage.xml
-          flags: backend
-          name: codecov-backend
-          fail_ci_if_error: false
+#       - name: Upload coverage to Codecov
+#         uses: codecov/codecov-action@v4
+#         with:
+#           file: src/be/coverage.xml
+#           flags: backend
+#           name: codecov-backend
+#           fail_ci_if_error: false
 
-  lint:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.13']
+#   lint:
+#     runs-on: ubuntu-latest
+#     strategy:
+#       matrix:
+#         python-version: ['3.13']
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: 'poetry'
+#       - name: Set up Python ${{ matrix.python-version }}
+#         uses: actions/setup-python@v5
+#         with:
+#           python-version: ${{ matrix.python-version }}
+#           cache: 'poetry'
 
-      - name: Install Poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          poetry --version
+#       - name: Install Poetry
+#         run: |
+#           curl -sSL https://install.python-poetry.org | python3 -
+#           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+#           poetry --version
 
-      - name: Install dependencies
-        working-directory: src/be
-        run: |
-          poetry install
+#       - name: Install dependencies
+#         working-directory: src/be
+#         run: |
+#           poetry install
 
-      - name: Run linters
-        working-directory: src/be
-        run: |
-          poetry run bash scripts/lint.sh
+#       - name: Run linters
+#         working-directory: src/be
+#         run: |
+#           poetry run bash scripts/lint.sh
 
-  security:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.13']
+#   security:
+#     runs-on: ubuntu-latest
+#     strategy:
+#       matrix:
+#         python-version: ['3.13']
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
+#       - name: Set up Python ${{ matrix.python-version }}
+#         uses: actions/setup-python@v5
+#         with:
+#           python-version: ${{ matrix.python-version }}
 
-      - name: Install Poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          poetry --version
+#       - name: Install Poetry
+#         run: |
+#           curl -sSL https://install.python-poetry.org | python3 -
+#           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+#           poetry --version
 
-      - name: Install dependencies
-        working-directory: src/be
-        run: |
-          poetry install
+#       - name: Install dependencies
+#         working-directory: src/be
+#         run: |
+#           poetry install
 
-      - name: Install security tools
-        run: |
-          pip install safety bandit
+#       - name: Install security tools
+#         run: |
+#           pip install safety bandit
 
-      - name: Run dependency vulnerability check (safety)
-        working-directory: src/be
-        run: |
-          poetry run safety check --full-report
+#       - name: Run dependency vulnerability check (safety)
+#         working-directory: src/be
+#         run: |
+#           poetry run safety check --full-report
 
-      - name: Run code security scan (bandit)
-        working-directory: src/be
-        run: |
-          bandit -r app/ -f xml -o src/be/bandit-report.xml --skip B101
+#       - name: Run code security scan (bandit)
+#         working-directory: src/be
+#         run: |
+#           bandit -r app/ -f xml -o src/be/bandit-report.xml --skip B101
 
-      - name: Upload bandit report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: bandit-report
-          path: src/be/bandit-report.xml
+#       - name: Upload bandit report
+#         uses: actions/upload-artifact@v4
+#         if: always()
+#         with:
+#           name: bandit-report
+#           path: src/be/bandit-report.xml

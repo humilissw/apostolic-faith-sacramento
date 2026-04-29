@@ -23,4 +23,5 @@ def get_superuser_token_headers(client: TestClient) -> dict[str, str]:
     tokens = r.json()
     a_token = tokens["access_token"]
     headers = {"Authorization": f"Bearer {a_token}"}
+    # print(login_data)
     return headers
