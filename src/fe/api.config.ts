@@ -1,7 +1,7 @@
-import './envConfig.ts'
+// import './envConfig.ts'
  
-export default defineConfig({
-  apiConfig: {
-    host: process.env.API_URL!,
-  },
-})
+// export default defineConfig({
+//   apiConfig: {
+//     host: process.env.API_URL!,
+//   },
+// })
