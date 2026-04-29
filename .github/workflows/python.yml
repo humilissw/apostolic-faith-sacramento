@@ -20,7 +20,7 @@ jobs:
     strategy:
       matrix:
         #poetry requires at least 3.13
-        python-version: [ "3.13.5" ]
+        python-version: [ "3.13.5", "3.14" ]
         poetry-version: [ "2.2.1" ]
 
     steps:
