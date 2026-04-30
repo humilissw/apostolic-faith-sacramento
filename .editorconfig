@@ -25,6 +25,7 @@ max_line_length = 100
 [*.{md,markdown}]
 trim_trailing_whitespace = false
 max_line_length = off
+indent_size = unset
 
 # JSON files
 [*.json]

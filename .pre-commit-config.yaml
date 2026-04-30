@@ -71,4 +71,4 @@ repos:
             then echo "Commit message must follow conventional commits format"; exit 1; fi'
         language: system
         files: ^COMMIT$
-        stages: [commit]
+        stages: [pre-commit]

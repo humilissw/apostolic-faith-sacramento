@@ -25,6 +25,7 @@ import CustomSidebarTrigger from "@/components/custom-sidebar-trigger"
 import Link from "next/link"
 
 import { useSidebar } from "@/components/ui/sidebar"
+import { useAuth } from "@/context/auth-context"
 import { Button } from "./ui/button"
 
 const data = {
@@ -36,7 +37,7 @@ const data = {
       items: [
         {
           title: "Our Beliefs",
-          url: "/doctrines",
+          url: "/doctrines/",
           target: "_self",
           isActive: true,
         },
@@ -66,7 +67,7 @@ const data = {
     },
     {
       title: "Media",
-      url: "/media",
+      url: "/media/",
       target: "_self",
       empty: true,
       items: [
@@ -75,7 +76,7 @@ const data = {
     },
     {
       title: "Contact Us",
-      url: "/contact",
+      url: "/contact/",
       target: "_self",
       empty: true,
       items: [
@@ -86,6 +87,19 @@ const data = {
 }
 
 export function NavSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+
+  let isAuthenticated = false;
+  let logout = () => {};
+  try {
+    const auth = useAuth();
+    isAuthenticated = auth.isAuthenticated;
+    logout = () => {
+      auth.logout();
+      window.location.assign("/login/");
+    };
+  } catch {
+    // outside AuthProvider, default to logged out
+  }
 
   const {
     state,
@@ -104,6 +118,18 @@ export function NavSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
 
       <SidebarContent className="pl-3">
+        {isAuthenticated && (
+          <Collapsible key="video-uploads" className="group/collapsible">
+            <SidebarGroup>
+              <SidebarGroupLabel
+                asChild
+                className="group/label font-normal text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-2xl"
+              >
+                <Link onClick={toggleSidebar} href="/video-uploads/">Video Uploads</Link>
+              </SidebarGroupLabel>
+            </SidebarGroup>
+          </Collapsible>
+        )}
         {/* We create a collapsible SidebarGroup for each parent. */}
         {data.navMain.map((item) => (
           <Collapsible
@@ -148,9 +174,13 @@ export function NavSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
 
       <SidebarFooter className="items-end mr-2 mb-2">
-        <Link href="/login">
-          <Button className="font-noto-sans bg-black text-white hover:bg-gray-700" size="default" variant="default">Login</Button>
-        </Link>
+        {isAuthenticated ? (
+          <Button className="font-noto-sans bg-black text-white hover:bg-gray-700" size="default" variant="default" onClick={() => logout()}>Logout</Button>
+        ) : (
+          <Link href="/login/">
+            <Button className="font-noto-sans bg-black text-white hover:bg-gray-700" size="default" variant="default">Login</Button>
+          </Link>
+        )}
       </SidebarFooter>
 
       <SidebarRail />

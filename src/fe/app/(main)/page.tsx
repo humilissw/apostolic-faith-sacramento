@@ -22,7 +22,7 @@ export default function Home() {
         </h1>
       </div>
         <div className="flex gap-8 2xs:justify-center xl:justify-start pt-5 items-center px-3">
-          <Link href="/doctrines">
+          <Link href="/doctrines/">
               <Button className=" border-white bg-white/70 hover:text-white text-zinc-900" variant="default">About Us</Button>
           </Link>
           <Link href="https://www.youtube.com/@ApostolicFaithSacramento/streams">

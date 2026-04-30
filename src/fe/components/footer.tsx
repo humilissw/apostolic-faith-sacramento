@@ -45,15 +45,15 @@ export default function Footer() {
 
                     <h1 className="font-bold text-[17px]">Quick Links</h1>
 
-                    <Link className="hover:underline" href="/doctrines">
+                    <Link className="hover:underline" href="/doctrines/">
                         About
                     </Link>
 
-                    <Link className="hover:underline"href="/media">
+                    <Link className="hover:underline" href="/media/">
                         Media
                     </Link>
 
-                    <Link className="hover:underline" href="/contact">
+                    <Link className="hover:underline" href="/contact/">
                         Contact
                     </Link>
                 </ul>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Barlow_Condensed, EB_Garamond, Libre_Baskerville, Lora, Merriweather, Noto_Serif, Playfair_Display, PT_Serif, Roboto, Noto_Sans, Work_Sans, Epilogue } from 'next/font/google';
 import "../globals.css";
+import { AuthProvider } from "@/context/auth-context";
 
 
 const roboto = Roboto({
@@ -70,8 +71,10 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <div className={`${playfair.variable} ${lora.variable} ${libre.variable} ${merriweather.variable} ${noto.variable} ${pt.variable} ${eb.variable} ${barlow_condensed.variable} ${roboto.variable} ${noto_sans.variable} ${work_sans.variable} ${epilogue.variable}`}>
-        {children}
-    </div>
+    <AuthProvider>
+      <div className={`${playfair.variable} ${lora.variable} ${libre.variable} ${merriweather.variable} ${noto.variable} ${pt.variable} ${eb.variable} ${barlow_condensed.variable} ${roboto.variable} ${noto_sans.variable} ${work_sans.variable} ${epilogue.variable}`}>
+          {children}
+      </div>
+    </AuthProvider>
   )
 }
