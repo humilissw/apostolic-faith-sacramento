@@ -1,6 +1,0 @@
-packages:
-  - '.'
-onlyBuiltDependencies:
-  - '@heroui/shared-utils'
-  - sharp
-  - unrs-resolver
