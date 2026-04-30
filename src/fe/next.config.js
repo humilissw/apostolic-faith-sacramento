@@ -2,40 +2,6 @@
  * @type {import('next').NextConfig}
  */
 const nextConfig = {
-    async redirects() {
-    return [
-      {
-        source: '/doctrine.html',
-        destination: '/doctrines',
-        permanent: true,
-      },
-      {
-        source: '/about.html',
-        destination: '/doctrines',
-        permanent: true,
-      },
-      {
-        source: '/index.html',
-        destination: '/',
-        permanent: true,
-      },
-      {
-        source: '/media.html',
-        destination: '/media',
-        permanent: true,
-      },
-      {
-        source: '/contact.html',
-        destination: '/contact',
-        permanent: true,
-      },
-      {
-        source: '/event.html',
-        destination: '/',
-        permanent: true,
-      },
-    ]
-  },
   output: 'export',
   // output: 'standalone',
   images: { unoptimized: true },
