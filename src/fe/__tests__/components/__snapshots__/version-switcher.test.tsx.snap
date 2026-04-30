@@ -80,7 +80,6 @@ exports[`VersionSwitcher matches snapshot 1`] = `
         >
           v
           1.0
-
           <svg
             aria-hidden="true"
             class="lucide lucide-check ml-auto"
@@ -104,14 +103,12 @@ exports[`VersionSwitcher matches snapshot 1`] = `
         >
           v
           2.0
-
         </button>
         <button
           data-testid="version-item"
         >
           v
           3.0
-
         </button>
       </div>
     </div>
