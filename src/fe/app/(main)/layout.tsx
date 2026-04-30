@@ -71,11 +71,10 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <div className={`${playfair.variable} ${lora.variable} ${libre.variable} ${merriweather.variable} ${noto.variable} ${pt.variable} ${eb.variable} ${barlow_condensed.variable} ${roboto.variable} ${noto_sans.variable} ${work_sans.variable} ${epilogue.variable}`}> 
+    <div className={`${playfair.variable} ${lora.variable} ${libre.variable} ${merriweather.variable} ${noto.variable} ${pt.variable} ${eb.variable} ${barlow_condensed.variable} ${roboto.variable} ${noto_sans.variable} ${work_sans.variable} ${epilogue.variable}`}>
         <Navbar />
         <main className="flex-1">{children}</main>
         <Footer />
     </div>
   )
 }
-

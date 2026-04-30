@@ -5,9 +5,10 @@ This test suite validates the MediaRepository class by mocking database operatio
 These tests demonstrate the benefits of the repository pattern - database logic
 can be tested in isolation without requiring a real database.
 """
+
 import uuid
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -127,7 +128,9 @@ class TestMediaRepositoryGetById:
 
         assert media is None
 
-    async def test_get_by_id_with_special_characters(self, mock_async_session: AsyncSession) -> None:
+    async def test_get_by_id_with_special_characters(
+        self, mock_async_session: AsyncSession
+    ) -> None:
         """Test retrieving media with special characters in name (edge case)."""
         repository = MediaRepository(session=mock_async_session)
         test_id = uuid.uuid4()
@@ -205,7 +208,10 @@ class TestMediaRepositoryGetAll:
 
         # Mock results to return both medias
         mock_results = MagicMock()
-        mock_results.scalars.return_value.all.return_value = [mock_media_1, mock_media_2]
+        mock_results.scalars.return_value.all.return_value = [
+            mock_media_1,
+            mock_media_2,
+        ]
 
         mock_execute = AsyncMock()
         mock_execute.side_effect = [mock_count_result, mock_results]
@@ -481,7 +487,9 @@ def mock_async_session() -> AsyncSession:
 class TestMediaRepositoryEdgeCases:
     """Test edge cases and error scenarios."""
 
-    async def test_create_media_with_unicode_characters(self, mock_async_session: AsyncSession) -> None:
+    async def test_create_media_with_unicode_characters(
+        self, mock_async_session: AsyncSession
+    ) -> None:
         """Test media creation with unicode characters (edge case)."""
         repository = MediaRepository(session=mock_async_session)
         unicode_name = "Media with 🎬 emojis 🚀 and 中文"
@@ -533,7 +541,9 @@ class TestMediaRepositoryEdgeCases:
         assert medias == []
         assert total_count == 2
 
-    async def test_update_media_clears_password_field(self, mock_async_session: AsyncSession) -> None:
+    async def test_update_media_clears_password_field(
+        self, mock_async_session: AsyncSession
+    ) -> None:
         """Test that update removes password field if present (edge case)."""
         repository = MediaRepository(session=mock_async_session)
         test_id = uuid.uuid4()
@@ -565,7 +575,9 @@ class TestMediaRepositoryEdgeCases:
         assert updated_media.name == "Updated"
         assert updated_media.updated_on is not None
 
-    async def test_repository_session_not_commits_on_failure(self, mock_async_session: AsyncSession) -> None:
+    async def test_repository_session_not_commits_on_failure(
+        self, mock_async_session: AsyncSession
+    ) -> None:
         """Test that commit is only called when operation succeeds (edge case)."""
         repository = MediaRepository(session=mock_async_session)
         media_in = MediaCreate(name="Test Media")
@@ -577,7 +589,7 @@ class TestMediaRepositoryEdgeCases:
 
         # This test demonstrates the repository's behavior
         # In a real scenario, exceptions would be raised
-        media = await repository.create(media_in=media_in)
+        _ = await repository.create(media_in=media_in)
 
         # Verify commit was called
         assert mock_async_session.commit.called
@@ -586,7 +598,7 @@ class TestMediaRepositoryEdgeCases:
         mock_async_session.reset_mock()
 
         # Try to create another one
-        media2 = await repository.create(media_in=media_in)
+        _ = await repository.create(media_in=media_in)
 
         # Commit should be called again
         assert mock_async_session.commit.called

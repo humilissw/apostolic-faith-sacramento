@@ -4,6 +4,7 @@ Configuration for repository tests.
 This conftest provides fixtures for testing repository classes.
 Prevents collection of parent conftest.py to avoid async fixture conflicts.
 """
+
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 

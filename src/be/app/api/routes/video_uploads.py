@@ -1,15 +1,16 @@
-import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import func
+from fastapi import APIRouter, HTTPException, status
 
 from app.api.deps import SessionDep
 from app.models import Message
 from app.repositories.video_upload_repo import VideoUploadRepository
 from app.requests.video_upload_request import VideoUploadCreate, VideoUploadUpdate
-from app.responses.video_upload_response import VideoUploadPublic, VideoUploadsPublic
-
+from app.responses.video_upload_response import (
+    VideoUploadPublic,
+    VideoUploadPublicWithUrl,
+    VideoUploadsPublic,
+)
 
 router = APIRouter(prefix="/video-uploads", tags=["video-uploads"])
 
@@ -21,15 +22,13 @@ async def health_check() -> str:
 
 
 @router.get("/readiness")
-async def health_check() -> str:
+async def readiness_check() -> str:
     """Health check for readiness probe."""
     return "Ready"
 
 
 @router.get("/", response_model=VideoUploadsPublic)
-async def read_video_uploads(
-    session: SessionDep, skip: int = 0, limit: int = 100
-) -> Any:
+async def read_video_uploads(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
     """
     Retrieve all video uploads.
 
@@ -44,6 +43,10 @@ async def read_video_uploads(
             id=v.id,
             upload_location=v.upload_location,
             upload_name=v.upload_name,
+            description=v.description,
+            reference_text=v.reference_text,
+            speaker_name=v.speaker_name,
+            media_association_date=v.media_association_date,
             created_on=v.created_on,
             updated_on=v.updated_on,
             download_url=f"/video-uploads/{v.id}/download",
@@ -55,9 +58,7 @@ async def read_video_uploads(
 
 
 @router.get("/{video_upload_id}", response_model=VideoUploadPublic)
-async def read_video_upload_by_id(
-    video_upload_id: str, session: SessionDep
-) -> Any:
+async def read_video_upload_by_id(video_upload_id: str, session: SessionDep) -> Any:
     """
     Get video upload by ID.
 
@@ -75,6 +76,10 @@ async def read_video_upload_by_id(
         id=video_upload.id,
         upload_location=video_upload.upload_location,
         upload_name=video_upload.upload_name,
+        description=video_upload.description,
+        reference_text=video_upload.reference_text,
+        speaker_name=video_upload.speaker_name,
+        media_association_date=video_upload.media_association_date,
         created_on=video_upload.created_on,
         updated_on=video_upload.updated_on,
     )
@@ -95,6 +100,10 @@ async def create_video_upload_endpoint(
         id=video_upload.id,
         upload_location=video_upload.upload_location,
         upload_name=video_upload.upload_name,
+        description=video_upload.description,
+        reference_text=video_upload.reference_text,
+        speaker_name=video_upload.speaker_name,
+        media_association_date=video_upload.media_association_date,
         created_on=video_upload.created_on,
         updated_on=video_upload.updated_on,
     )
@@ -120,10 +129,16 @@ async def update_video_upload_endpoint(
             detail="Video upload not found",
         )
 
-    video_upload = await repository.update(db_video_upload=video_upload, video_upload_in=video_upload_in)
+    video_upload = await repository.update(
+        db_video_upload=video_upload, video_upload_in=video_upload_in
+    )
     return VideoUploadPublic(
         id=video_upload.id,
         upload_location=video_upload.upload_location,
+        description=video_upload.description,
+        reference_text=video_upload.reference_text,
+        speaker_name=video_upload.speaker_name,
+        media_association_date=video_upload.media_association_date,
         upload_name=video_upload.upload_name,
         created_on=video_upload.created_on,
         updated_on=video_upload.updated_on,
@@ -131,9 +146,7 @@ async def update_video_upload_endpoint(
 
 
 @router.delete("/{video_upload_id}", response_model=Message)
-async def delete_video_upload_endpoint(
-    video_upload_id: str, session: SessionDep
-) -> Any:
+async def delete_video_upload_endpoint(video_upload_id: str, session: SessionDep) -> Any:
     """
     Delete a video upload entry.
 
@@ -149,8 +162,3 @@ async def delete_video_upload_endpoint(
 
     await repository.delete(db_video_upload=video_upload)
     return Message(message="Video upload deleted successfully")
-
-
-# Helper class for response
-class VideoUploadPublicWithUrl(VideoUploadPublic):
-    download_url: str | None = None

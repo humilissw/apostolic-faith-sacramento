@@ -1,15 +1,13 @@
-import uuid
 from typing import Any
 
 from app.services.media_service import MediaService
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import func
+from fastapi import APIRouter, HTTPException, status
 
 from app.api.deps import SessionDep
 from app.models import Message
 from app.repositories.media_repo import MediaRepository
 from app.requests.media_request import MediaCreate, MediaUpdate
-from app.responses.media_response import MediaPublic, MediasPublic, MediaPublicWithUrl
+from app.responses.media_response import MediaPublic, MediasPublic
 
 
 router = APIRouter(prefix="/media", tags=["media"])
@@ -17,21 +15,19 @@ media_service = MediaService()
 
 
 @router.get("/liveness")
-async def health_check() -> str:
+async def get_liveness() -> str:
     """Health check for liveness probe."""
     return "Live"
 
 
 @router.get("/readiness")
-async def health_check() -> str:
+async def get_readiness() -> str:
     """Health check for readiness probe."""
     return "Ready"
 
 
 @router.get("/", response_model=MediasPublic)
-async def read_media(
-    session: SessionDep, skip: int = 0, limit: int = 100
-) -> Any:
+async def read_media(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
     """
     Retrieve all media entries.
 
@@ -57,9 +53,7 @@ async def read_media(
 
 
 @router.get("/{media_id}", response_model=MediaPublic)
-async def read_media_by_id(
-    media_id: str, session: SessionDep
-) -> Any:
+async def read_media_by_id(media_id: str, session: SessionDep) -> Any:
     """
     Get media by ID.
 
@@ -83,9 +77,7 @@ async def read_media_by_id(
 
 
 @router.post("/", response_model=MediaPublic, status_code=status.HTTP_201_CREATED)
-async def create_media_endpoint(
-    *, session: SessionDep, media_in: MediaCreate
-) -> Any:
+async def create_media_endpoint(*, session: SessionDep, media_in: MediaCreate) -> Any:
     """
     Create new media entry.
 
@@ -133,9 +125,7 @@ async def update_media_endpoint(
 
 
 @router.delete("/{media_id}", response_model=Message)
-async def delete_media_endpoint(
-    media_id: str, session: SessionDep
-) -> Any:
+async def delete_media_endpoint(media_id: str, session: SessionDep) -> Any:
     """
     Delete a media entry.
 
@@ -151,8 +141,3 @@ async def delete_media_endpoint(
 
     await repository.delete(db_media=media)
     return Message(message="Media deleted successfully")
-
-
-# Helper class for response
-class MediaPublicWithUrl(MediaPublic):
-    download_url: str | None = None

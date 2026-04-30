@@ -42,8 +42,10 @@ class MediaRepository:
             await self.session.commit()
             await self.session.refresh(media)
             return media
-        except Exception as e:
-            raise HTTPException(status_code=500, detail="Database error occurred while creating media")
+        except Exception:
+            raise HTTPException(
+                status_code=500, detail="Database error occurred while creating media"
+            )
 
     async def get_by_id(self, media_id: str) -> Media | None:
         """
@@ -56,15 +58,15 @@ class MediaRepository:
             Media | None: Media object if found, None otherwise
         """
         try:
-            statement = select(Media).where(Media.id == media_id)
+            statement = select(Media).where(Media.id == media_id)  # type: ignore[arg-type]
             result = await self.session.execute(statement)
             return result.scalar_one_or_none()
-        except Exception as e:
-            raise HTTPException(status_code=500, detail="Database error occurred while retrieving media")
+        except Exception:
+            raise HTTPException(
+                status_code=500, detail="Database error occurred while retrieving media"
+            )
 
-    async def get_all(
-        self, skip: int = 0, limit: int = 100
-    ) -> tuple[list[Media], int]:
+    async def get_all(self, skip: int = 0, limit: int = 100) -> tuple[list[Media], int]:
         """
         Retrieve all media entries with pagination.
 
@@ -80,24 +82,25 @@ class MediaRepository:
             count_statement = select(func.count()).select_from(Media)
             count_result = await self.session.execute(count_statement)
             total_count = count_result.scalar()
-        except Exception as e:
-            raise HTTPException(status_code=500, detail="Database error occurred while counting media")
+        except Exception:
+            raise HTTPException(
+                status_code=500, detail="Database error occurred while counting media"
+            )
 
         try:
             # Get paginated results
             statement = select(Media).offset(skip).limit(limit)
             result = await self.session.execute(statement)
             medias = result.scalars().all()
-        except Exception as e:
-            raise HTTPException(status_code=500, detail="Database error occurred while retrieving media list")
+        except Exception:
+            raise HTTPException(
+                status_code=500,
+                detail="Database error occurred while retrieving media list",
+            )
 
-        return medias, total_count
+        return list(medias), total_count or 0
 
-        return medias, total_count
-
-    async def update(
-        self, db_media: Media, media_in: MediaUpdate
-    ) -> Media:
+    async def update(self, db_media: Media, media_in: MediaUpdate) -> Media:
         """
         Update an existing media entry.
 

@@ -1,43 +1,30 @@
-import asyncio
-from os import read
-
-import sentry_sdk
-from fastapi import APIRouter, FastAPI
+from fastapi import FastAPI
 from fastapi.routing import APIRoute
-from sqlmodel import Session, create_engine, select
+from sqlmodel import select
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
-    async_session,
-    async_sessionmaker,
     create_async_engine,
 )
-from starlette.middleware.cors import CORSMiddleware
-from starlette.middleware.sessions import SessionMiddleware
-
-from authlib.integrations.starlette_client import OAuth
 
 
 from app.api.main import api_router
 from app.config import settings
-from app.core import db
+
 
 def custom_generate_unique_id(route: APIRoute) -> str:
     return f"{route.tags[0]}-{route.name}"
+
 
 async def main(app: FastAPI):
     print("---------------------")
     print(str(settings.SQLALCHEMY_DATABASE_URI))
     print("---------------------")
 
+
 async def setup_db():
     # Initialize database
     async_engine = create_async_engine(
         str(settings.SQLALCHEMY_ASYNC_DATABASE_URI), echo=False, future=True
-    )
-    async_session_maker = async_sessionmaker(
-        bind=async_engine,
-        expire_on_commit=False,
-        class_=AsyncSession,
     )
     async with AsyncSession(async_engine) as session:
         try:

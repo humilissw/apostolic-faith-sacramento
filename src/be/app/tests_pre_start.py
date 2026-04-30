@@ -24,7 +24,7 @@ def init(db_engine: Engine) -> None:
     try:
         # Try to create session to check if DB is awake
         with SyncSessionLocal() as session:
-            session.exec(select(1))
+            session.execute(select(1))
     except Exception as e:
         logger.error(e)
         raise e
@@ -37,4 +37,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(main())  # type: ignore[func-returns-value]

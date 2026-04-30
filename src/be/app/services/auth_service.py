@@ -2,10 +2,15 @@
 Authentication service for handling user authentication operations.
 Contains business logic for password recovery and reset.
 """
+
 from fastapi import HTTPException, status
-from app.models import User
 from app.repositories.user_repo import UserRepository
-from app.utils import generate_password_reset_token, generate_reset_password_email, send_email, verify_password_reset_token
+from app.utils import (
+    generate_password_reset_token,
+    generate_reset_password_email,
+    send_email,
+    verify_password_reset_token,
+)
 
 
 class AuthService:
@@ -51,7 +56,7 @@ class AuthService:
             html_content=email_data.html_content,
         )
 
-    async def reset_password(self, token: str, new_password: str, session) -> None:
+    async def reset_password(self, token: str, new_password: str, session) -> dict:
         """
         Reset a user's password using a valid reset token.
 
@@ -63,25 +68,16 @@ class AuthService:
         # Verify the token
         email = verify_password_reset_token(token=token)
         if not email:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid token"
-            )
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid token")
 
         # Get the user by email
         user = await self.user_repo.get_by_email(email=email)
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
         # Check if user is active
         if not user.is_active:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Inactive user"
-            )
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user")
 
         # Update the password through the repository
         await self.user_repo.update_password(db_user=user, new_password=new_password)

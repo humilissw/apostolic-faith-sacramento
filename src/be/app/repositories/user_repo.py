@@ -1,10 +1,7 @@
-import uuid
-
-from sqlalchemy import select, func, delete
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import User, UserCreate, UserUpdate, UserUpdateMe
 from app.core.security import get_password_hash
-from datetime import datetime, timezone
 
 
 class UserRepository:
@@ -33,7 +30,8 @@ class UserRepository:
             User: Created user object
         """
         db_obj = User.model_validate(
-            user_create, update={"hashed_password": get_password_hash(user_create.password)}
+            user_create,
+            update={"hashed_password": get_password_hash(user_create.password)},
         )
         self.session.add(db_obj)
         await self.session.commit()
@@ -50,7 +48,7 @@ class UserRepository:
         Returns:
             User | None: User object if found, None otherwise
         """
-        statement = select(User).where(User.email == email)
+        statement = select(User).where(User.email == email)  # type: ignore[arg-type]
         session_user = await self.session.execute(statement)
         return session_user.scalar_one_or_none()
 
@@ -58,18 +56,16 @@ class UserRepository:
         """
         Retrieve a user entry by id or new_id.
         """
-        statement = select(User).where(User.id == user_id)
+        statement = select(User).where(User.id == user_id)  # type: ignore[arg-type]
         result = await self.session.execute(statement)
         user = result.scalar_one_or_none()
         if user:
             return user
-        statement = select(User).where(User.new_id == str(user_id))
+        statement = select(User).where(User.new_id == str(user_id))  # type: ignore[arg-type]
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()
 
-    async def get_all(
-        self, skip: int = 0, limit: int = 100
-    ) -> tuple[list[User], int]:
+    async def get_all(self, skip: int = 0, limit: int = 100) -> tuple[list[User], int]:
         """
         Retrieve all user entries with pagination.
 
@@ -90,11 +86,9 @@ class UserRepository:
         result = await self.session.execute(statement)
         users = result.scalars().all()
 
-        return users, total_count
+        return list(users), total_count or 0
 
-    async def update(
-        self, db_user: User, user_in: UserUpdate | UserUpdateMe
-    ) -> User:
+    async def update(self, db_user: User, user_in: UserUpdate | UserUpdateMe) -> User:
         """
         Update an existing user entry.
 

@@ -33,6 +33,10 @@ class VideoUploadRepository:
         video_upload = VideoUpload(
             upload_location=video_upload_in.upload_location,
             upload_name=video_upload_in.upload_name,
+            description=video_upload_in.description,
+            media_association_date=video_upload_in.media_association_date,
+            speaker_name=video_upload_in.speaker_name,
+            reference_text=video_upload_in.reference_text,
             created_on=datetime.now(timezone.utc),
             updated_on=datetime.now(timezone.utc),
         )
@@ -51,13 +55,13 @@ class VideoUploadRepository:
         Returns:
             VideoUpload | None: VideoUpload object if found, None otherwise
         """
-        statement = select(VideoUpload).where(VideoUpload.id == video_upload_id)
+        statement = select(VideoUpload).where(
+            VideoUpload.id == video_upload_id  # type: ignore[arg-type]
+        )
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()
 
-    async def get_all(
-        self, skip: int = 0, limit: int = 100
-    ) -> tuple[list[VideoUpload], int]:
+    async def get_all(self, skip: int = 0, limit: int = 100) -> tuple[list[VideoUpload], int]:
         """
         Retrieve all video upload entries with pagination.
 
@@ -78,7 +82,7 @@ class VideoUploadRepository:
         result = await self.session.execute(statement)
         video_uploads = result.scalars().all()
 
-        return video_uploads, total_count
+        return list(video_uploads), total_count or 0
 
     async def update(
         self, db_video_upload: VideoUpload, video_upload_in: VideoUploadUpdate

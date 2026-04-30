@@ -1,16 +1,10 @@
 from datetime import datetime, timedelta, timezone
-import os
-from typing import Annotated, Any
 
-from fastapi import Depends, HTTPException
 import jwt
-from passlib.context import CryptContext
 from pwdlib import PasswordHash
 
-import app
 from app.config import settings
 from app.models import User
-
 
 password_hash = PasswordHash.recommended()
 # pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -55,13 +49,16 @@ ALGORITHM = "RS256"
 #     format=serialization.PublicFormat.SubjectPublicKeyInfo
 # )
 
-def create_access_token(subject: str | Any, expires_delta: timedelta) -> str:
-    try:    
+
+def create_access_token(subject: str, expires_delta: timedelta) -> str:
+    try:
         expire = datetime.now(timezone.utc) + expires_delta
         to_encode = {"exp": expire, "sub": str(subject)}
-        encoded_jwt = jwt.encode(payload=to_encode, key=PRIVATE_KEY, algorithm=ALGORITHM)
+        encoded_jwt = jwt.encode(
+            payload=to_encode, key=PRIVATE_KEY, algorithm=ALGORITHM
+        )  # type: ignore[return-value]
         verify_access_token(encoded_jwt)
-        return encoded_jwt
+        return str(encoded_jwt)
     except Exception as err:
         print(err)
         raise err
@@ -79,7 +76,8 @@ def get_user(db, username: str):
     if username in db:
         user_dict = db[username]
         return User(**user_dict)
-    
+
+
 def verify_access_token(token: str):
     """Verifies a JWT token using the public key."""
     try:

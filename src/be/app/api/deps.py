@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Generator
 
 import jwt
 from fastapi import Depends, HTTPException, status
@@ -15,20 +15,21 @@ from app.models import TokenPayload, User
 from app.core.db import SyncSessionLocal, get_db_session
 
 
-reusable_oauth2 = OAuth2PasswordBearer(
-    tokenUrl=f"{settings.API_V1_STR}/login/access-token"
-)
+reusable_oauth2 = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/login/access-token")
 
 TokenDep = Annotated[str, Depends(reusable_oauth2)]
 SessionDep = Annotated[AsyncSession, Depends(get_db_session)]
 
 
-def get_sync_db_session() -> Session:
+def get_sync_db_session() -> Generator[Session]:
     """Synchronous database session for tests."""
     session = SyncSessionLocal()
-    yield session
-    session.close()
-    
+    try:
+        yield session
+    finally:
+        session.close()
+
+
 SyncSessionDep = Annotated[Session, Depends(get_sync_db_session)]
 
 
@@ -60,6 +61,8 @@ async def get_current_user(session: SessionDep, token: TokenDep) -> User:
     print(statement)
     db_user_result = await session.execute(statement)
     db_user = db_user_result.scalar()
+    if db_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
     user = await session.get(User, db_user.id)
 
     if not user:
@@ -92,7 +95,7 @@ async def get_current_user(session: SessionDep, token: TokenDep) -> User:
 async def get_current_active_user(
     current_user: Annotated[User, Depends(get_current_user)],
 ):
-    if current_user.disabled:
+    if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
@@ -102,7 +105,5 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 
 async def get_current_active_superuser(current_user: CurrentUser) -> User:
     if not current_user.is_superuser:
-        raise HTTPException(
-            status_code=403, detail="The user doesn't have enough privileges"
-        )
+        raise HTTPException(status_code=403, detail="The user doesn't have enough privileges")
     return current_user

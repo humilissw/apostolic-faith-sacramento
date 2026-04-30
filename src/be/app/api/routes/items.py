@@ -1,4 +1,3 @@
-import uuid
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
@@ -25,17 +24,10 @@ async def read_items(
         items = (await session.execute(statement)).scalars().all()
     else:
         count_statement = (
-            select(func.count())
-            .select_from(Item)
-            .where(Item.owner_id == current_user.id)
+            select(func.count()).select_from(Item).where(Item.owner_id == current_user.id)
         )
         count = (await session.execute(count_statement)).scalar_one()
-        statement = (
-            select(Item)
-            .where(Item.owner_id == current_user.id)
-            .offset(skip)
-            .limit(limit)
-        )
+        statement = select(Item).where(Item.owner_id == current_user.id).offset(skip).limit(limit)
         items = (await session.execute(statement)).scalars().all()
 
     return ItemsPublic(data=items, count=count)
@@ -94,10 +86,9 @@ async def update_item(
     await session.refresh(item)
     return item
 
+
 @router.delete("/{id}")
-async def delete_item(
-    session: SessionDep, current_user: CurrentUser, id: int
-) -> Message:
+async def delete_item(session: SessionDep, current_user: CurrentUser, id: int) -> Message:
     """
     Delete an item.
     """

@@ -30,7 +30,7 @@ async def db_session() -> AsyncSession:
         class_=AsyncSession,
     )
     session = async_session_maker()
-    
+
     # print(f'Test Settings: {settings}')
 
     try:
@@ -55,7 +55,9 @@ async def client() -> httpx.AsyncClient:
 
 
 @pytest.fixture(scope="function")
-async def superuser_token_headers(client: httpx.AsyncClient, db_session: AsyncSession) -> dict[str, str]:
+async def superuser_token_headers(
+    client: httpx.AsyncClient, db_session: AsyncSession
+) -> dict[str, str]:
     """Superuser authentication headers."""
     statement = select(User).where(User.email == settings.FIRST_SUPERUSER)
     user_result = await db_session.execute(statement)
@@ -88,7 +90,9 @@ async def superuser_token_headers(client: httpx.AsyncClient, db_session: AsyncSe
 
 
 @pytest.fixture(scope="function")
-async def normal_user_token_headers(client: httpx.AsyncClient, db_session: AsyncSession) -> dict[str, str]:
+async def normal_user_token_headers(
+    client: httpx.AsyncClient, db_session: AsyncSession
+) -> dict[str, str]:
     """Normal user authentication headers."""
     statement = select(User).where(User.email == settings.EMAIL_TEST_USER)
     user_result = await db_session.execute(statement)
@@ -102,6 +106,7 @@ async def normal_user_token_headers(client: httpx.AsyncClient, db_session: Async
         user = await crud.create_user(session=db_session, user_create=user_in)
     else:
         from app.core.security import get_password_hash
+
         user.hashed_password = get_password_hash("testpassword123")
         db_session.add(user)
         await db_session.commit()

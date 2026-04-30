@@ -2,8 +2,13 @@ name: Main Workflow (parent triggers others)
 run-name: Running CI on ${{ github.ref_name }}
 on: [push]
 jobs:
+  pre-commit:
+    uses: humilissw/apostolic-faith-sacramento/.github/workflows/pre-commit.yml@main
+
   Run-CI-Python:
+    needs: [ pre-commit ]
     uses: humilissw/apostolic-faith-sacramento/.github/workflows/python.yml@main # Use main branch or specific commit SHA
 
   Run-CI-Node:
+    needs: [ pre-commit ]
     uses: humilissw/apostolic-faith-sacramento/.github/workflows/node.yml@main # Use main branch or specific commit SHA

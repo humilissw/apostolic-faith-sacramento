@@ -1,7 +1,6 @@
 from typing import Any
 
 from pydantic import (
-    MariaDBDsn,
     MySQLDsn,
     computed_field,
 )
@@ -19,10 +18,10 @@ def parse_cors(v: Any) -> list[str] | str:
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         # Use top level .env file (one level above ./backend/)
-        env_file = ".env",
-        env_file_encoding='utf-8',
-        env_ignore_empty = False,
-        arbitrary_types_allowed = True
+        env_file=".env",
+        env_file_encoding="utf-8",
+        env_ignore_empty=False,
+        arbitrary_types_allowed=True,
     )
     API_V1_STR: str
     EMAIL_TEST_USER: str
@@ -57,7 +56,7 @@ class Settings(BaseSettings):
     cert_key: str
     rsa_pub_key: str
     rsa_private_key: str
-    
+
     @computed_field  # type: ignore[prop-decorator]
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> MySQLDsn:
@@ -81,7 +80,6 @@ class Settings(BaseSettings):
             port=self.DB_PORT,
             path=self.DB_DB,
         )
-
 
 
 settings = Settings()

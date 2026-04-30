@@ -154,7 +154,9 @@ async def test_recovery_password(login_client, login_normal_user_token_headers) 
 
 
 @pytest.mark.asyncio
-async def test_recovery_password_user_not_exits(login_client, login_normal_user_token_headers) -> None:
+async def test_recovery_password_user_not_exits(
+    login_client, login_normal_user_token_headers
+) -> None:
     email = "jVgQr@example.com"
     r = await login_client.post(
         f"{settings.API_V1_STR}/password-recovery/{email}",
@@ -191,7 +193,9 @@ async def test_reset_password(login_client, login_db_session) -> None:
     assert r.status_code == 200
     assert r.json() == {"message": "Password updated successfully"}
 
-    auth_headers = await user_authentication_headers(client=login_client, email=email, password=new_password)
+    auth_headers = await user_authentication_headers(
+        client=login_client, email=email, password=new_password
+    )
     r2 = await login_client.post(
         f"{settings.API_V1_STR}/login/test-token",
         headers=auth_headers,
