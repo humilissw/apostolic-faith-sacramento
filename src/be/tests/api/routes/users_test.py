@@ -428,7 +428,7 @@ async def test_delete_user_me(users_client: httpx.AsyncClient, db_session: Async
     a_token = tokens["access_token"]
     headers = {"Authorization": f"Bearer {a_token}"}
 
-    _ = await users_client.delete(
+    r = await users_client.delete(
         f"{settings.API_V1_STR}/users/me",
         headers=headers,
     )

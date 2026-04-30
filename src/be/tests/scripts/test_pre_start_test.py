@@ -5,11 +5,9 @@ from app.tests_pre_start import init, logger
 
 
 def test_init_successful_connection() -> None:
+    result_mock = MagicMock()
     session_mock = MagicMock()
-    exec_mock = MagicMock()
-    _ = MagicMock()
-    exec_mock.scalar_one_or_none.return_value = MagicMock()
-    session_mock.exec.return_value = exec_mock
+    session_mock.execute.return_value = result_mock
     session_mock.__enter__ = MagicMock(return_value=session_mock)
     session_mock.__exit__ = MagicMock(return_value=False)
 
@@ -30,5 +28,5 @@ def test_init_successful_connection() -> None:
         ), "The database connection should be successful and not raise an exception."
 
         assert (
-            session_mock.exec.call_count == 1
+            session_mock.execute.call_count == 1
         ), "The session should execute a select statement once."
