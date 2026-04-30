@@ -98,11 +98,11 @@ export function NavSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   } = useSidebar()
 
   return (
- <Sidebar className="" side="right" {...props}>
+  <Sidebar className="" side="right" {...props}>
       <SidebarHeader className="items-end">
         <CustomSidebarTrigger state={true}/>
       </SidebarHeader>
-      
+
       <SidebarContent className="pl-3">
         {/* We create a collapsible SidebarGroup for each parent. */}
         {data.navMain.map((item) => (
@@ -116,8 +116,8 @@ export function NavSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 asChild
                 className="group/label font-normal text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-2xl"
               >
-                
-                {item.empty ? <Link onClick={toggleSidebar} href={item.url}>{item.title}</Link> : 
+
+                {item.empty ? <Link onClick={toggleSidebar} href={item.url}>{item.title}</Link> :
                 <CollapsibleTrigger className="">
                   {item.title} <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90"/>
                 </CollapsibleTrigger>}
@@ -131,20 +131,20 @@ export function NavSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           <Link target={item.target} href={item.url} onClick={toggleSidebar}>{item.title}</Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
-                      
+
                     ))}
                   </SidebarMenu>
-                  
+
                 </SidebarGroupContent>
-                
+
               </CollapsibleContent>
-              
+
             </SidebarGroup>
-            
+
           </Collapsible>
-          
+
         ))}
-        
+
       </SidebarContent>
 
       <SidebarFooter className="items-end mr-2 mb-2">
@@ -156,6 +156,6 @@ export function NavSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarRail />
 
     </Sidebar>
-    
+
   )
 }

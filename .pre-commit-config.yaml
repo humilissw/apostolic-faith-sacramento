@@ -27,12 +27,12 @@ repos:
         args: ['--line-length=100']
 
   # Python linting
-  # - repo: https://github.com/astral-sh/ruff-pre-commit
-  #   rev: v0.7.1
-  #   hooks:
-  #     - id: ruff
-  #       args: ['--fix', '--exit-non-zero-on-fix']
-  #     - id: ruff-format
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.7.1
+    hooks:
+      - id: ruff
+        args: ['--fix', '--exit-non-zero-on-fix']
+      # - id: ruff-format
 
   # Type checking
   - repo: https://github.com/pre-commit/mirrors-mypy
@@ -42,10 +42,10 @@ repos:
         additional_dependencies:
           - pydantic
           - sqlmodel
-          # - types-all
         args: ['--ignore-missing-imports', '--warn-redundant-casts', '--warn-return-any']
         files: ^src/be/app/
 
+  #todo: look into why bandit is failing
   # Security
   - repo: https://github.com/PyCQA/bandit
     rev: 1.8.0
@@ -53,19 +53,22 @@ repos:
       - id: bandit
         args: ['-c', 'src/be/pyproject.toml', '-r', 'app/']
 
-  # # Documentation
-  # - repo: https://github.com/editorconfig-checker/editorconfig-checker
-  #   rev: 3.6.1
-  #   hooks:
-  #     - id: editorconfig-checker
-  #       args: ['-exclude', '.git,.venv']
+  # Documentation
+  - repo: https://github.com/editorconfig-checker/editorconfig-checker
+    rev: v3.6.1
+    hooks:
+      - id: editorconfig-checker
+        args: ['-exclude', '\.git|\.venv|[/\\.]idea[/\\]|[/\\.]vscode[/\\]|bun\.lock|wiki|_SUMMARY\.md|email-templates|auth0sample|setup_poetry\.py|AGENTS\.md|CONTRIBUTING\.md|alembic/README\.md|tests/repositories/README\.md|alembic/versions/']
 
   # Git hooks
-  # - repo: local
-  #   hooks:
-  #     - id: validate-commit-message
-  #       name: Validate commit message
-  #       entry: bash -c 'if ! grep -E "^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\\(.+\\))?: .{1,}$" $1; then echo "Commit message must follow conventional commits format"; exit 1; fi'
-  #       language: system
-  #       files: ^COMMIT$
-  #       stages: [commit]
+  - repo: local
+    hooks:
+      - id: validate-commit-message
+        name: Validate commit message
+        entry: >-
+          bash -c '
+            if ! grep -E "^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\\(.+\\))?: .{1,}$" $1;
+            then echo "Commit message must follow conventional commits format"; exit 1; fi'
+        language: system
+        files: ^COMMIT$
+        stages: [commit]

@@ -5,16 +5,16 @@ pyproject configuration, based on the generic configuration.
 ## Update to Latest Migration
 
 ```bash
- alembic upgrade head        
+ alembic upgrade head
 ```
 
 ## Generate new migration
 ```bash
-alembic revision -m "create init migration with media-related tables"    
+alembic revision -m "create init migration with media-related tables"
 ```
 
 ## Generate Migrations from code
- 
+
  ```bash
  alembic revision --autogenerate -m "Generate for Media Tables"
  ```
@@ -24,14 +24,14 @@ alembic revision -m "create init migration with media-related tables"
  ### Downgrade
 
 - You can downgrade by the full name of by the first four characters of the hash.
-  
+
  ```bash
-   alembic downgrade e241   
+   alembic downgrade e241
  ```
 
  ### Upgrade
  - You can upgrade by the full name of by the first four characters of the hash.
-  
+
  ```bash
- alembic upgrade e241  
+ alembic upgrade e241
  ```

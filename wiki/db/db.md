@@ -16,7 +16,7 @@
 
 1. Run the SSL command at the root of the repo.
 2. Install **docker desktop**.
-3. Switch to this directory. 
+3. Switch to this directory.
 
 ```bash
 cd infrastructure/db
@@ -36,7 +36,7 @@ Set-Location -Path infrastructure/db
 $ docker-compose -f compose.db.yml up -d --build
 ```
 
-5. Access PgAdmin and use the container name as the server name. 
+5. Access PgAdmin and use the container name as the server name.
    1. See db.env for more credentials.
    2. Open your web browser and navigate to:
       1. https://localhost:5005
@@ -60,5 +60,3 @@ https://www.pgadmin.org/docs/pgadmin4/9.10/index.html
 # Future plans
 
 DB Generation will be done via an ORM.  This is meant to demonstrate the power of PostgreSQL.
-
-

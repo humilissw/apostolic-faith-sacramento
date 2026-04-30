@@ -13,7 +13,7 @@ interface sermonData {
 }
 
 
-export default function Media() {    
+export default function Media() {
 
 
   const [videoData, setVideoData] = useState([]);
@@ -56,12 +56,12 @@ export default function Media() {
           <h1 className='text-4xl md:text-6xl text-center tracking-wider'>Latest Services</h1>
         </div>
         <div className='flex justify-center pt-15'>
-            {videoData.slice(0, 1).map((data: sermonData, index) => 
+            {videoData.slice(0, 1).map((data: sermonData, index) =>
             <div key={index}>
               {index == 0 ?
-              <Link 
+              <Link
                 target="_blank"
-                key={index} 
+                key={index}
                 href={data.videoUri}
             >
               <div className='rounded-xl shadow-xl/20'>
@@ -76,7 +76,7 @@ export default function Media() {
                     />
                       <div className='flex flex-col px-5 pt-3 w-full font-medium font-noto-sans'>
                         <h1 className='xs:text-xl md:text-4xl'>{data.sermonTitle}</h1>
-                        <h1 className='text-black/40 font-normal'>{data.speaker}</h1>  
+                        <h1 className='text-black/40 font-normal'>{data.speaker}</h1>
                         <h1 className='text-black/40 font-normal'>{new Date(data.createDate).toLocaleDateString('en-US')}</h1>
                       </div>
 
@@ -91,14 +91,14 @@ export default function Media() {
 
 
         <div className='flex flex-wrap gap-x-5 gap-y-5 justify-center py-15 sm:px-10 md:px-20 lg:px-40 xl:px-80'>
-          {videoData.slice(1).map((data: sermonData, index) => 
+          {videoData.slice(1).map((data: sermonData, index) =>
           <div key={index}>
-       
-          <Link 
+
+          <Link
             href={data.videoUri}
             target="_blank"
             >
-           
+
           <div className='rounded-xl shadow-xl/10'>
           <div className='flex xs:h-100 xs:w-60 md:h-60 md:w-140'>
             <div className='flex flex-col md:flex-row items-center'>
@@ -111,21 +111,21 @@ export default function Media() {
                 />
                   <div className='flex flex-col px-5 pt-3 w-full font-medium font-noto-sans'>
                     <h1 className='text-xl'>{data.sermonTitle}</h1>
-                    <h1 className='text-black/40 font-normal'>{data.speaker}</h1>  
+                    <h1 className='text-black/40 font-normal'>{data.speaker}</h1>
                     <h1 className='text-black/40 font-normal'>{new Date(data.createDate).toLocaleDateString('en-US')}</h1>
                   </div>
-                
+
             </div>
           </div>
-          </div> 
-          </Link> 
-
-          
           </div>
-          
+          </Link>
+
+
+          </div>
+
           )}
         </div>
-        
+
 
 
       </div>

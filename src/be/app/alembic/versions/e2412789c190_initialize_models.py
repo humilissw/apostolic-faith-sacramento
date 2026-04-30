@@ -7,7 +7,7 @@ Create Date: 2023-11-24 22:55:43.195942
 """
 
 import sqlalchemy as sa
-from alembic import op
+from alembic import op  # type: ignore[attr-defined]
 
 # revision identifiers, used by Alembic.
 revision = "e2412789c190"
@@ -32,7 +32,12 @@ def upgrade():
             nullable=False,
         ),
         sa.Column("hashed_password", sa.String(length=4000), nullable=False),
-        sa.Column("created_on", sa.DateTime(), nullable=False, default=sa.Function("UTC_DATE()")),
+        sa.Column(
+            "created_on",
+            sa.DateTime(),
+            nullable=False,
+            default=sa.Function("UTC_DATE()"),
+        ),
         sa.Column("updated_on", sa.DateTime()),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("new_id"),

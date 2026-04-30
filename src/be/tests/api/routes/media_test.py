@@ -28,8 +28,12 @@ async def test_create_media(client, superuser_token_headers) -> None:
 
 @pytest.mark.asyncio
 async def test_read_media(client, superuser_token_headers) -> None:
-    await client.post("/api/v1/media/", headers=superuser_token_headers, json={"name": "First Media"})
-    await client.post("/api/v1/media/", headers=superuser_token_headers, json={"name": "Second Media"})
+    await client.post(
+        "/api/v1/media/", headers=superuser_token_headers, json={"name": "First Media"}
+    )
+    await client.post(
+        "/api/v1/media/", headers=superuser_token_headers, json={"name": "Second Media"}
+    )
 
     response = await client.get("/api/v1/media/", headers=superuser_token_headers)
     assert response.status_code == 200
@@ -58,7 +62,10 @@ async def test_read_media_by_id(client, superuser_token_headers) -> None:
 
 @pytest.mark.asyncio
 async def test_read_media_by_id_not_found(client, superuser_token_headers) -> None:
-    response = await client.get("/api/v1/media/00000000-0000-0000-0000-000000000000", headers=superuser_token_headers)
+    response = await client.get(
+        "/api/v1/media/00000000-0000-0000-0000-000000000000",
+        headers=superuser_token_headers,
+    )
     assert response.status_code == 404
     assert "not found" in response.json()["detail"].lower()
 
@@ -66,7 +73,9 @@ async def test_read_media_by_id_not_found(client, superuser_token_headers) -> No
 @pytest.mark.asyncio
 async def test_update_media(client, superuser_token_headers) -> None:
     create_response = await client.post(
-        "/api/v1/media/", headers=superuser_token_headers, json={"name": "Original Name"}
+        "/api/v1/media/",
+        headers=superuser_token_headers,
+        json={"name": "Original Name"},
     )
     media_id = create_response.json()["id"]
 
@@ -95,7 +104,9 @@ async def test_update_media_not_found(client, superuser_token_headers) -> None:
 @pytest.mark.asyncio
 async def test_delete_media(client, superuser_token_headers) -> None:
     create_response = await client.post(
-        "/api/v1/media/", headers=superuser_token_headers, json={"name": "To Be Deleted"}
+        "/api/v1/media/",
+        headers=superuser_token_headers,
+        json={"name": "To Be Deleted"},
     )
     media_id = create_response.json()["id"]
 
@@ -109,7 +120,10 @@ async def test_delete_media(client, superuser_token_headers) -> None:
 
 @pytest.mark.asyncio
 async def test_delete_media_not_found(client, superuser_token_headers) -> None:
-    response = await client.delete("/api/v1/media/00000000-0000-0000-0000-000000000000", headers=superuser_token_headers)
+    response = await client.delete(
+        "/api/v1/media/00000000-0000-0000-0000-000000000000",
+        headers=superuser_token_headers,
+    )
     assert response.status_code == 404
 
 
@@ -117,7 +131,9 @@ async def test_delete_media_not_found(client, superuser_token_headers) -> None:
 async def test_pagination(client, superuser_token_headers) -> None:
     for i in range(10):
         await client.post(
-            "/api/v1/media/", headers=superuser_token_headers, json={"name": f"Media {i}"}
+            "/api/v1/media/",
+            headers=superuser_token_headers,
+            json={"name": f"Media {i}"},
         )
 
     response = await client.get("/api/v1/media/", headers=superuser_token_headers)

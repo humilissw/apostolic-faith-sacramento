@@ -1,4 +1,3 @@
-import uuid
 from unittest.mock import patch
 
 import pytest
@@ -47,11 +46,11 @@ async def test_get_users_normal_user_me(
 
 @pytest.mark.asyncio
 async def test_create_user_new_email(
-    users_client: httpx.AsyncClient, superuser_token_headers: dict[str, str], db_session: AsyncSession
+    users_client: httpx.AsyncClient,
+    superuser_token_headers: dict[str, str],
+    db_session: AsyncSession,
 ) -> None:
-    with (
-        patch("app.utils.send_email", return_value=None),
-    ):
+    with (patch("app.utils.send_email", return_value=None),):
         username = random_email()
         password = random_lower_string()
         data = {"email": username, "password": password}
@@ -69,7 +68,9 @@ async def test_create_user_new_email(
 
 @pytest.mark.asyncio
 async def test_get_existing_user(
-    users_client: httpx.AsyncClient, superuser_token_headers: dict[str, str], db_session: AsyncSession
+    users_client: httpx.AsyncClient,
+    superuser_token_headers: dict[str, str],
+    db_session: AsyncSession,
 ) -> None:
     username = random_email()
     password = random_lower_string()
@@ -88,7 +89,9 @@ async def test_get_existing_user(
 
 
 @pytest.mark.asyncio
-async def test_get_existing_user_current_user(users_client: httpx.AsyncClient, db_session: AsyncSession) -> None:
+async def test_get_existing_user_current_user(
+    users_client: httpx.AsyncClient, db_session: AsyncSession
+) -> None:
     username = random_email()
     password = random_lower_string()
     user_in = UserCreate(email=username, password=password)
@@ -117,7 +120,9 @@ async def test_get_existing_user_current_user(users_client: httpx.AsyncClient, d
 
 @pytest.mark.asyncio
 async def test_get_existing_user_permissions_error(
-    users_client: httpx.AsyncClient, normal_user_token_headers: dict[str, str], db_session: AsyncSession
+    users_client: httpx.AsyncClient,
+    normal_user_token_headers: dict[str, str],
+    db_session: AsyncSession,
 ) -> None:
     # Create a user that the normal user can't access
     username = random_email()
@@ -135,7 +140,9 @@ async def test_get_existing_user_permissions_error(
 
 @pytest.mark.asyncio
 async def test_create_user_existing_username(
-    users_client: httpx.AsyncClient, superuser_token_headers: dict[str, str], db_session: AsyncSession
+    users_client: httpx.AsyncClient,
+    superuser_token_headers: dict[str, str],
+    db_session: AsyncSession,
 ) -> None:
     username = random_email()
     password = random_lower_string()
@@ -169,7 +176,9 @@ async def test_create_user_by_normal_user(
 
 @pytest.mark.asyncio
 async def test_retrieve_users(
-    users_client: httpx.AsyncClient, superuser_token_headers: dict[str, str], db_session: AsyncSession
+    users_client: httpx.AsyncClient,
+    superuser_token_headers: dict[str, str],
+    db_session: AsyncSession,
 ) -> None:
     username = random_email()
     password = random_lower_string()
@@ -192,7 +201,9 @@ async def test_retrieve_users(
 
 @pytest.mark.asyncio
 async def test_update_user_me(
-    users_client: httpx.AsyncClient, normal_user_token_headers: dict[str, str], db_session: AsyncSession
+    users_client: httpx.AsyncClient,
+    normal_user_token_headers: dict[str, str],
+    db_session: AsyncSession,
 ) -> None:
     full_name = "Updated Name"
     data = {"full_name": full_name}
@@ -212,7 +223,9 @@ async def test_update_user_me(
 
 @pytest.mark.asyncio
 async def test_update_password_me(
-    users_client: httpx.AsyncClient, superuser_token_headers: dict[str, str], db_session: AsyncSession
+    users_client: httpx.AsyncClient,
+    superuser_token_headers: dict[str, str],
+    db_session: AsyncSession,
 ) -> None:
     new_password = random_lower_string()
     data = {
@@ -260,7 +273,9 @@ async def test_update_password_me_incorrect_password(
 
 @pytest.mark.asyncio
 async def test_update_user_me_email_exists(
-    users_client: httpx.AsyncClient, normal_user_token_headers: dict[str, str], db_session: AsyncSession
+    users_client: httpx.AsyncClient,
+    normal_user_token_headers: dict[str, str],
+    db_session: AsyncSession,
 ) -> None:
     username = random_email()
     password = random_lower_string()
@@ -292,9 +307,7 @@ async def test_update_password_me_same_password_error(
     )
     assert r.status_code == 400
     updated_user = r.json()
-    assert (
-        updated_user["detail"] == "New password cannot be the same as the current one"
-    )
+    assert updated_user["detail"] == "New password cannot be the same as the current one"
 
 
 @pytest.mark.asyncio
@@ -321,7 +334,9 @@ async def test_register_user(users_client: httpx.AsyncClient, db_session: AsyncS
 
 
 @pytest.mark.asyncio
-async def test_register_user_already_exists_error(users_client: httpx.AsyncClient) -> None:
+async def test_register_user_already_exists_error(
+    users_client: httpx.AsyncClient,
+) -> None:
     password = random_lower_string()
     full_name = random_lower_string()
     data = {
@@ -339,7 +354,9 @@ async def test_register_user_already_exists_error(users_client: httpx.AsyncClien
 
 @pytest.mark.asyncio
 async def test_update_user(
-    users_client: httpx.AsyncClient, superuser_token_headers: dict[str, str], db_session: AsyncSession
+    users_client: httpx.AsyncClient,
+    superuser_token_headers: dict[str, str],
+    db_session: AsyncSession,
 ) -> None:
     username = random_email()
     password = random_lower_string()
@@ -371,7 +388,9 @@ async def test_update_user_not_exists(
 
 @pytest.mark.asyncio
 async def test_update_user_email_exists(
-    users_client: httpx.AsyncClient, superuser_token_headers: dict[str, str], db_session: AsyncSession
+    users_client: httpx.AsyncClient,
+    superuser_token_headers: dict[str, str],
+    db_session: AsyncSession,
 ) -> None:
     username = random_email()
     password = random_lower_string()
@@ -398,8 +417,7 @@ async def test_delete_user_me(users_client: httpx.AsyncClient, db_session: Async
     username = random_email()
     password = random_lower_string()
     user_in = UserCreate(email=username, password=password)
-    user = await crud.create_user(session=db_session, user_create=user_in)
-    user_id = user.id
+    _user = await crud.create_user(session=db_session, user_create=user_in)
 
     login_data = {
         "username": username,
@@ -410,7 +428,7 @@ async def test_delete_user_me(users_client: httpx.AsyncClient, db_session: Async
     a_token = tokens["access_token"]
     headers = {"Authorization": f"Bearer {a_token}"}
 
-    r = await users_client.delete(
+    _ = await users_client.delete(
         f"{settings.API_V1_STR}/users/me",
         headers=headers,
     )
@@ -434,7 +452,9 @@ async def test_delete_user_me_as_superuser(
 
 @pytest.mark.asyncio
 async def test_delete_user_super_user(
-    users_client: httpx.AsyncClient, superuser_token_headers: dict[str, str], db_session: AsyncSession
+    users_client: httpx.AsyncClient,
+    superuser_token_headers: dict[str, str],
+    db_session: AsyncSession,
 ) -> None:
     username = random_email()
     password = random_lower_string()
@@ -464,7 +484,9 @@ async def test_delete_user_not_found(
 
 @pytest.mark.asyncio
 async def test_delete_user_current_super_user_error(
-    users_client: httpx.AsyncClient, superuser_token_headers: dict[str, str], db_session: AsyncSession
+    users_client: httpx.AsyncClient,
+    superuser_token_headers: dict[str, str],
+    db_session: AsyncSession,
 ) -> None:
     super_user = await crud.get_user_by_email(session=db_session, email=settings.FIRST_SUPERUSER)
     assert super_user
@@ -480,7 +502,9 @@ async def test_delete_user_current_super_user_error(
 
 @pytest.mark.asyncio
 async def test_delete_user_without_privileges(
-    users_client: httpx.AsyncClient, normal_user_token_headers: dict[str, str], db_session: AsyncSession
+    users_client: httpx.AsyncClient,
+    normal_user_token_headers: dict[str, str],
+    db_session: AsyncSession,
 ) -> None:
     username = random_email()
     password = random_lower_string()

@@ -59,7 +59,7 @@ pipx install poetry
 # install the project dependencies
 > poetry install
 ## run the app - no ssl
-# > poetry run uvicorn app.main:app --reload 
+# > poetry run uvicorn app.main:app --reload
 ## run the app - with SSL (required now)
 > poetry run uvicorn app.main:app --reload --ssl-certfile=../../infrastructure/certs/cert.pem --ssl-keyfile=../../infrastructure/certs/key.pem
 ```
@@ -76,4 +76,3 @@ pipx install poetry
 ```
 
 # Housekeeping stuff
-

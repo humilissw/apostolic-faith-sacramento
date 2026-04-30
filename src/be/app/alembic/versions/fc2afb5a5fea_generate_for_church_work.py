@@ -8,7 +8,7 @@ Create Date: 2026-02-07 12:31:28.357780
 
 from typing import Sequence, Union
 
-from alembic import op
+from alembic import op  # type: ignore[attr-defined]
 import sqlalchemy as sa
 import sqlmodel
 
@@ -28,15 +28,9 @@ def upgrade() -> None:
         sa.Column("id", sqlmodel.sql.sqltypes.AutoString(length=36), nullable=False),
         sa.Column("created_on", sa.DateTime(), nullable=False),
         sa.Column("updated_on", sa.DateTime(), nullable=True),
-        sa.Column(
-            "sender", sqlmodel.sql.sqltypes.AutoString(length=200), nullable=False
-        ),
-        sa.Column(
-            "recipients", sqlmodel.sql.sqltypes.AutoString(length=4000), nullable=False
-        ),
-        sa.Column(
-            "message", sqlmodel.sql.sqltypes.AutoString(length=4000), nullable=False
-        ),
+        sa.Column("sender", sqlmodel.sql.sqltypes.AutoString(length=200), nullable=False),
+        sa.Column("recipients", sqlmodel.sql.sqltypes.AutoString(length=4000), nullable=False),
+        sa.Column("message", sqlmodel.sql.sqltypes.AutoString(length=4000), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_table(
@@ -45,12 +39,8 @@ def upgrade() -> None:
         sa.Column("created_on", sa.DateTime(), nullable=False),
         sa.Column("updated_on", sa.DateTime(), nullable=True),
         sa.Column("service_date", sa.DateTime(), nullable=False),
-        sa.Column(
-            "speaker", sqlmodel.sql.sqltypes.AutoString(length=200), nullable=True
-        ),
-        sa.Column(
-            "service_title", sqlmodel.sql.sqltypes.AutoString(length=200), nullable=True
-        ),
+        sa.Column("speaker", sqlmodel.sql.sqltypes.AutoString(length=200), nullable=True),
+        sa.Column("service_title", sqlmodel.sql.sqltypes.AutoString(length=200), nullable=True),
         sa.Column(
             "file_location",
             sqlmodel.sql.sqltypes.AutoString(length=1000),
@@ -65,12 +55,8 @@ def upgrade() -> None:
         sa.Column("id", sqlmodel.sql.sqltypes.AutoString(length=36), nullable=False),
         sa.Column("created_on", sa.DateTime(), nullable=False),
         sa.Column("updated_on", sa.DateTime(), nullable=True),
-        sa.Column(
-            "first_name", sqlmodel.sql.sqltypes.AutoString(length=200), nullable=False
-        ),
-        sa.Column(
-            "last_name", sqlmodel.sql.sqltypes.AutoString(length=200), nullable=False
-        ),
+        sa.Column("first_name", sqlmodel.sql.sqltypes.AutoString(length=200), nullable=False),
+        sa.Column("last_name", sqlmodel.sql.sqltypes.AutoString(length=200), nullable=False),
         sa.Column("birthday", sa.DateTime(), nullable=False),
         sa.Column("wedding_anniversary", sa.DateTime(), nullable=True),
         sa.Column("baptism_date", sa.DateTime(), nullable=False),
@@ -86,9 +72,7 @@ def upgrade() -> None:
             sqlmodel.sql.sqltypes.AutoString(length=1000),
             nullable=False,
         ),
-        sa.Column(
-            "upload_name", sqlmodel.sql.sqltypes.AutoString(length=1000), nullable=False
-        ),
+        sa.Column("upload_name", sqlmodel.sql.sqltypes.AutoString(length=1000), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
     # ### end Alembic commands ###

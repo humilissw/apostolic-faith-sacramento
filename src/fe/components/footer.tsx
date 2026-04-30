@@ -11,7 +11,7 @@ import { RiInstagramFill } from "react-icons/ri";
 export default function Footer() {
     return (
       <footer className="flex flex-col md:items-center md:justify-center bg-zinc-700 text-white mt-auto">
-            
+
             <div className="flex flex-col gap-10 pt-7 pl-5 pb-10 md:flex-row md:gap-20 ">
                 <div className="hidden md:flex md:flex-col">
                     <AFCLogo width={175} height={175}/>
@@ -21,7 +21,7 @@ export default function Footer() {
                         <Link href="https://www.instagram.com/p/DWfxFHDlRfO/" aria-label="Go to Apostolic Faith Church - Sacramento Instagram Page" target="_blank" rel="noopener noreferrer"> <RiInstagramFill size="25"/> </Link>
                     </div>
                 </div>
-                
+
                 <ul className="flex flex-col gap-4 static bold">
                     <h1 className="font-bold text-[17px]"> Contact Us </h1>
                     <div className="flex flex-row items-center gap-2">
@@ -42,11 +42,11 @@ export default function Footer() {
                 </ul>
 
                 <ul className="flex flex-col gap-4 static bold md:pr-5">
-                    
+
                     <h1 className="font-bold text-[17px]">Quick Links</h1>
 
                     <Link className="hover:underline" href="/doctrines">
-                        About 
+                        About
                     </Link>
 
                     <Link className="hover:underline"href="/media">
@@ -60,18 +60,18 @@ export default function Footer() {
             </div>
 
             <div className="flex flex-row items-center pl-5 gap-5 pb-5 md:hidden">
-                <Link href="https://www.facebook.com/p/Sacramento-AFC-100064440229528/" aria-label="Go to Apostolic Faith Church - Sacramento Facebook Page" target="_blank" rel="noopener noreferrer"> 
-                    <FaFacebookSquare aria-hidden="true"size="25"/> 
-    
+                <Link href="https://www.facebook.com/p/Sacramento-AFC-100064440229528/" aria-label="Go to Apostolic Faith Church - Sacramento Facebook Page" target="_blank" rel="noopener noreferrer">
+                    <FaFacebookSquare aria-hidden="true"size="25"/>
+
                 </Link>
-                <Link href="https://www.youtube.com/@ApostolicFaithSacramento" aria-label="Go to Apostolic Faith Church - Sacramento YouTube Channel" target="_blank" rel="noopener noreferrer"> 
-                    <IoLogoYoutube aria-hidden="true" size="25"/> 
+                <Link href="https://www.youtube.com/@ApostolicFaithSacramento" aria-label="Go to Apostolic Faith Church - Sacramento YouTube Channel" target="_blank" rel="noopener noreferrer">
+                    <IoLogoYoutube aria-hidden="true" size="25"/>
                 </Link>
-                <Link href="https://www.instagram.com/p/DWfxFHDlRfO/" aria-label="Go to Apostolic Faith Church - Sacramento Instagram Page" target="_blank" rel="noopener noreferrer"> 
-                    <RiInstagramFill aria-hidden="true" size="25"/> 
+                <Link href="https://www.instagram.com/p/DWfxFHDlRfO/" aria-label="Go to Apostolic Faith Church - Sacramento Instagram Page" target="_blank" rel="noopener noreferrer">
+                    <RiInstagramFill aria-hidden="true" size="25"/>
                 </Link>
             </div>
-            
+
             <div className="items-center justify-center pt-3 pb-4 bg-zinc-800 md:bottom-0 md:w-full md:flex md:gap-100">
                 <div className="flex flex-row items-center justify-center gap-3">
                     <FaRegCopyright size="15"/>

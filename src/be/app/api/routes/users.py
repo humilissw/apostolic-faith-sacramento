@@ -1,4 +1,3 @@
-import uuid
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -15,7 +14,6 @@ from app.models import (
     Item,
     Message,
     UpdatePassword,
-    User,
     UserCreate,
     UserPublic,
     UserRegister,
@@ -44,9 +42,7 @@ async def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> An
     return UsersPublic(data=users, count=total_count)
 
 
-@router.post(
-    "/", dependencies=[Depends(get_current_active_superuser)], response_model=UserPublic
-)
+@router.post("/", dependencies=[Depends(get_current_active_superuser)], response_model=UserPublic)
 async def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
     """
     Create new user.
@@ -84,9 +80,7 @@ async def update_user_me(
     if user_in.email:
         existing_user = await repository.get_by_email(email=user_in.email)
         if existing_user and existing_user.new_id != current_user.new_id:
-            raise HTTPException(
-                status_code=409, detail="User with this email already exists"
-            )
+            raise HTTPException(status_code=409, detail="User with this email already exists")
     user_data = user_in.model_dump(exclude_unset=True)
     current_user.sqlmodel_update(user_data)
     session.add(current_user)
@@ -154,9 +148,7 @@ async def register_user(session: SessionDep, user_in: UserRegister) -> Any:
 
 
 @router.get("/{user_id}", response_model=UserPublic)
-async def read_user_by_id(
-    user_id: int, session: SessionDep, current_user: CurrentUser
-) -> Any:
+async def read_user_by_id(user_id: int, session: SessionDep, current_user: CurrentUser) -> Any:
     """
     Get a specific user by id.
     """
@@ -196,18 +188,14 @@ async def update_user(
     if user_in.email:
         existing_user = await repository.get_by_email(email=user_in.email)
         if existing_user and existing_user.id != user_id:
-            raise HTTPException(
-                status_code=409, detail="User with this email already exists"
-            )
+            raise HTTPException(status_code=409, detail="User with this email already exists")
 
     db_user = await repository.update(db_user=db_user, user_in=user_in)
     return db_user
 
 
 @router.delete("/{user_id}", dependencies=[Depends(get_current_active_superuser)])
-async def delete_user(
-    session: SessionDep, current_user: CurrentUser, user_id: int
-) -> Message:
+async def delete_user(session: SessionDep, current_user: CurrentUser, user_id: int) -> Message:
     """
     Delete a user.
     """
@@ -219,7 +207,7 @@ async def delete_user(
         raise HTTPException(
             status_code=403, detail="Super users are not allowed to delete themselves"
         )
-    statement = delete(Item).where(Item.owner_id == user_id)
+    statement = delete(Item).where(Item.owner_id == user_id)  # type: ignore[arg-type]
     await session.execute(statement)  # type: ignore
     await session.delete(user)
     await session.commit()

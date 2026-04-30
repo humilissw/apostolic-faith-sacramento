@@ -1,8 +1,8 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import delete, select
+from sqlalchemy import select
 
 from app.core.security import get_password_hash, verify_password
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -44,7 +44,7 @@ async def update_user(*, session: AsyncSession, db_user: User, user_in: UserUpda
 
 
 async def get_user_by_email(*, session: AsyncSession, email: str) -> User | None:
-    statement = select(User).where(User.email == email)
+    statement = select(User).where(User.email == email)  # type: ignore[arg-type]
     session_user = await session.execute(statement)
     return session_user.scalar()
 
@@ -71,9 +71,9 @@ async def create_media(*, session: AsyncSession, media_in: MediaCreate) -> Media
     """Create a new media entry."""
     media = Media(
         name=media_in.name,
-        uploaded_on=datetime.now(datetime.timezone.utc),
-        created_on=datetime.now(datetime.timezone.utc),
-        updated_on=datetime.now(datetime.timezone.utc),
+        uploaded_on=datetime.now(timezone.utc),
+        created_on=datetime.now(timezone.utc),
+        updated_on=datetime.now(timezone.utc),
     )
     session.add(media)
     await session.commit()
@@ -83,26 +83,22 @@ async def create_media(*, session: AsyncSession, media_in: MediaCreate) -> Media
 
 async def get_media_by_id(*, session: AsyncSession, media_id: str) -> Media | None:
     """Get media by ID."""
-    statement = select(Media).where(Media.id == media_id)
+    statement = select(Media).where(Media.id == media_id)  # type: ignore[arg-type]
     result = await session.execute(statement)
     return result.scalar_one_or_none()
 
 
-async def get_media(
-    *, session: AsyncSession, skip: int = 0, limit: int = 100
-) -> list[Media]:
+async def get_media(*, session: AsyncSession, skip: int = 0, limit: int = 100) -> list[Media]:
     """Get all media entries with pagination."""
     statement = select(Media).offset(skip).limit(limit)
     result = await session.execute(statement)
-    return result.scalars().all()
+    return list(result.scalars().all())
 
 
-async def update_media(
-    *, session: AsyncSession, db_media: Media, media_in: MediaUpdate
-) -> Media:
+async def update_media(*, session: AsyncSession, db_media: Media, media_in: MediaUpdate) -> Media:
     """Update a media entry."""
     update_data = media_in.model_dump(exclude_unset=True)
-    update_data["updated_on"] = datetime.now(datetime.timezone.utc)
+    update_data["updated_on"] = datetime.now(timezone.utc)
 
     # Handle datetime fields
     if "created_on" in update_data:
@@ -117,7 +113,7 @@ async def update_media(
 
 async def delete_media(*, session: AsyncSession, db_media: Media) -> None:
     """Delete a media entry."""
-    session.delete(db_media)
+    await session.delete(db_media)
     await session.commit()
 
 
@@ -129,8 +125,8 @@ async def create_video_upload(
     video_upload = VideoUpload(
         upload_location=video_upload_in.upload_location,
         upload_name=video_upload_in.upload_name,
-        created_on=datetime.now(datetime.timezone.utc),
-        updated_on=datetime.now(datetime.timezone.utc),
+        created_on=datetime.now(timezone.utc),
+        updated_on=datetime.now(timezone.utc),
     )
     session.add(video_upload)
     await session.commit()
@@ -138,9 +134,13 @@ async def create_video_upload(
     return video_upload
 
 
-async def get_video_upload_by_id(*, session: AsyncSession, video_upload_id: str) -> VideoUpload | None:
+async def get_video_upload_by_id(
+    *, session: AsyncSession, video_upload_id: str
+) -> VideoUpload | None:
     """Get video upload by ID."""
-    statement = select(VideoUpload).where(VideoUpload.id == video_upload_id)
+    statement = select(VideoUpload).where(
+        VideoUpload.id == video_upload_id  # type: ignore[arg-type]
+    )
     result = await session.execute(statement)
     return result.scalar_one_or_none()
 
@@ -151,15 +151,18 @@ async def get_video_upload(
     """Get all video uploads with pagination."""
     statement = select(VideoUpload).offset(skip).limit(limit)
     result = await session.execute(statement)
-    return result.scalars().all()
+    return list(result.scalars().all())
 
 
 async def update_video_upload(
-    *, session: AsyncSession, db_video_upload: VideoUpload, video_upload_in: VideoUploadUpdate
+    *,
+    session: AsyncSession,
+    db_video_upload: VideoUpload,
+    video_upload_in: VideoUploadUpdate,
 ) -> VideoUpload:
     """Update a video upload entry."""
     update_data = video_upload_in.model_dump(exclude_unset=True)
-    update_data["updated_on"] = datetime.now(datetime.timezone.utc)
+    update_data["updated_on"] = datetime.now(timezone.utc)
 
     # Handle datetime fields
     if "created_on" in update_data:
@@ -174,5 +177,5 @@ async def update_video_upload(
 
 async def delete_video_upload(*, session: AsyncSession, db_video_upload: VideoUpload) -> None:
     """Delete a video upload entry."""
-    session.delete(db_video_upload)
+    await session.delete(db_video_upload)
     await session.commit()

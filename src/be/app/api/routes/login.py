@@ -17,9 +17,12 @@ from app.services.auth_service import AuthService
 
 router = APIRouter(tags=["login"])
 
+
 @router.post("/login/access-token")
 async def login_access_token(
-    *, form_data: Annotated[OAuth2PasswordRequestForm, Depends()], session: AsyncSession = Depends(get_db_session)
+    *,
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    session: AsyncSession = Depends(get_db_session),
 ) -> Token:
     """
     OAuth2 compatible token login, get an access token for future requests
@@ -34,19 +37,19 @@ async def login_access_token(
         raise HTTPException(status_code=400, detail="Inactive user")
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     return Token(
-        access_token=security.create_access_token(
-            user.email, expires_delta=access_token_expires
-        )
+        access_token=security.create_access_token(user.email, expires_delta=access_token_expires)
     )
 
 
 @router.post("/login/idp")
-def logout(current_user: CurrentUser) -> Any:
-    return 0;    
+async def logout(current_user: CurrentUser) -> Message:
+    return Message(message="Logged out via idp")
+
 
 @router.post("/login/clear")
-def logout(current_user: CurrentUser) -> Any:
-    return 0;    
+async def clear_token(current_user: CurrentUser) -> Message:
+    return Message(message="Token cleared")
+
 
 @router.post("/login/test-token", response_model=UserPublic)
 def test_token(current_user: CurrentUser) -> Any:
@@ -82,9 +85,7 @@ async def reset_password(session: SessionDep, body: NewPassword) -> Message:
 
     # Use the service to reset the password
     result = await auth_service.reset_password(
-        token=body.token,
-        new_password=body.new_password,
-        session=session
+        token=body.token, new_password=body.new_password, session=session
     )
 
     # Return the success message
@@ -110,5 +111,5 @@ async def recover_password_html_content(email: str, session: SessionDep) -> Any:
     # Return HTML content
     return HTMLResponse(
         content="Password recovery email sent successfully",
-        headers={"subject:": "Password Recovery"}
+        headers={"subject:": "Password Recovery"},
     )

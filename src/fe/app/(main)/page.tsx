@@ -15,11 +15,11 @@ export default function Home() {
           WELCOME TO THE
         </h1>
         <h1 className="text-4xl md:text-5xl md:pb-4 lg:text-6xl text-white tracking-wider ">
-           APOSTOLIC FAITH CHURCH
-        </h1> 
+          APOSTOLIC FAITH CHURCH
+        </h1>
         <h1 className="text-2xl pt-3 px-10 text-white md:text-3xl lg:text-4xl tracking-wider">
-           Sundays at 11:00 am & 5:00 pm
-        </h1> 
+            Sundays at 11:00 am & 5:00 pm
+        </h1>
       </div>
         <div className="flex gap-8 2xs:justify-center xl:justify-start pt-5 items-center px-3">
           <Link href="/doctrines">

@@ -54,7 +54,7 @@ jobs:
         if: steps.cache-venv.outputs.cache-hit != 'true'
         working-directory: src/be
         run: |
-          poetry install          
+          poetry install
 
       - name: Lint with flake8
         run: |
@@ -110,7 +110,7 @@ jobs:
           key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
           restore-keys: |+
             ${{ runner.os }}-poetry-
-              
+
       - uses: ylemkimon/cache-restore@v2
         with:
           path: ~/.cache/pip

@@ -4,6 +4,7 @@ Standalone tests for MediaRepository using mocks.
 These tests demonstrate how to test repository methods with mock objects
 without requiring environment configuration or database connections.
 """
+
 import uuid
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock
@@ -372,9 +373,7 @@ class TestMediaRepositoryIntegrationScenarios:
         mock_update_result.scalar_one_or_none.return_value = created_media
         mock_async_session.execute = AsyncMock(return_value=mock_update_result)
 
-        updated_media = await repository.update(
-            db_media=created_media, media_in=update_media_in
-        )
+        updated_media = await repository.update(db_media=created_media, media_in=update_media_in)
 
         assert updated_media.name == "Updated Media"
         assert updated_media.updated_on is not None
