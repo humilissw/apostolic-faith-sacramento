@@ -3,6 +3,7 @@ import { Barlow_Condensed, EB_Garamond, Libre_Baskerville, Lora, Merriweather, N
 import "../globals.css";
 import Footer from "@/components/footer";
 import Navbar from "@/components/navbar";
+import { AuthProvider } from "@/context/auth-context";
 
 const roboto = Roboto({
   weight: ['100', '300', '400', '500', '700', '900'],
@@ -71,10 +72,12 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <div className={`${playfair.variable} ${lora.variable} ${libre.variable} ${merriweather.variable} ${noto.variable} ${pt.variable} ${eb.variable} ${barlow_condensed.variable} ${roboto.variable} ${noto_sans.variable} ${work_sans.variable} ${epilogue.variable}`}>
-        <Navbar />
-        <main className="flex-1">{children}</main>
-        <Footer />
-    </div>
+    <AuthProvider>
+      <div className={`${playfair.variable} ${lora.variable} ${libre.variable} ${merriweather.variable} ${noto.variable} ${pt.variable} ${eb.variable} ${barlow_condensed.variable} ${roboto.variable} ${noto_sans.variable} ${work_sans.variable} ${epilogue.variable}`}>
+          <Navbar />
+          <main className="flex-1">{children}</main>
+          <Footer />
+      </div>
+    </AuthProvider>
   )
 }

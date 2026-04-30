@@ -17,6 +17,7 @@ A multi-platform application for the Apostolic Faith Sacramento church, includin
 ### Frontend
 - **Path**: `/src/fe/`
 - **CLAUDE.md**: See [fe/CLAUDE.md](./src/fe/CLAUDE.md)
+- **AGENTS.md**: See [fe/AGENTS.md](./src/fe/AGENTS.md)
 
 ### Mobile
 - **Path**: `/src/mobile/`
@@ -104,11 +105,25 @@ docker-compose logs -f
 docker-compose test
 ```
 
+### Frontend
+```bash
+cd src/fe
+pnpm install
+pnpm dev          # run dev server
+pnpm build        # static export
+pnpm test         # run tests
+pnpm lint         # lint code
+```
+
 ### Testing
 ```bash
 # Backend
 cd src/be
 poetry run pytest
+
+# Frontend
+cd src/fe
+pnpm test
 
 # Full stack
 docker-compose test
