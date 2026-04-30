@@ -27,7 +27,7 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'pnpm dev',
+    command: process.env.CI ? 'bun run dev' : 'pnpm dev',
     port: 3000,
     timeout: 60_000,
     stdout: 'pipe',

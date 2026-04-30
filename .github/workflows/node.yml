@@ -42,7 +42,11 @@ jobs:
     - run: bun install
       # if: steps.cache.outputs.cache-hit != 'true'
       working-directory: src/fe
-    - run: bun test:ci
+    - run: bun run test:ci
+      working-directory: src/fe
+    - name: Install Playwright browsers
+      run: npx playwright install --with-deps chromium
+    - run: npx playwright test
       working-directory: src/fe
     - name: run bun build
       # working-directory: src/fe
