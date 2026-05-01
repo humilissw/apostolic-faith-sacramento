@@ -68,6 +68,7 @@
   },
   "trustedDependencies": [
     "@heroui/shared-utils",
+    "sharp",
     "unrs-resolver"
   ]
 }
