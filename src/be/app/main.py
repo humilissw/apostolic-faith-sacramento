@@ -106,6 +106,9 @@ origins = [
     "http://localhost:8080",
     "http://localhost:3000",
     "https://localhost:3000",
+    "https://pre.afcsacramento.org",
+    "https://afcsacramento.org",
+    "https://www.afcsacramento.org",
 ]
 
 route_prefix = f"/{settings.API_V1_STR}"
