@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-
+from fastapi.middleware.cors import CORSMiddleware
 from app.api.main import api_router
 from app.config import settings
 
@@ -84,12 +84,36 @@ async def main_root(app: FastAPI):
 
 # main_root(app)
 
+# if settings.all_cors_origins:
+#     app.add_middleware(
+#         CORSMiddleware,
+#         allow_origins=settings.all_cors_origins,
+#         allow_credentials=True,
+#         allow_methods=["*"],
+#         allow_headers=["*"],
+#     )
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"/{settings.API_V1_STR}/openapi.json",
     generate_unique_id_function=custom_generate_unique_id,
 )
 
+origins = [
+    "http://localhost.tiangolo.com",
+    "https://localhost.tiangolo.com",
+    "http://localhost",
+    "http://localhost:8080",
+    "http://localhost:3000",
+    "https://localhost:3000",
+]
 
 route_prefix = f"/{settings.API_V1_STR}"
 app.include_router(api_router, prefix=route_prefix)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)

@@ -9,6 +9,7 @@
   },
   "scripts": {
     "dev": "next dev",
+    "https": "next dev --experimental-https --experimental-https-key security_keys/cert_key.pem --experimental-https-cert security_keys/cert.pem --turbopack",
     "build": "next build",
     "start": "next start",
     "test": "jest",
