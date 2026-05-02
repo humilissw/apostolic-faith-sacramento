@@ -1,7 +1,7 @@
 /** @jest-environment jsdom */
 
 import '@testing-library/jest-dom'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { NavSidebar } from '@/components/nav-sidebar'
 
 Object.defineProperty(window, 'matchMedia', {

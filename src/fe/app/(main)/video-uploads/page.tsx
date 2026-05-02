@@ -1,11 +1,15 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import UploadForm from "@/components/upload-form";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://localhost:8000/';
-const API_V1 = 'api/v1';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://localhost:8000/";
+const API_V1 = "api/v1";
 
 interface VideoUpload {
   id: string;
@@ -25,17 +29,11 @@ interface VideoUploadsResponse {
   count: number;
 }
 
-interface SermonCardData {
-  videoUri: string;
-  sermonTitle: string;
-  speaker: string;
-  createDate: string;
-}
-
 export default function VideoUploadsPage() {
   const [videos, setVideos] = useState<VideoUpload[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -48,7 +46,7 @@ export default function VideoUploadsPage() {
         if (!cancelled) setVideos(json.data);
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Unknown error');
+          setError(err instanceof Error ? err.message : "Unknown error");
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -56,18 +54,31 @@ export default function VideoUploadsPage() {
     }
 
     fetchVideos();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const cards: SermonCardData[] = videos.map((v) => ({
-    videoUri: `${API_BASE}${API_V1}${v.download_url}`,
-    sermonTitle: v.upload_name || 'Untitled',
-    speaker: v.speaker_name || 'Unknown',
-    createDate: v.created_on,
-  }));
+  function handleUploadSuccess() {
+    setOpen(false);
+    fetch(`${API_BASE}${API_V1}/video-uploads/`)
+      .then((res) => res.json())
+      .then((json: VideoUploadsResponse) => setVideos(json.data))
+      .catch(() => setError("Failed to refresh after upload"));
+  }
 
-  if (loading) return <div className="flex justify-center items-center min-h-dvh"><p>Loading...</p></div>;
-  if (error) return <div className="flex justify-center items-center min-h-dvh"><p className="text-red-600">{error}</p></div>;
+  if (loading)
+    return (
+      <div className="flex justify-center items-center min-h-dvh">
+        <p>Loading...</p>
+      </div>
+    );
+  if (error)
+    return (
+      <div className="flex justify-center items-center min-h-dvh">
+        <p className="text-red-600">{error}</p>
+      </div>
+    );
 
   return (
     <div className="">
@@ -77,64 +88,57 @@ export default function VideoUploadsPage() {
             Video Uploads
           </h1>
         </div>
-        <div className="flex justify-center pt-20">
-          <h1 className="text-4xl md:text-6xl text-center tracking-wider">Latest Services</h1>
+
+        <div className="flex justify-center px-6 py-8">
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
+              <Button className="font-noto-sans bg-black text-white hover:bg-gray-700 text-lg px-8 py-6">
+                Upload a Video
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className={cn("w-full max-w-lg overflow-y-auto", open ? "sheet-animate-open" : "sheet-animate-close")}>
+              <SheetHeader>
+                <SheetTitle>Upload a Video</SheetTitle>
+              </SheetHeader>
+              <div className="mt-4 pb-6 px-2">
+                <UploadForm onSuccess={handleUploadSuccess} />
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
-        <div className="flex justify-center pt-15">
-          {cards.slice(0, 1).map((data, index) => (
-            <div key={index}>
-              {index === 0 ? (
-                <Link target="_blank" key={index} href={data.videoUri}>
-                  <div className="rounded-xl shadow-xl/20">
-                    <div className="flex xs:h-100 xs:w-60 md:h-75 md:w-150 lg:h-100 lg:w-200">
+
+        {videos.length === 0 ? (
+          <p className="flex justify-center text-gray-500 py-10">No videos uploaded yet.</p>
+        ) : (
+          <div className="flex flex-wrap gap-x-5 gap-y-5 justify-center py-15 sm:px-10 md:px-20 lg:px-40 xl:px-80">
+            {videos.map((v) => (
+              <div key={v.id}>
+                <Link href={v.download_url.startsWith("http") ? v.download_url : `${API_BASE}${API_V1}${v.download_url}`} target="_blank">
+                  <div className="rounded-xl shadow-xl/10">
+                    <div className="flex xs:h-100 xs:w-60 md:h-60 md:w-140">
                       <div className="flex flex-col md:flex-row items-center">
                         <Image
                           src="/sacAFC.jpg"
-                          width={500}
-                          height={500}
-                          alt="Picture of the Apostolic Faith Church"
-                          className="xs:h-50 md:h-75 xs:rounded-t-xl md:rounded-l-xl 2xl:h-100"
+                          width={300}
+                          height={300}
+                          alt="Apostolic Faith Church"
+                          className="h-50 md:h-60 rounded-t-xl md:rounded-l-xl"
                         />
                         <div className="flex flex-col px-5 pt-3 w-full font-medium font-noto-sans">
-                          <h1 className="xs:text-xl md:text-4xl">{data.sermonTitle}</h1>
-                          <h1 className="text-black/40 font-normal">{data.speaker}</h1>
-                          <h1 className="text-black/40 font-normal">{new Date(data.createDate).toLocaleDateString('en-US')}</h1>
+                          <h1 className="text-xl">{v.upload_name || "Untitled"}</h1>
+                          <h1 className="text-black/40 font-normal">{v.speaker_name || "Unknown"}</h1>
+                          <h1 className="text-black/40 font-normal">
+                            {new Date(v.created_on).toLocaleDateString("en-US")}
+                          </h1>
                         </div>
                       </div>
                     </div>
                   </div>
                 </Link>
-              ) : null}
-            </div>
-          ))}
-        </div>
-
-        <div className="flex flex-wrap gap-x-5 gap-y-5 justify-center py-15 sm:px-10 md:px-20 lg:px-40 xl:px-80">
-          {cards.slice(1).map((data, index) => (
-            <div key={index}>
-              <Link href={data.videoUri} target="_blank">
-                <div className="rounded-xl shadow-xl/10">
-                  <div className="flex xs:h-100 xs:w-60 md:h-60 md:w-140">
-                    <div className="flex flex-col md:flex-row items-center">
-                      <Image
-                        src="/sacAFC.jpg"
-                        width={300}
-                        height={300}
-                        alt="Picture of the Apostolic Faith Church"
-                        className="h-50 md:h-60 rounded-t-xl md:rounded-l-xl "
-                      />
-                      <div className="flex flex-col px-5 pt-3 w-full font-medium font-noto-sans">
-                        <h1 className="text-xl">{data.sermonTitle}</h1>
-                        <h1 className="text-black/40 font-normal">{data.speaker}</h1>
-                        <h1 className="text-black/40 font-normal">{new Date(data.createDate).toLocaleDateString('en-US')}</h1>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            </div>
-          ))}
-        </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
