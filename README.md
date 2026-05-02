@@ -1,5 +1,5 @@
-# apostolic-faith-sacramento
 [![Main Workflow (parent triggers others)](https://github.com/humilissw/apostolic-faith-sacramento/actions/workflows/main.yml/badge.svg)](https://github.com/humilissw/apostolic-faith-sacramento/actions/workflows/main.yml)
+# apostolic-faith-sacramento
 
 Mono Repo for AFC Sacramento
 
