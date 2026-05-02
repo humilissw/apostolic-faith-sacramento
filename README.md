@@ -1,5 +1,6 @@
 # apostolic-faith-sacramento
 [![Main Workflow (parent triggers others)](https://github.com/humilissw/apostolic-faith-sacramento/actions/workflows/main.yml/badge.svg)](https://github.com/humilissw/apostolic-faith-sacramento/actions/workflows/main.yml)
+
 Mono Repo for AFC Sacramento
 
 # Generate an SSL-cert
