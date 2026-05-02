@@ -4,7 +4,7 @@
     {
       "name": "Launch via bun",
       "request": "launch",
-      "runtimeArgs": ["dev"],
+      "runtimeArgs": ["dev", "--experimental-https",  "--experimental-https-key",  "${workspaceFolder}/infrastructure/certs/key.pem",  "--experimental-https-cert",  "${workspaceFolder}/infrastructure/certs/cert.pem",  "--turbopack"],
       "runtimeExecutable": "bun",
       "cwd": "${workspaceFolder}/src/fe",
       "skipFiles": ["<node_internals>/**"],
@@ -14,7 +14,7 @@
       "name": "Launch via npm",
       "request": "launch",
       "cwd": "${workspaceFolder}/src/fe",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": ["run", "dev", "--experimental-https",  "--experimental-https-key",  "${workspaceFolder}/infrastructure/certs/key.pem",  "--experimental-https-cert",  "${workspaceFolder}/infrastructure/certs/cert.pem",  "--turbopack"],
       "runtimeExecutable": "npm",
       "skipFiles": ["<node_internals>/**"],
       "type": "node"
@@ -39,8 +39,8 @@
       "args": [
         "app.main:app",
         "--reload",
-        "--ssl-certfile=${workspaceFolder}/infrastructure/certs/cert.pem",
-        "--ssl-keyfile=${workspaceFolder}/infrastructure/certs/key.pem"
+        "--ssl-certfile=${workspaceFolder}/src/be/security_keys/cert.pem",
+        "--ssl-keyfile=${workspaceFolder}/src/be/security_keys/cert_key.pem"
       ],
       "jinja": true
     }

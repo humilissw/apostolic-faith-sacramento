@@ -31,7 +31,7 @@ export default function Navbar() {
     isAuthenticated = auth.isAuthenticated;
     logout = () => {
       auth.logout();
-      window.location.assign("/login/");
+      window.location.assign("/");
     };
   } catch {
     // outside AuthProvider, default to logged out

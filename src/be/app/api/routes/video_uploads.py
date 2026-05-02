@@ -2,7 +2,7 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException, status
 
-from app.api.deps import SessionDep
+from app.api.deps import CurrentUser, SessionDep
 from app.models import Message
 from app.repositories.video_upload_repo import VideoUploadRepository
 from app.requests.video_upload_request import VideoUploadCreate, VideoUploadUpdate
@@ -49,7 +49,7 @@ async def read_video_uploads(session: SessionDep, skip: int = 0, limit: int = 10
             media_association_date=v.media_association_date,
             created_on=v.created_on,
             updated_on=v.updated_on,
-            download_url=f"/video-uploads/{v.id}/download",
+            download_url=v.upload_location,
         )
         for v in video_uploads
     ]
@@ -87,12 +87,16 @@ async def read_video_upload_by_id(video_upload_id: str, session: SessionDep) -> 
 
 @router.post("/", response_model=VideoUploadPublic, status_code=status.HTTP_201_CREATED)
 async def create_video_upload_endpoint(
-    *, session: SessionDep, video_upload_in: VideoUploadCreate
+    *,
+    session: SessionDep,
+    video_upload_in: VideoUploadCreate,
+    current_user: CurrentUser,
 ) -> Any:
     """
     Create new video upload entry.
 
     Adds a new video upload entry to the database.
+    Requires authentication.
     """
     repository = VideoUploadRepository(session=session)
     video_upload = await repository.create(video_upload_in=video_upload_in)
