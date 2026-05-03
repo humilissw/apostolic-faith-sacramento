@@ -50,12 +50,18 @@ class Settings(BaseSettings):
     DOCKER_IMAGE_BACKEND: str
     DOCKER_IMAGE_FRONTEND: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 30
     EMAIL_RESET_TOKEN_EXPIRE_HOURS: int = 1
     emails_enabled: bool = False
     cert_file: str
     cert_key: str
     rsa_pub_key: str
     rsa_private_key: str
+    # OAuth 2.0 settings
+    JWT_ISSUER: str = "apostolic-faith-sacramento"
+    JWT_AUDIENCE: str
+    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: str = ""
 
     @computed_field  # type: ignore[prop-decorator]
     @property

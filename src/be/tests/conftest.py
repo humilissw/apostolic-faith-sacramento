@@ -1,3 +1,6 @@
+import sys
+from unittest.mock import MagicMock
+
 import pytest
 from httpx import ASGITransport
 import httpx
@@ -8,6 +11,23 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy import select, delete
 from app.models import User, UserCreate, Media, VideoUpload
 from app import crud
+
+
+# Fake google module for tests (google-auth is not a project dependency)
+# verify_id_token must return a 2-tuple (credentials, payload) directly, not another MagicMock
+def _fake_verify_id_token(id_token, client_id=None):
+    return (MagicMock(), {"email": "test@example.com", "email_verified": True})
+
+
+_google_auth_jwt = MagicMock()
+_google_auth_jwt.verify_id_token = _fake_verify_id_token
+_google_auth_pkg = MagicMock()
+_google_auth_pkg.jwt = _google_auth_jwt
+_google_pkg = MagicMock()
+_google_pkg.auth = _google_auth_pkg
+sys.modules.setdefault("google", _google_pkg)
+sys.modules.setdefault("google.auth", _google_auth_pkg)
+sys.modules.setdefault("google.auth.jwt", _google_auth_jwt)
 
 
 @pytest.fixture(scope="function")

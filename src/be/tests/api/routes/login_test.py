@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from app.config import settings
 from app.crud import create_user
-from app.models import User, UserCreate
+from app.models import RefreshToken, User, UserCreate
 from app.utils import generate_password_reset_token
 from tests.utils.user import user_authentication_headers
 from tests.utils.utils import random_email, random_lower_string
@@ -19,6 +19,14 @@ async def login_db_session() -> AsyncSession:
     async_engine = create_async_engine(
         str(settings.SQLALCHEMY_ASYNC_DATABASE_URI), echo=False, future=True
     )
+
+    # Create all tables (including RefreshToken) — use sync conn for DDL
+    from sqlmodel import SQLModel
+
+    async with async_engine.connect() as conn:
+        await conn.run_sync(SQLModel.metadata.create_all)
+        await conn.commit()
+
     async_session_maker = async_sessionmaker(
         bind=async_engine,
         expire_on_commit=False,
@@ -104,17 +112,76 @@ async def login_normal_user_token_headers(login_client, login_db_session) -> dic
     return {"Authorization": f"Bearer {tokens['access_token']}"}
 
 
+@pytest.fixture(scope="function")
+async def login_tokens(login_client) -> dict[str, str]:
+    """Get both access and refresh tokens."""
+    login_data = {
+        "username": settings.FIRST_SUPERUSER,
+        "password": settings.FIRST_SUPERUSER_PASSWORD,
+    }
+    r = await login_client.post(
+        f"{settings.API_V1_STR}/login/access-token",
+        data=login_data,
+    )
+    return r.json()
+
+
 @pytest.mark.asyncio
 async def test_get_access_token(login_client) -> None:
     login_data = {
         "username": settings.FIRST_SUPERUSER,
         "password": settings.FIRST_SUPERUSER_PASSWORD,
     }
-    r = await login_client.post(f"{settings.API_V1_STR}/login/access-token", data=login_data)
+    r = await login_client.post(
+        f"{settings.API_V1_STR}/login/access-token",
+        data=login_data,
+    )
     tokens = r.json()
     assert r.status_code == 200
     assert "access_token" in tokens
     assert tokens["access_token"]
+
+
+@pytest.mark.asyncio
+async def test_login_returns_refresh_token(login_client) -> None:
+    login_data = {
+        "username": settings.FIRST_SUPERUSER,
+        "password": settings.FIRST_SUPERUSER_PASSWORD,
+    }
+    r = await login_client.post(
+        f"{settings.API_V1_STR}/login/access-token",
+        data=login_data,
+    )
+    tokens = r.json()
+    assert r.status_code == 200
+    assert "refresh_token" in tokens
+    assert tokens["refresh_token"]
+    assert tokens["token_type"] == "bearer"
+    assert tokens["access_token_expires"] > 0
+    assert tokens["refresh_token_expires"] > 0
+
+
+@pytest.mark.asyncio
+async def test_pkce_challenge(login_client) -> None:
+    """Test that the PKCE challenge endpoint returns valid verifier/challenge."""
+    r = await login_client.post(f"{settings.API_V1_STR}/login/pkce-challenge")
+    assert r.status_code == 200
+    data = r.json()
+    assert "code_verifier" in data
+    assert "code_challenge" in data
+    assert data["code_challenge_method"] == "S256"
+
+    # Verify S256: challenge = base64url(sha256(verifier))
+    import base64
+    import hashlib
+
+    verifier = data["code_verifier"]
+    expected = (
+        base64.urlsafe_b64encode(hashlib.sha256(verifier.encode("ascii")).digest())
+        .rstrip(b"=")
+        .decode("ascii")
+    )
+    assert data["code_challenge"] == expected
 
 
 @pytest.mark.asyncio
@@ -123,7 +190,10 @@ async def test_get_access_token_incorrect_password(login_client) -> None:
         "username": settings.FIRST_SUPERUSER,
         "password": "incorrect",
     }
-    r = await login_client.post(f"{settings.API_V1_STR}/login/access-token", data=login_data)
+    r = await login_client.post(
+        f"{settings.API_V1_STR}/login/access-token",
+        data=login_data,
+    )
     assert r.status_code == 400
 
 
@@ -136,6 +206,54 @@ async def test_use_access_token(login_client, login_superuser_token_headers) -> 
     result = r.json()
     assert r.status_code == 200
     assert "email" in result
+
+
+@pytest.mark.asyncio
+async def test_refresh_token(login_client, login_tokens) -> None:
+    """Test that a refresh token can be used to get a new access token."""
+    refresh = login_tokens["refresh_token"]
+    r = await login_client.post(
+        f"{settings.API_V1_STR}/login/refresh-token",
+        json={"refresh_token": refresh},
+    )
+    assert r.status_code == 200
+    result = r.json()
+    assert "access_token" in result
+    assert result["token_type"] == "bearer"
+    assert result["access_token_expires"] > 0
+
+
+@pytest.mark.asyncio
+async def test_refresh_token_revoked(login_client, login_db_session, login_tokens) -> None:
+    """Test that a revoked refresh token is rejected."""
+    refresh = login_tokens["refresh_token"]
+
+    # Revoke the refresh token
+    result = await login_db_session.execute(
+        select(RefreshToken).where(RefreshToken.token == refresh)
+    )
+    stored = result.scalar_one_or_none()
+    if stored:
+        stored.revoked = True
+        await login_db_session.commit()
+
+    r = await login_client.post(
+        f"{settings.API_V1_STR}/login/refresh-token",
+        json={"refresh_token": refresh},
+    )
+    assert r.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_revoke_token(login_client, login_tokens, login_superuser_token_headers) -> None:
+    """Test that a token can be revoked."""
+    r = await login_client.post(
+        f"{settings.API_V1_STR}/login/revoke-token",
+        headers=login_superuser_token_headers,
+        json={"token": login_tokens["refresh_token"]},
+    )
+    assert r.status_code == 200
+    assert r.json()["message"] == "Refresh token revoked"
 
 
 @pytest.mark.asyncio
