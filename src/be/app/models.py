@@ -57,13 +57,13 @@ class UpdatePassword(SQLModel):
 # Database model, database table inferred from class name
 class User(UserBase, table=True):
     __tablename__ = "users"
-    id: str = Field(default_factory=uuid.uuid4, max_length=36, primary_key=True)
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), max_length=36, primary_key=True)
     hashed_password: str = Field(max_length=4000)
     created_on: datetime.datetime = Field(
         default=datetime.datetime.now(datetime.timezone.utc), nullable=False
     )
     updated_on: datetime.datetime | None = Field(nullable=True, default=None)
-    new_id: str = Field(default_factory=uuid.uuid4, max_length=36, exclude=True)
+    new_id: str = Field(default_factory=lambda: str(uuid.uuid4()), max_length=36, exclude=True)
     # items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
 
 
@@ -101,7 +101,9 @@ class ItemUpdate(ItemBase):
 class Item(ItemBase, table=True):
     __tablename__ = "items"
     id: int | None = Field(primary_key=True, default=None)
-    owner_id: str | None = Field(default_factory=uuid.uuid4, max_length=36, nullable=False)
+    owner_id: str | None = Field(
+        default_factory=lambda: str(uuid.uuid4()), max_length=36, nullable=False
+    )
     created_on: datetime.datetime | None = Field(
         default=datetime.datetime.now(datetime.timezone.utc), nullable=False
     )
@@ -154,7 +156,7 @@ class NewPassword(SQLModel):
 # Refresh token storage model
 class RefreshToken(SQLModel, table=True):
     __tablename__ = "refresh_tokens"
-    id: str = Field(default_factory=uuid.uuid4, primary_key=True, max_length=36)
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True, max_length=36)
     user_id: str = Field(nullable=False)
     token: str = Field(max_length=4000, nullable=False, unique=True)
     revoked: bool = Field(default=False)
