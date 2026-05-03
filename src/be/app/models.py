@@ -56,8 +56,8 @@ class UpdatePassword(SQLModel):
 
 # Database model, database table inferred from class name
 class User(UserBase, table=True):
-    id: int | None = Field(default=None, primary_key=True)
-    new_id: str = Field(default_factory=uuid.uuid4, max_length=36)
+    __tablename__ = "users"
+    id: str = Field(default_factory=uuid.uuid4, max_length=36, primary_key=True)
     hashed_password: str = Field(max_length=4000)
     created_on: datetime.datetime = Field(
         default=datetime.datetime.now(datetime.timezone.utc), nullable=False
@@ -98,9 +98,9 @@ class ItemUpdate(ItemBase):
 
 # Database model, database table inferred from class name
 class Item(ItemBase, table=True):
+    __tablename__ = "items"
     id: int | None = Field(primary_key=True, default=None)
-    owner_id: int = Field()
-    new_owner_id: str | None = Field(default_factory=uuid.uuid4, max_length=36, nullable=False)
+    owner_id: str | None = Field(default_factory=uuid.uuid4, max_length=36, nullable=False)
     created_on: datetime.datetime | None = Field(
         default=datetime.datetime.now(datetime.timezone.utc), nullable=False
     )
@@ -152,6 +152,7 @@ class NewPassword(SQLModel):
 
 # Refresh token storage model
 class RefreshToken(SQLModel, table=True):
+    __tablename__ = "refresh_tokens"
     id: str = Field(default_factory=uuid.uuid4, primary_key=True, max_length=36)
     user_id: int = Field(nullable=False)
     token: str = Field(max_length=4000, nullable=False, unique=True)
@@ -177,6 +178,7 @@ class RevokeTokenRequest(SQLModel):
 
 
 class Media(SQLModel, table=True):
+    __tablename__ = "media"
     id: str = Field(default_factory=uuid.uuid4, primary_key=True, max_length=36)
     name: str = Field(max_length=200)
     uploaded_on: datetime.datetime
@@ -201,6 +203,7 @@ class DefaultBase(SQLModel):
 
 
 class Member(DefaultBase, table=True):
+    __tablename__ = "members"
     first_name: str = Field(max_length=200, nullable=False)
     last_name: str = Field(max_length=200, nullable=False)
     birthday: datetime.datetime = Field(nullable=False)
@@ -209,6 +212,7 @@ class Member(DefaultBase, table=True):
 
 
 class ChurchService(DefaultBase, table=True):
+    __tablename__ = "church_services"
     service_date: datetime.datetime = Field(nullable=False)
     speaker: str = Field(max_length=200, nullable=True)
     service_title: Optional[str] = Field(max_length=200, nullable=True)
@@ -218,6 +222,7 @@ class ChurchService(DefaultBase, table=True):
 
 
 class VideoUpload(DefaultBase, table=True):
+    __tablename__ = "video_uploads"
     upload_location: str = Field(max_length=1000)
     upload_name: str = Field(max_length=1000)
     media_association_date: datetime.datetime = Field(nullable=False)
@@ -238,6 +243,7 @@ class VideoUploadRequest(BaseModel):
 
 
 class Announcement(DefaultBase, table=True):
+    __tablename__ = "announcements"
     sender: str = Field(max_length=200)
     recipients: str = Field(max_length=4000)
     message: str = Field(max_length=4000)
