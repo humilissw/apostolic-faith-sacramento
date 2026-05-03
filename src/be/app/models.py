@@ -250,3 +250,103 @@ class Announcement(DefaultBase, table=True):
     sender: str = Field(max_length=200)
     recipients: str = Field(max_length=4000)
     message: str = Field(max_length=4000)
+
+
+# Payment / Donation models
+
+
+class Payment(DefaultBase, table=True):
+    __tablename__ = "payments"
+    amount_cents: int = Field(nullable=False)
+    currency: str = Field(default="usd", max_length=3)
+    status: str = Field(default="pending", max_length=20)  # pending, succeeded, failed, refunded
+    stripe_payment_intent_id: str = Field(max_length=255, nullable=False, unique=True)
+    stripe_subscription_id: str | None = Field(default=None, max_length=255)
+    donor_email: str | None = Field(default=None, max_length=255)
+    donor_name: str | None = Field(default=None, max_length=255)
+    receipt_url: str | None = Field(default=None, max_length=1000)
+    metadata_json: str | None = Field(default=None, max_length=4000)
+
+
+class DonationConfig(DefaultBase, table=True):
+    __tablename__ = "donation_configs"
+    label: str = Field(max_length=100)
+    amount_cents: int = Field(nullable=False)
+    is_default: bool = Field(default=False)
+    frequency: str = Field(max_length=20)  # one_time or recurring
+
+
+# Third-party integration configuration models
+
+
+class IntegrationConfigBase(SQLModel):
+    """Shared properties for integration configs."""
+
+    type: str = Field(max_length=50)
+    display_name: str = Field(max_length=100)
+    icon: str = Field(default="Plug", max_length=50)
+    enabled: bool = False
+    status: str = Field(default="disconnected", max_length=20)
+
+
+class IntegrationConfigCreate(IntegrationConfigBase):
+    """Properties to receive via API on creation."""
+
+    config_json: str | None = Field(default=None, max_length=4000)
+    credentials: dict[str, str] = Field(default_factory=dict)
+
+
+class IntegrationConfigUpdate(SQLModel):
+    """Properties to receive via API on update (all optional)."""
+
+    display_name: str | None = Field(default=None, max_length=100)
+    icon: str | None = Field(default=None, max_length=50)
+    enabled: bool | None = None
+    status: str | None = Field(default=None, max_length=20)
+    config_json: str | None = Field(default=None, max_length=4000)
+
+
+class IntegrationConfigPublic(IntegrationConfigBase):
+    """Properties to return via API (credentials stripped)."""
+
+    id: str
+    created_on: datetime.datetime
+    updated_on: datetime.datetime | None
+    config_json: str | None = Field(default=None, max_length=4000)
+
+
+class IntegrationConfigPublicWithCreds(IntegrationConfigPublic):
+    """Integration config with masked credential fields."""
+
+    credential_fields: dict[str, str] = Field(default_factory=dict)
+
+
+class IntegrationsPublic(SQLModel):
+    """Paginated list of integration configs."""
+
+    data: list[IntegrationConfigPublic]
+    count: int
+
+
+class TestConnectionResponse(SQLModel):
+    """Response from testing a third-party connection."""
+
+    success: bool
+    status: str
+    message: str = ""
+
+
+class IntegrationConfig(DefaultBase, table=True):
+    """Third-party integration configuration with encrypted credentials."""
+
+    __tablename__ = "integration_configs"
+    type: str = Field(max_length=50, unique=True)
+    display_name: str = Field(max_length=100)
+    icon: str = Field(default="Plug", max_length=50)
+    enabled: bool = Field(default=False)
+    status: str = Field(default="disconnected", max_length=20)
+    last_synced_at: datetime.datetime | None = Field(default=None, nullable=True)
+    config_json: str | None = Field(default=None, max_length=4000)
+    cred_key_id: str | None = Field(default=None, max_length=100)
+    cred_encrypted_iv: str | None = Field(default=None, max_length=255)
+    cred_encrypted_blob: str | None = Field(default=None, max_length=4000)

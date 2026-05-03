@@ -28,6 +28,9 @@ export default function Home() {
           <Link href="https://www.youtube.com/@ApostolicFaithSacramento/streams">
               <Button className=" border-white bg-white/70 hover:text-white text-zinc-900" size="default" variant="default">Latest Sermon</Button>
           </Link>
+          <Link href="/donate/">
+              <Button className=" border-white bg-green-600/80 hover:bg-green-700 text-white" size="default" variant="default">Donate</Button>
+          </Link>
 
         </div>
         <div className="pt-10">

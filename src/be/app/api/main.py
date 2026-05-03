@@ -5,10 +5,12 @@ from app.api.routes import (
     church_services,
     google,
     health,
+    integrations,
     items,
     login,
     media,
     members,
+    payments,
     private,
     users,
     utils,
@@ -28,6 +30,8 @@ api_router.include_router(members.router)
 api_router.include_router(video_uploads.router)
 api_router.include_router(announcements.router)
 api_router.include_router(google.router)
+api_router.include_router(payments.router)
+api_router.include_router(integrations.router)
 
 
 if settings.ENVIRONMENT == "local":

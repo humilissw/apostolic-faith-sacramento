@@ -28,6 +28,17 @@ import { useSidebar } from "@/components/ui/sidebar"
 import { useAuth } from "@/context/auth-context"
 import { Button } from "./ui/button"
 
+function getIsSuperuser(): boolean {
+  try {
+    const token = localStorage.getItem("auth_token");
+    if (!token) return false;
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload?.is_superuser === true;
+  } catch {
+    return false;
+  }
+}
+
 const data = {
   navMain: [
     {
@@ -75,6 +86,15 @@ const data = {
       ],
     },
     {
+      title: "Donate",
+      url: "/donate/",
+      target: "_self",
+      empty: true,
+      items: [
+
+      ],
+    },
+    {
       title: "Contact Us",
       url: "/contact/",
       target: "_self",
@@ -89,10 +109,12 @@ const data = {
 export function NavSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   let isAuthenticated = false;
+  let isSuperuser = false;
   let logout = () => {};
   try {
     const auth = useAuth();
     isAuthenticated = auth.isAuthenticated;
+    isSuperuser = getIsSuperuser();
     logout = () => {
       auth.logout();
       window.location.assign("/");
@@ -126,6 +148,18 @@ export function NavSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 className="group/label font-normal text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-2xl"
               >
                 <Link onClick={toggleSidebar} href="/video-uploads/">Video Uploads</Link>
+              </SidebarGroupLabel>
+            </SidebarGroup>
+          </Collapsible>
+        )}
+        {isAuthenticated && isSuperuser && (
+          <Collapsible key="integrations" className="group/collapsible">
+            <SidebarGroup>
+              <SidebarGroupLabel
+                asChild
+                className="group/label font-normal text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-2xl"
+              >
+                <Link onClick={toggleSidebar} href="/integrations/">Integrations</Link>
               </SidebarGroupLabel>
             </SidebarGroup>
           </Collapsible>
