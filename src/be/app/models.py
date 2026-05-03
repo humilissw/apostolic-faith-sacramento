@@ -131,17 +131,49 @@ class Message(SQLModel):
 # JSON payload containing access token
 class Token(SQLModel):
     access_token: str = Field(default=None, min_length=8, max_length=4000)
+    refresh_token: str = Field(default=None, min_length=8, max_length=4000)
     token_type: str = "bearer"
+    access_token_expires: int = Field(default=0)
+    refresh_token_expires: int = Field(default=0)
 
 
 # Contents of JWT token
 class TokenPayload(SQLModel):
     sub: str | None = None
+    iss: str | None = None
+    aud: str | None = None
+    jti: str | None = None
 
 
 class NewPassword(SQLModel):
     token: str = Field(max_length=4000)
     new_password: str = Field(min_length=8, max_length=128)
+
+
+# Refresh token storage model
+class RefreshToken(SQLModel, table=True):
+    id: str = Field(default_factory=uuid.uuid4, primary_key=True, max_length=36)
+    user_id: int = Field(nullable=False)
+    token: str = Field(max_length=4000, nullable=False, unique=True)
+    revoked: bool = Field(default=False)
+    expires_at: datetime.datetime = Field(nullable=False)
+    created_on: datetime.datetime = Field(
+        default=datetime.datetime.now(datetime.timezone.utc), nullable=False
+    )
+
+
+class UpdateTokenResponse(SQLModel):
+    access_token: str = Field(min_length=8, max_length=4000)
+    token_type: str = "bearer"
+    access_token_expires: int = Field(default=0)
+
+
+class TokenRefresh(SQLModel):
+    refresh_token: str = Field(min_length=8, max_length=4000)
+
+
+class RevokeTokenRequest(SQLModel):
+    token: str = Field(min_length=8, max_length=4000)
 
 
 class Media(SQLModel, table=True):

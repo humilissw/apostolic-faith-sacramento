@@ -34,22 +34,19 @@ SyncSessionDep = Annotated[Session, Depends(get_sync_db_session)]
 
 
 async def get_current_user(session: SessionDep, token: TokenDep) -> User:
-    header_data = jwt.get_unverified_header(token)
+    """Validate JWT token and return the current user.
 
-    if header_data["alg"] != security.ALGORITHM:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Could not validate credentials",
-        )
-
+    Security fixes:
+    - Hardcodes RS256 algorithm to prevent algorithm confusion attacks
+    - Verifies iss and aud claims to prevent token confusion across services
+    """
     try:
         payload = jwt.decode(
             token,
             security.PUBLIC_KEY,
-            algorithms=[
-                header_data["alg"],
-            ],
-            # algorithms=[security.ALGORITHM]
+            algorithms=[security.ALGORITHM],
+            audience=settings.JWT_AUDIENCE,
+            issuer=settings.JWT_ISSUER,
         )
         token_data = TokenPayload(**payload)
     except (InvalidTokenError, ValidationError):
@@ -58,7 +55,6 @@ async def get_current_user(session: SessionDep, token: TokenDep) -> User:
             detail="Could not validate credentials",
         )
     statement = select(User).where(User.email == token_data.sub)
-    print(statement)
     db_user_result = await session.execute(statement)
     db_user = db_user_result.scalar()
     if db_user is None:

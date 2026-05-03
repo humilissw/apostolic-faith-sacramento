@@ -137,6 +137,11 @@ prepend_sys_path = [
 # executable = "ruff"
 # options = "check --fix REVISION_SCRIPT_FILENAME"
 
+# Ruff linter configuration
+[tool.ruff.lint.per-file-ignores]
+"app/api/routes/login.py" = ["E712"]
+"app/api/routes/google.py" = ["E712"]
+
 # Bandit security linter configuration
 [tool.bandit]
 skips = [
@@ -148,4 +153,5 @@ skips = [
     "B603",  # subprocess_without_shell - needed for setup_poetry.py
     "B607",  # process_beginning_with_partial_path - needed for setup_poetry.py
     "B311",  # random - fine for test code
+    "B110",  # try_except_pass - intentional pass for graceful fallback
 ]

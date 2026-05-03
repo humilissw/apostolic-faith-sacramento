@@ -5,6 +5,7 @@ import { useAuth } from "@/context/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { fetchWithAuth } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://localhost:8000/";
 const API_V1 = "api/v1";
@@ -30,21 +31,24 @@ export default function UploadVideosPage() {
     setSuccess(false);
 
     try {
-      const res = await fetch(`${API_BASE}${API_V1}/video-uploads/`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+      const res = await fetchWithAuth(
+        `${API_BASE}${API_V1}/video-uploads/`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            upload_location: uploadLocation,
+            upload_name: uploadName,
+            media_association_date: mediaDate,
+            ...(speakerName && { speaker_name: speakerName }),
+            ...(referenceText && { reference_text: referenceText }),
+            ...(description && { description }),
+          }),
         },
-        body: JSON.stringify({
-          upload_location: uploadLocation,
-          upload_name: uploadName,
-          media_association_date: mediaDate,
-          ...(speakerName && { speaker_name: speakerName }),
-          ...(referenceText && { reference_text: referenceText }),
-          ...(description && { description }),
-        }),
-      });
+      );
 
       if (!res.ok) {
         const body = await res.text();
