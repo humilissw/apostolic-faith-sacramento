@@ -148,7 +148,7 @@ async def register_user(session: SessionDep, user_in: UserRegister) -> Any:
 
 
 @router.get("/{user_id}", response_model=UserPublic)
-async def read_user_by_id(user_id: int, session: SessionDep, current_user: CurrentUser) -> Any:
+async def read_user_by_id(user_id: str, session: SessionDep, current_user: CurrentUser) -> Any:
     """
     Get a specific user by id.
     """
@@ -172,7 +172,7 @@ async def read_user_by_id(user_id: int, session: SessionDep, current_user: Curre
 async def update_user(
     *,
     session: SessionDep,
-    user_id: int,
+    user_id: str,
     user_in: UserUpdate,
 ) -> Any:
     """
@@ -195,7 +195,7 @@ async def update_user(
 
 
 @router.delete("/{user_id}", dependencies=[Depends(get_current_active_superuser)])
-async def delete_user(session: SessionDep, current_user: CurrentUser, user_id: int) -> Message:
+async def delete_user(session: SessionDep, current_user: CurrentUser, user_id: str) -> Message:
     """
     Delete a user.
     """

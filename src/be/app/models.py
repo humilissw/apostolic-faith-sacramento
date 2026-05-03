@@ -63,6 +63,7 @@ class User(UserBase, table=True):
         default=datetime.datetime.now(datetime.timezone.utc), nullable=False
     )
     updated_on: datetime.datetime | None = Field(nullable=True, default=None)
+    new_id: str = Field(default_factory=uuid.uuid4, max_length=36, exclude=True)
     # items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
 
 
@@ -111,7 +112,7 @@ class Item(ItemBase, table=True):
 # Properties to return via API, id is always required
 class ItemPublic(ItemBase):
     id: int
-    owner_id: int
+    owner_id: str
 
 
 class ItemsPublic(SQLModel):
@@ -154,7 +155,7 @@ class NewPassword(SQLModel):
 class RefreshToken(SQLModel, table=True):
     __tablename__ = "refresh_tokens"
     id: str = Field(default_factory=uuid.uuid4, primary_key=True, max_length=36)
-    user_id: int = Field(nullable=False)
+    user_id: str = Field(nullable=False)
     token: str = Field(max_length=4000, nullable=False, unique=True)
     revoked: bool = Field(default=False)
     expires_at: datetime.datetime = Field(nullable=False)
