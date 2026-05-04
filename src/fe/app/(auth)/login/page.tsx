@@ -25,8 +25,8 @@ export default function LoginForm() {
     setError("");
 
     try {
-      const res = await apiLogin(email, password);
-      login(res.access_token, res.refresh_token);
+      const res = await apiLogin(email, password, ["api:all"]);
+      login(res.access_token, res.refresh_token, res.scopes);
       window.location.assign("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");

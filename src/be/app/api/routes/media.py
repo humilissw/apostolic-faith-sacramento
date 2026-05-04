@@ -3,7 +3,7 @@ from typing import Any
 from app.services.media_service import MediaService
 from fastapi import APIRouter, HTTPException, status
 
-from app.api.deps import SessionDep
+from app.api.deps import SessionDep, require_scope
 from app.models import Message
 from app.repositories.media_repo import MediaRepository
 from app.requests.media_request import MediaCreate, MediaUpdate
@@ -26,7 +26,11 @@ async def get_readiness() -> str:
     return "Ready"
 
 
-@router.get("/", response_model=MediasPublic)
+@router.get(
+    "/",
+    response_model=MediasPublic,
+    dependencies=[require_scope("api:all")],
+)
 async def read_media(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
     """
     Retrieve all media entries.
@@ -52,7 +56,11 @@ async def read_media(session: SessionDep, skip: int = 0, limit: int = 100) -> An
     return {"data": media_data, "count": total_count}
 
 
-@router.get("/{media_id}", response_model=MediaPublic)
+@router.get(
+    "/{media_id}",
+    response_model=MediaPublic,
+    dependencies=[require_scope("api:all")],
+)
 async def read_media_by_id(media_id: str, session: SessionDep) -> Any:
     """
     Get media by ID.
@@ -76,7 +84,12 @@ async def read_media_by_id(media_id: str, session: SessionDep) -> Any:
     )
 
 
-@router.post("/", response_model=MediaPublic, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/",
+    response_model=MediaPublic,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[require_scope("api:all")],
+)
 async def create_media_endpoint(*, session: SessionDep, media_in: MediaCreate) -> Any:
     """
     Create new media entry.
@@ -94,7 +107,11 @@ async def create_media_endpoint(*, session: SessionDep, media_in: MediaCreate) -
     )
 
 
-@router.patch("/{media_id}", response_model=MediaPublic)
+@router.patch(
+    "/{media_id}",
+    response_model=MediaPublic,
+    dependencies=[require_scope("api:all")],
+)
 async def update_media_endpoint(
     *,
     session: SessionDep,
@@ -124,7 +141,11 @@ async def update_media_endpoint(
     )
 
 
-@router.delete("/{media_id}", response_model=Message)
+@router.delete(
+    "/{media_id}",
+    response_model=Message,
+    dependencies=[require_scope("api:all")],
+)
 async def delete_media_endpoint(media_id: str, session: SessionDep) -> Any:
     """
     Delete a media entry.

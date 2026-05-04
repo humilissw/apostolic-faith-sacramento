@@ -3,7 +3,7 @@
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
 
-from app.api.deps import CurrentUser, SessionDep
+from app.api.deps import CurrentUser, SessionDep, require_scope
 from app.models import IntegrationConfig, Message
 from app.repositories.integration_repo import IntegrationConfigRepository
 from app.requests.integration_request import (
@@ -38,7 +38,11 @@ def _mask_credentials(creds: dict[str, str] | None) -> dict[str, str]:
     }
 
 
-@router.get("/", response_model=IntegrationsPublic)
+@router.get(
+    "/",
+    response_model=IntegrationsPublic,
+    dependencies=[require_scope("integrations:admin")],
+)
 async def list_integrations(
     session: SessionDep,
     current_user: CurrentUser,
@@ -63,7 +67,11 @@ async def get_integrations_status(session: SessionDep) -> dict:
     return {i.type: {"enabled": i.enabled, "status": i.status} for i in integrations}
 
 
-@router.get("/{integration_id}", response_model=IntegrationConfigPublicWithCreds)
+@router.get(
+    "/{integration_id}",
+    response_model=IntegrationConfigPublicWithCreds,
+    dependencies=[require_scope("integrations:admin")],
+)
 async def get_integration(
     integration_id: str,
     session: SessionDep,
@@ -83,7 +91,10 @@ async def get_integration(
 
 
 @router.post(
-    "/", response_model=IntegrationConfigPublicWithCreds, status_code=status.HTTP_201_CREATED
+    "/",
+    response_model=IntegrationConfigPublicWithCreds,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[require_scope("integrations:admin")],
 )
 async def create_integration(
     integration_in: IntegrationCreate,
@@ -122,7 +133,11 @@ async def create_integration(
     )
 
 
-@router.put("/{integration_id}", response_model=IntegrationConfigPublicWithCreds)
+@router.put(
+    "/{integration_id}",
+    response_model=IntegrationConfigPublicWithCreds,
+    dependencies=[require_scope("integrations:admin")],
+)
 async def update_integration(
     integration_id: str,
     integration_in: IntegrationUpdate,
@@ -145,7 +160,11 @@ async def update_integration(
     )
 
 
-@router.patch("/{integration_id}/credentials", response_model=IntegrationConfigPublicWithCreds)
+@router.patch(
+    "/{integration_id}/credentials",
+    response_model=IntegrationConfigPublicWithCreds,
+    dependencies=[require_scope("integrations:admin")],
+)
 async def update_credentials(
     integration_id: str,
     cred_in: CredentialUpdate,
@@ -166,7 +185,11 @@ async def update_credentials(
     )
 
 
-@router.delete("/{integration_id}", response_model=Message)
+@router.delete(
+    "/{integration_id}",
+    response_model=Message,
+    dependencies=[require_scope("integrations:admin")],
+)
 async def delete_integration(
     integration_id: str,
     session: SessionDep,
@@ -182,7 +205,11 @@ async def delete_integration(
     return Message(message="Integration deleted")
 
 
-@router.post("/test-connection", response_model=TestConnectionResponse)
+@router.post(
+    "/test-connection",
+    response_model=TestConnectionResponse,
+    dependencies=[require_scope("integrations:admin")],
+)
 async def test_connection(
     test_in: TestConnectionRequest,
     session: SessionDep,
@@ -203,7 +230,11 @@ async def test_connection(
     return TestConnectionResponse(**result)
 
 
-@router.post("/sync-status/{integration_id}", response_model=IntegrationConfigPublic)
+@router.post(
+    "/sync-status/{integration_id}",
+    response_model=IntegrationConfigPublic,
+    dependencies=[require_scope("integrations:admin")],
+)
 async def sync_status(
     integration_id: str,
     session: SessionDep,
@@ -219,7 +250,11 @@ async def sync_status(
     return IntegrationConfigPublic.model_validate(updated)
 
 
-@router.post("/pre-seed", response_model=IntegrationsPublic)
+@router.post(
+    "/pre-seed",
+    response_model=IntegrationsPublic,
+    dependencies=[require_scope("integrations:admin")],
+)
 async def pre_seed_integrations(
     session: SessionDep,
     current_user: CurrentUser,

@@ -6,6 +6,7 @@ from fastapi.responses import RedirectResponse
 from app.api.deps import CurrentUser, SessionDep
 from app.config import settings
 from app.core import security
+from app.core.scopes import Scope
 from app.models import Message, RefreshToken, UserCreate
 from app.repositories.user_repo import UserRepository
 from sqlalchemy import update as sa_update
@@ -140,10 +141,12 @@ async def auth_via_google(
             detail="Inactive user",
         )
 
-    # Issue our own tokens
+    # Issue our own tokens (superusers get all scopes)
+    user_scopes = [s.value for s in Scope] if user.is_superuser else ["api:all"]
     access_token, access_expires = security.create_access_token_with_claims(
         user.email,
         timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
+        scopes=user_scopes,
     )
     refresh_token_str, refresh_expires = security.create_refresh_token_with_expiry(
         timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),

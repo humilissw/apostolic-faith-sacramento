@@ -7,6 +7,7 @@ export interface LoginResponse {
   token_type: string;
   access_token_expires: number;
   refresh_token_expires: number;
+  scopes: string[];
 }
 
 export interface PkceChallenge {
@@ -19,6 +20,7 @@ export interface UpdateTokenResponse {
   access_token: string;
   token_type: string;
   access_token_expires: number;
+  scopes: string[];
 }
 
 // --- PKCE helpers ---
@@ -88,14 +90,29 @@ export function clearRefreshToken(): void {
 export function clearAllTokens(): void {
   clearAuthToken();
   clearRefreshToken();
+  removeStoredToken("auth_scopes");
+}
+
+export function getScopesFromToken(token: string): string[] {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return (payload.scopes as string[]) || [];
+  } catch {
+    return [];
+  }
 }
 
 // --- API functions ---
 
-export async function login(email: string, password: string): Promise<LoginResponse> {
+export async function login(
+  email: string,
+  password: string,
+  scopes: string[] = ["api:all"],
+): Promise<LoginResponse> {
   const formData = new URLSearchParams();
   formData.append("username", email);
   formData.append("password", password);
+  formData.append("scope", scopes.join(" "));
 
   const res = await fetch(`${API_BASE}${API_V1}/login/access-token`, {
     method: "POST",
@@ -162,7 +179,14 @@ export async function fetchWithAuth(
   options: RequestInit = {},
   maxRetries: number = 1,
 ): Promise<Response> {
-  let response = await fetch(url, options);
+  const token = getAuthToken();
+  const existingHeaders = { ...(options.headers as Record<string, string> || {}) };
+  const headers = token
+    ? { ...existingHeaders, Authorization: `Bearer ${token}` }
+    : existingHeaders;
+  const newOptions: RequestInit = { ...options, headers };
+
+  let response = await fetch(url, newOptions);
 
   // Retry once on 401 (access token expired) by refreshing
   if (response.status === 401 && maxRetries > 0) {
@@ -172,16 +196,9 @@ export async function fetchWithAuth(
         const refreshed = await refreshToken(currentRefreshToken);
         setAuthToken(refreshed.access_token);
 
-        // Clone headers and update Authorization with new token
-        const newHeaders = { ...options.headers } as Record<string, string>;
-        if (newHeaders["Authorization"]) {
-          newHeaders["Authorization"] = `Bearer ${refreshed.access_token}`;
-        }
-        const newOptions: RequestInit = {
-          ...options,
-          headers: newHeaders,
-        };
-        response = await fetch(url, newOptions);
+        const newHeaders = { ...headers, Authorization: `Bearer ${refreshed.access_token}` };
+        const newOpts: RequestInit = { ...newOptions, headers: newHeaders };
+        response = await fetch(url, newOpts);
       } catch {
         // Refresh failed — user will be redirected to login by the context
       }

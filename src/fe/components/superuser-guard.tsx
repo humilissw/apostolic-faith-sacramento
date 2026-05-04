@@ -8,10 +8,13 @@ interface SuperuserGuardProps {
   children: React.ReactNode;
 }
 
-function decodeJwtPayload(token: string): { is_superuser?: boolean } | null {
+function decodeJwtPayload(token: string): { is_superuser?: boolean; scopes?: string[] } | null {
   try {
     const payload = JSON.parse(atob(token.split(".")[1]));
-    return { is_superuser: payload?.is_superuser };
+    return {
+      is_superuser: payload?.is_superuser,
+      scopes: payload?.scopes as string[] | undefined,
+    };
   } catch {
     return null;
   }

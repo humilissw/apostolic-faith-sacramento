@@ -7,6 +7,7 @@ from app.api.deps import (
     CurrentUser,
     SessionDep,
     get_current_active_superuser,
+    require_scope,
 )
 from app.config import settings
 from app.core.security import verify_password, get_password_hash
@@ -68,7 +69,11 @@ async def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
     return user
 
 
-@router.patch("/me", response_model=UserPublic)
+@router.patch(
+    "/me",
+    response_model=UserPublic,
+    dependencies=[require_scope("api:all")],
+)
 async def update_user_me(
     *, session: SessionDep, user_in: UserUpdateMe, current_user: CurrentUser
 ) -> Any:
@@ -89,7 +94,11 @@ async def update_user_me(
     return current_user
 
 
-@router.patch("/me/password", response_model=Message)
+@router.patch(
+    "/me/password",
+    response_model=Message,
+    dependencies=[require_scope("api:all")],
+)
 async def update_password_me(
     *, session: SessionDep, body: UpdatePassword, current_user: CurrentUser
 ) -> Any:
@@ -109,7 +118,11 @@ async def update_password_me(
     return Message(message="Password updated successfully")
 
 
-@router.get("/me", response_model=UserPublic)
+@router.get(
+    "/me",
+    response_model=UserPublic,
+    dependencies=[require_scope("api:all")],
+)
 def read_user_me(current_user: CurrentUser) -> Any:
     """
     Get current user.
@@ -117,7 +130,11 @@ def read_user_me(current_user: CurrentUser) -> Any:
     return current_user
 
 
-@router.delete("/me", response_model=Message)
+@router.delete(
+    "/me",
+    response_model=Message,
+    dependencies=[require_scope("api:all")],
+)
 async def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
     """
     Delete own user.
@@ -147,7 +164,11 @@ async def register_user(session: SessionDep, user_in: UserRegister) -> Any:
     return user
 
 
-@router.get("/{user_id}", response_model=UserPublic)
+@router.get(
+    "/{user_id}",
+    response_model=UserPublic,
+    dependencies=[require_scope("api:all")],
+)
 async def read_user_by_id(user_id: str, session: SessionDep, current_user: CurrentUser) -> Any:
     """
     Get a specific user by id.

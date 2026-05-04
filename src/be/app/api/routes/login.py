@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import CurrentUser, SessionDep, get_current_active_superuser, get_current_user
 from app.core import security
+from app.core.scopes import Scope
 from app.config import settings
 from app.core.db import get_db_session
 from app.core.security import verify_password
@@ -64,9 +65,17 @@ async def login_access_token(
     elif not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
 
+    # Resolve scopes: superusers get all, regular users get requested scopes
+    requested_scopes = form_data.scopes if form_data.scopes else ["api:all"]
+    if user.is_superuser:
+        token_scopes = [s.value for s in Scope]
+    else:
+        token_scopes = requested_scopes
+
     access_token, access_expires = security.create_access_token_with_claims(
         user.email,
         timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
+        scopes=token_scopes,
     )
     refresh_token, refresh_expires = security.create_refresh_token_with_expiry(
         timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
@@ -87,6 +96,7 @@ async def login_access_token(
         token_type="bearer",
         access_token_expires=access_expires,
         refresh_token_expires=int((refresh_expires - datetime.now(timezone.utc)).total_seconds()),
+        scopes=token_scopes,
     )
 
 
@@ -139,10 +149,12 @@ async def refresh_token(
     stored.revoked = True
     await session.commit()
 
-    # Issue new access token
+    # Issue new access token (superusers get all scopes, regular users get api:all)
+    new_scopes = [s.value for s in Scope] if user.is_superuser else ["api:all"]
     new_access_token, new_expires = security.create_access_token_with_claims(
         user.email,
         timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
+        scopes=new_scopes,
     )
 
     # Issue new refresh token
@@ -161,6 +173,7 @@ async def refresh_token(
         access_token=new_access_token,
         token_type="bearer",
         access_token_expires=new_expires,
+        scopes=new_scopes,
     )
 
 

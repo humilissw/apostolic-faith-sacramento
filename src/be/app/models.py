@@ -138,6 +138,7 @@ class Token(SQLModel):
     token_type: str = "bearer"
     access_token_expires: int = Field(default=0)
     refresh_token_expires: int = Field(default=0)
+    scopes: list[str] = Field(default_factory=list)
 
 
 # Contents of JWT token
@@ -146,6 +147,7 @@ class TokenPayload(SQLModel):
     iss: str | None = None
     aud: str | None = None
     jti: str | None = None
+    scopes: list[str] | None = None
 
 
 class NewPassword(SQLModel):
@@ -170,6 +172,7 @@ class UpdateTokenResponse(SQLModel):
     access_token: str = Field(min_length=8, max_length=4000)
     token_type: str = "bearer"
     access_token_expires: int = Field(default=0)
+    scopes: list[str] = Field(default_factory=list)
 
 
 class TokenRefresh(SQLModel):

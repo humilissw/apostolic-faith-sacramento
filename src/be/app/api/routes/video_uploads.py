@@ -2,7 +2,7 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException, status
 
-from app.api.deps import CurrentUser, SessionDep
+from app.api.deps import CurrentUser, SessionDep, require_scope
 from app.models import Message
 from app.repositories.video_upload_repo import VideoUploadRepository
 from app.requests.video_upload_request import VideoUploadCreate, VideoUploadUpdate
@@ -27,7 +27,11 @@ async def readiness_check() -> str:
     return "Ready"
 
 
-@router.get("/", response_model=VideoUploadsPublic)
+@router.get(
+    "/",
+    response_model=VideoUploadsPublic,
+    dependencies=[require_scope("video_uploads:read")],
+)
 async def read_video_uploads(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
     """
     Retrieve all video uploads.
@@ -57,7 +61,11 @@ async def read_video_uploads(session: SessionDep, skip: int = 0, limit: int = 10
     return VideoUploadsPublic(data=video_upload_data, count=total_count)
 
 
-@router.get("/{video_upload_id}", response_model=VideoUploadPublic)
+@router.get(
+    "/{video_upload_id}",
+    response_model=VideoUploadPublic,
+    dependencies=[require_scope("video_uploads:read")],
+)
 async def read_video_upload_by_id(video_upload_id: str, session: SessionDep) -> Any:
     """
     Get video upload by ID.
@@ -85,7 +93,12 @@ async def read_video_upload_by_id(video_upload_id: str, session: SessionDep) -> 
     )
 
 
-@router.post("/", response_model=VideoUploadPublic, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/",
+    response_model=VideoUploadPublic,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[require_scope("video_uploads:write")],
+)
 async def create_video_upload_endpoint(
     *,
     session: SessionDep,
@@ -113,7 +126,11 @@ async def create_video_upload_endpoint(
     )
 
 
-@router.patch("/{video_upload_id}", response_model=VideoUploadPublic)
+@router.patch(
+    "/{video_upload_id}",
+    response_model=VideoUploadPublic,
+    dependencies=[require_scope("video_uploads:write")],
+)
 async def update_video_upload_endpoint(
     *,
     session: SessionDep,
@@ -149,7 +166,11 @@ async def update_video_upload_endpoint(
     )
 
 
-@router.delete("/{video_upload_id}", response_model=Message)
+@router.delete(
+    "/{video_upload_id}",
+    response_model=Message,
+    dependencies=[require_scope("video_uploads:delete")],
+)
 async def delete_video_upload_endpoint(video_upload_id: str, session: SessionDep) -> Any:
     """
     Delete a video upload entry.

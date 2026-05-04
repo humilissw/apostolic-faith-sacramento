@@ -21,11 +21,13 @@ import {
 
 interface AuthContextValue {
   token: string | null;
+  scopes: string[];
   isAuthenticated: boolean;
   isLoadingToken: boolean;
-  login: (access_token: string, refresh_token: string) => void;
+  login: (access_token: string, refresh_token: string, scopes?: string[]) => void;
   logout: () => Promise<void>;
   refreshAccessToken: () => Promise<void>;
+  hasScope: (requiredScope: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -38,11 +40,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoadingToken, setIsLoadingToken] = useState(true);
   const retryCount = useRef(0);
 
+  const scopes = useMemo(() => {
+    const stored = localStorage.getItem("auth_scopes");
+    return stored ? JSON.parse(stored) : [];
+  }, [token]);
+
   const isAuthenticated = token !== null;
 
-  const login = useCallback((access_token: string, refresh_token: string) => {
+  const login = useCallback((access_token: string, refresh_token: string, scopesInput?: string[]) => {
     setAuthToken(access_token);
     setRefreshToken(refresh_token);
+    const storedScopes = scopesInput || ["api:all"];
+    localStorage.setItem("auth_scopes", JSON.stringify(storedScopes));
     setToken(access_token);
     retryCount.current = 0;
   }, []);
@@ -90,6 +99,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(null);
   }, []);
 
+  const hasScope = useCallback(
+    (requiredScope: string) => {
+      if (scopes.includes("api:all")) return true;
+      if (scopes.includes(requiredScope)) return true;
+      try {
+        const t = getAuthToken();
+        if (t) {
+          const payload = JSON.parse(atob(t.split(".")[1]));
+          if (payload.is_superuser) return true;
+        }
+      } catch {
+        // ignore
+      }
+      return false;
+    },
+    [scopes],
+  );
+
   const value = useMemo(
     () => ({
       token,
@@ -98,8 +125,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       login,
       logout,
       refreshAccessToken,
+    hasScope,
     }),
-    [token, isAuthenticated, isLoadingToken, login, logout, refreshAccessToken],
+    [token, isAuthenticated, isLoadingToken, login, logout, refreshAccessToken, scopes, hasScope],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
