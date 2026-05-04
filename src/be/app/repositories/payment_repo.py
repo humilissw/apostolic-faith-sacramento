@@ -23,14 +23,14 @@ class PaymentRepository:
     async def get_by_id(self, payment_id: str) -> Payment | None:
         statement = select(Payment).where(Payment.id == payment_id)  # type: ignore[arg-type]
         result = await self.session.execute(statement)
-        return result.scalar_one_or_none()
+        return result.scalar_one_or_none()  # type: ignore[no-any-return]
 
     async def get_by_stripe_intent(self, stripe_intent_id: str) -> Payment | None:
         statement = select(Payment).where(
             Payment.stripe_payment_intent_id == stripe_intent_id  # type: ignore[arg-type]
         )
         result = await self.session.execute(statement)
-        return result.scalar_one_or_none()
+        return result.scalar_one_or_none()  # type: ignore[no-any-return]
 
     async def get_all(self, skip: int = 0, limit: int = 100) -> tuple[list[Payment], int]:
         count_statement = select(Payment)

@@ -4,27 +4,18 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
 
-import {
-  clearAllTokens,
-  getAuthToken,
-  getRefreshToken,
-  revokeToken,
-  setAuthToken,
-  setRefreshToken,
-  refreshToken as apiRefreshToken,
-} from "@/lib/api";
+import { isAuthenticated, logout as apiLogout, refreshToken as apiRefreshToken } from "@/lib/api";
 
 interface AuthContextValue {
-  token: string | null;
-  scopes: string[];
   isAuthenticated: boolean;
   isLoadingToken: boolean;
-  login: (access_token: string, refresh_token: string, scopes?: string[]) => void;
+  login: () => void;
   logout: () => Promise<void>;
   refreshAccessToken: () => Promise<void>;
   hasScope: (requiredScope: string) => boolean;
@@ -36,31 +27,27 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 let pendingRefresh: Promise<void> | null = null;
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [token, setToken] = useState<string | null>(() => getAuthToken());
   const [isLoadingToken, setIsLoadingToken] = useState(true);
+  const [tokenExpiry, setTokenExpiry] = useState<number | null>(null);
   const retryCount = useRef(0);
 
-  const scopes = useMemo(() => {
-    const stored = localStorage.getItem("auth_scopes");
-    return stored ? JSON.parse(stored) : [];
-  }, [token]);
+  // Authenticated if there's an auth cookie AND (either has a valid expiry or expiry hasn't been set yet, meaning the user just loaded the page)
+  const isAuthenticatedState = document.cookie.includes("access_token=") && (tokenExpiry === null || tokenExpiry > Date.now());
 
-  const isAuthenticated = token !== null;
-
-  const login = useCallback((access_token: string, refresh_token: string, scopesInput?: string[]) => {
-    setAuthToken(access_token);
-    setRefreshToken(refresh_token);
-    const storedScopes = scopesInput || ["api:all"];
-    localStorage.setItem("auth_scopes", JSON.stringify(storedScopes));
-    setToken(access_token);
+  const login = useCallback(() => {
+    // Cookies are set by the backend login endpoint.
+    // Just need to set an initial expiry estimate (client doesn't have the exact value).
+    // The actual auth state is validated by the backend on each request.
+    setTokenExpiry(Date.now() + 600 * 1000); // 10 min default estimate
     retryCount.current = 0;
   }, []);
 
   const refreshAccessToken = useCallback(async () => {
-    const currentRefreshToken = getRefreshToken();
+    // Read refresh token from cookie
+    const match = document.cookie.match(/refresh_token=([^;]+)/);
+    const currentRefreshToken = match ? match[1] : null;
     if (!currentRefreshToken) {
-      setToken(null);
-      clearAllTokens();
+      setTokenExpiry(null);
       return;
     }
 
@@ -71,15 +58,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const response = await apiRefreshToken(currentRefreshToken);
-      setAuthToken(response.access_token);
-      setToken(response.access_token);
-      // The response doesn't include a new refresh token (server issues one)
-      // We keep the existing refresh_token; the server handles rotation
+      setTokenExpiry(Date.now() + response.access_token_expires * 1000);
       retryCount.current = 0;
     } catch {
-      // Refresh failed — revoke and clear
-      clearAllTokens();
-      setToken(null);
+      setTokenExpiry(null);
       throw new Error("Session expired. Please log in again.");
     } finally {
       pendingRefresh = null;
@@ -87,47 +69,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    const currentToken = getAuthToken();
-    const currentRefresh = getRefreshToken();
-    // Fire-and-forget revoke (don't block the UI)
-    if (currentRefresh) {
-      revokeToken(currentRefresh).catch(() => {});
-    } else if (currentToken) {
-      revokeToken(currentToken).catch(() => {});
-    }
-    clearAllTokens();
-    setToken(null);
+    // Call backend logout to revoke tokens and clear cookies
+    await apiLogout().catch(() => {});
+    setTokenExpiry(null);
+    document.cookie = "auth_scopes=; max-age=0; path=/";
+  }, []);
+
+  const scopes = useMemo(() => {
+    const stored = localStorage.getItem("auth_scopes");
+    return stored ? JSON.parse(stored) : [];
   }, []);
 
   const hasScope = useCallback(
     (requiredScope: string) => {
+      // Client-side scope check is approximate — the backend is the source of truth.
+      // Superusers bypass scope checks entirely.
       if (scopes.includes("api:all")) return true;
-      if (scopes.includes(requiredScope)) return true;
-      try {
-        const t = getAuthToken();
-        if (t) {
-          const payload = JSON.parse(atob(t.split(".")[1]));
-          if (payload.is_superuser) return true;
-        }
-      } catch {
-        // ignore
-      }
-      return false;
+      return scopes.includes(requiredScope);
     },
     [scopes],
   );
 
+  // Check auth state on mount
+  useEffect(() => {
+    setIsLoadingToken(false);
+  }, []);
+
   const value = useMemo(
     () => ({
-      token,
-      isAuthenticated,
+      isAuthenticated: isAuthenticatedState,
       isLoadingToken,
       login,
       logout,
       refreshAccessToken,
-    hasScope,
+      hasScope,
     }),
-    [token, isAuthenticated, isLoadingToken, login, logout, refreshAccessToken, scopes, hasScope],
+    [isAuthenticatedState, isLoadingToken, login, logout, refreshAccessToken, hasScope],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

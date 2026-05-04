@@ -61,6 +61,11 @@ async def db_session() -> AsyncSession:
         except Exception:
             await session.rollback()
 
+        # Reset rate limiter to avoid 429s across tests
+        from app.core.rate_limiter import reset_rate_limit
+
+        reset_rate_limit()
+
         yield session
     finally:
         await session.close()

@@ -15,7 +15,6 @@ jest.mock('@/lib/api', () => ({
     checkout_url: 'https://checkout.stripe.com/test',
   }),
   fetchDonationConfigs: jest.fn().mockResolvedValue([]),
-  getAuthToken: jest.fn(() => null),
 }))
 
 jest.mock('@stripe/stripe-js', () => ({

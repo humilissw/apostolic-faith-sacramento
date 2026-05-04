@@ -72,6 +72,7 @@ export default function Navbar() {
                     <NavigationMenuLink asChild>
                       <Link
                         target="_blank"
+                        rel="noopener noreferrer"
                         href="https://www.youtube.com/@ApostolicFaithSacramento/streams"
                       >
                         Sermons
@@ -80,6 +81,7 @@ export default function Navbar() {
                     <NavigationMenuLink asChild>
                       <Link
                         target="_blank"
+                        rel="noopener noreferrer"
                         href="https://www.apostolicfaith.org/library/this-weeks-lessons"
                       >
                         Sunday School Lessons
@@ -88,6 +90,7 @@ export default function Navbar() {
                     <NavigationMenuLink asChild>
                       <Link
                         target="_blank"
+                        rel="noopener noreferrer"
                         href="https://www.apostolicfaith.org/apostolic-faith-magazine"
                       >
                         Apostolic Faith Magazine

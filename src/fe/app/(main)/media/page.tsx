@@ -55,7 +55,7 @@ export default function Media() {
           {videoData.slice(0, 1).map((data: sermonData, index) => (
             <div key={index}>
               {index == 0 ? (
-                <Link target="_blank" key={index} href={data.videoUri}>
+                <Link target="_blank" rel="noopener noreferrer" key={index} href={data.videoUri}>
                   <div className="rounded-xl shadow-xl/20">
                     <div className="flex xs:h-100 xs:w-60 md:h-75 md:w-150 lg:h-100 lg:w-200">
                       <div className="flex flex-col md:flex-row items-center">
@@ -93,7 +93,7 @@ export default function Media() {
         <div className="flex flex-wrap gap-x-5 gap-y-5 justify-center py-15 sm:px-10 md:px-20 lg:px-40 xl:px-80">
           {videoData.slice(1).map((data: sermonData, index) => (
             <div key={index}>
-              <Link href={data.videoUri} target="_blank">
+              <Link href={data.videoUri} target="_blank" rel="noopener noreferrer">
                 <div className="rounded-xl shadow-xl/10">
                   <div className="flex xs:h-100 xs:w-60 md:h-60 md:w-140">
                     <div className="flex flex-col md:flex-row items-center">

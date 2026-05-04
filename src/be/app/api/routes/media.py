@@ -3,12 +3,12 @@ from typing import Any
 from app.services.media_service import MediaService
 from fastapi import APIRouter, HTTPException, status
 
-from app.api.deps import SessionDep, require_scope
+from app.api.deps import CurrentUser, SessionDep, require_scope
+from app.crud import create_media
 from app.models import Message
 from app.repositories.media_repo import MediaRepository
 from app.requests.media_request import MediaCreate, MediaUpdate
 from app.responses.media_response import MediaPublic, MediasPublic
-
 
 router = APIRouter(prefix="/media", tags=["media"])
 media_service = MediaService()
@@ -90,14 +90,15 @@ async def read_media_by_id(media_id: str, session: SessionDep) -> Any:
     status_code=status.HTTP_201_CREATED,
     dependencies=[require_scope("api:all")],
 )
-async def create_media_endpoint(*, session: SessionDep, media_in: MediaCreate) -> Any:
+async def create_media_endpoint(
+    *, session: SessionDep, current_user: CurrentUser, media_in: MediaCreate
+) -> Any:
     """
     Create new media entry.
 
     Adds a new media entry to the database.
     """
-    repository = MediaRepository(session=session)
-    media = await repository.create(media_in=media_in)
+    media = await create_media(session=session, media_in=media_in, owner_id=current_user.id)
     return MediaPublic(
         id=media.id,
         name=media.name,
@@ -115,13 +116,14 @@ async def create_media_endpoint(*, session: SessionDep, media_in: MediaCreate) -
 async def update_media_endpoint(
     *,
     session: SessionDep,
+    current_user: CurrentUser,
     media_id: str,
     media_in: MediaUpdate,
 ) -> Any:
     """
     Update a media entry.
 
-    Updates an existing media entry by ID.
+    Updates an existing media entry by ID. Requires ownership.
     """
     repository = MediaRepository(session=session)
     media = await repository.get_by_id(media_id=media_id)
@@ -129,6 +131,11 @@ async def update_media_endpoint(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Media not found",
+        )
+    if current_user.id != media.owner_id and not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to update this media",
         )
 
     media = await repository.update(db_media=media, media_in=media_in)
@@ -146,11 +153,13 @@ async def update_media_endpoint(
     response_model=Message,
     dependencies=[require_scope("api:all")],
 )
-async def delete_media_endpoint(media_id: str, session: SessionDep) -> Any:
+async def delete_media_endpoint(
+    media_id: str, session: SessionDep, current_user: CurrentUser
+) -> Any:
     """
     Delete a media entry.
 
-    Deletes a media entry by ID.
+    Deletes a media entry by ID. Requires ownership.
     """
     repository = MediaRepository(session=session)
     media = await repository.get_by_id(media_id=media_id)
@@ -158,6 +167,11 @@ async def delete_media_endpoint(media_id: str, session: SessionDep) -> Any:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Media not found",
+        )
+    if current_user.id != media.owner_id and not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to delete this media",
         )
 
     await repository.delete(db_media=media)

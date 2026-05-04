@@ -1,11 +1,12 @@
-import * as React from "react"
-import { ChevronRight } from "lucide-react"
+import * as React from "react";
+import { ChevronRight } from "lucide-react";
+import { useState, useEffect } from "react";
 
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible"
+} from "@/components/ui/collapsible";
 
 import {
   Sidebar,
@@ -19,25 +20,16 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
-import CustomSidebarTrigger from "@/components/custom-sidebar-trigger"
-import Link from "next/link"
+import CustomSidebarTrigger from "@/components/custom-sidebar-trigger";
+import Link from "next/link";
 
-import { useSidebar } from "@/components/ui/sidebar"
-import { useAuth } from "@/context/auth-context"
-import { Button } from "./ui/button"
+import { useSidebar } from "@/components/ui/sidebar";
+import { useAuth } from "@/context/auth-context";
+import { Button } from "./ui/button";
 
-function getIsSuperuser(): boolean {
-  try {
-    const token = localStorage.getItem("auth_token");
-    if (!token) return false;
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    return payload?.is_superuser === true;
-  } catch {
-    return false;
-  }
-}
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://localhost:8000/";
 
 const data = {
   navMain: [
@@ -62,17 +54,17 @@ const data = {
         {
           title: "Sermons",
           url: "https://www.youtube.com/@ApostolicFaithSacramento/streams",
-          target: "_blank"
+          target: "_blank",
         },
         {
           title: "Sunday School Lessons",
           url: "https://www.apostolicfaith.org/library/this-weeks-lessons",
-          target: "_blank"
+          target: "_blank",
         },
         {
           title: "Apostolic Faith Magazine",
           url: "https://www.apostolicfaith.org/apostolic-faith-magazine",
-          target: "_blank"
+          target: "_blank",
         },
       ],
     },
@@ -81,62 +73,50 @@ const data = {
       url: "/media/",
       target: "_self",
       empty: true,
-      items: [
-
-      ],
+      items: [],
     },
     {
       title: "Donate",
       url: "/donate/",
       target: "_self",
       empty: true,
-      items: [
-
-      ],
+      items: [],
     },
     {
       title: "Contact Us",
       url: "/contact/",
       target: "_self",
       empty: true,
-      items: [
-
-      ],
+      items: [],
     },
   ],
-}
+};
 
-export function NavSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+function NavSidebarContent({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { isAuthenticated, logout } = useAuth();
+  const [isSuperuser, setIsSuperuser] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  let isAuthenticated = false;
-  let isSuperuser = false;
-  let logout = () => {};
-  try {
-    const auth = useAuth();
-    isAuthenticated = auth.isAuthenticated;
-    isSuperuser = getIsSuperuser();
-    logout = () => {
-      auth.logout();
-      window.location.assign("/");
-    };
-  } catch {
-    // outside AuthProvider, default to logged out
-  }
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setIsSuperuser(false);
+      setLoading(false);
+      return;
+    }
+    setLoading(false);
+    // Fetch superuser status from backend
+    fetch(`${API_BASE}/api/v1/auth/me`, { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((data) => setIsSuperuser(data.is_superuser))
+      .catch(() => setIsSuperuser(false));
+  }, [isAuthenticated]);
 
-  const {
-    state,
-    open,
-    setOpen,
-    openMobile,
-    setOpenMobile,
-    isMobile,
-    toggleSidebar,
-  } = useSidebar()
+  if (loading) return null;
 
   return (
-  <Sidebar className="" side="right" {...props}>
+    <Sidebar className="" side="right" {...props}>
       <SidebarHeader className="items-end">
-        <CustomSidebarTrigger state={true}/>
+        <CustomSidebarTrigger state={true} />
       </SidebarHeader>
 
       <SidebarContent className="pl-3">
@@ -147,7 +127,7 @@ export function NavSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 asChild
                 className="group/label font-normal text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-2xl"
               >
-                <Link onClick={toggleSidebar} href="/video-uploads/">Video Uploads</Link>
+                <Link href="/video-uploads/">Video Uploads</Link>
               </SidebarGroupLabel>
             </SidebarGroup>
           </Collapsible>
@@ -159,7 +139,7 @@ export function NavSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 asChild
                 className="group/label font-normal text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-2xl"
               >
-                <Link onClick={toggleSidebar} href="/integrations/">Integrations</Link>
+                <Link href="/integrations/">Integrations</Link>
               </SidebarGroupLabel>
             </SidebarGroup>
           </Collapsible>
@@ -176,11 +156,14 @@ export function NavSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 asChild
                 className="group/label font-normal text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-2xl"
               >
-
-                {item.empty ? <Link onClick={toggleSidebar} href={item.url}>{item.title}</Link> :
-                <CollapsibleTrigger className="">
-                  {item.title} <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90"/>
-                </CollapsibleTrigger>}
+                {item.empty ? (
+                  <Link href={item.url}>{item.title}</Link>
+                ) : (
+                  <CollapsibleTrigger className="">
+                    {item.title}{" "}
+                    <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                  </CollapsibleTrigger>
+                )}
               </SidebarGroupLabel>
               <CollapsibleContent className="pl-5 pt-3">
                 <SidebarGroupContent>
@@ -188,38 +171,53 @@ export function NavSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     {item.items.map((item) => (
                       <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton className="text-xl" asChild>
-                          <Link target={item.target} href={item.url} onClick={toggleSidebar}>{item.title}</Link>
+                          <Link target={item.target} href={item.url}>
+                            {item.title}
+                          </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
-
                     ))}
                   </SidebarMenu>
-
                 </SidebarGroupContent>
-
               </CollapsibleContent>
-
             </SidebarGroup>
-
           </Collapsible>
-
         ))}
-
       </SidebarContent>
 
       <SidebarFooter className="items-end mr-2 mb-2">
         {isAuthenticated ? (
-          <Button className="font-noto-sans bg-black text-white hover:bg-gray-700" size="default" variant="default" onClick={() => logout()}>Logout</Button>
+          <Button
+            className="font-noto-sans bg-black text-white hover:bg-gray-700"
+            size="default"
+            variant="default"
+            onClick={() => logout()}
+          >
+            Logout
+          </Button>
         ) : (
           <Link href="/login/">
-            <Button className="font-noto-sans bg-black text-white hover:bg-gray-700" size="default" variant="default">Login</Button>
+            <Button
+              className="font-noto-sans bg-black text-white hover:bg-gray-700"
+              size="default"
+              variant="default"
+            >
+              Login
+            </Button>
           </Link>
         )}
       </SidebarFooter>
 
       <SidebarRail />
-
     </Sidebar>
+  );
+}
 
-  )
+export function NavSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  // Render null outside AuthProvider
+  try {
+    return <NavSidebarContent {...props} />;
+  } catch {
+    return <Sidebar className="" side="right" {...props} />;
+  }
 }

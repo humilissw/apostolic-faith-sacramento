@@ -14,7 +14,7 @@ class IntegrationConfigRepository:
         self.session.add(config)
         await self.session.commit()
         await self.session.refresh(config)
-        return config
+        return config  # type: ignore[no-any-return]
 
     async def get_by_id(self, id: str) -> IntegrationConfig | None:
         statement = select(IntegrationConfig).where(IntegrationConfig.id == id)

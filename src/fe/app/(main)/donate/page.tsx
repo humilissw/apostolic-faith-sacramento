@@ -1,9 +1,15 @@
+"use client";
+
 import DonationForm from "@/components/donation-form";
 import DonationHistory from "@/components/donation-history";
-import { getAuthToken } from "@/lib/api";
+
+function getCookie(name: string): string | null {
+  const match = document.cookie.match("(^| )" + name + "=([^;]+)");
+  return match ? decodeURIComponent(match[2]) : null;
+}
 
 export default function DonatePage() {
-  const isAuthenticated = getAuthToken() !== null;
+  const isAuthenticated = getCookie("access_token") !== null;
 
   return (
     <div className="container mx-auto py-12">

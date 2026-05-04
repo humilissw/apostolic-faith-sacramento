@@ -247,7 +247,7 @@ async def sync_status(
         raise HTTPException(status_code=404, detail="Integration not found")
 
     updated = await service.sync_status(integration, "connected")
-    return IntegrationConfigPublic.model_validate(updated)
+    return IntegrationConfigPublic.model_validate(updated)  # type: ignore[no-any-return]
 
 
 @router.post(

@@ -46,63 +46,13 @@ export async function generatePkceChallenge(): Promise<PkceChallenge> {
   return { code_verifier, code_challenge, code_challenge_method: "S256" };
 }
 
-// --- Token storage ---
+// --- Auth state detection (cookies are the source of truth) ---
 
-function getStoredToken(key: string): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem(key);
+function hasAuthCookie(): boolean {
+  return document.cookie.includes("access_token=");
 }
 
-function setStoredToken(key: string, value: string): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(key, value);
-}
-
-function removeStoredToken(key: string): void {
-  if (typeof window === "undefined") return;
-  localStorage.removeItem(key);
-}
-
-export function getAuthToken(): string | null {
-  return getStoredToken("auth_token");
-}
-
-export function getRefreshToken(): string | null {
-  return getStoredToken("refresh_token");
-}
-
-export function setAuthToken(token: string): void {
-  setStoredToken("auth_token", token);
-}
-
-export function setRefreshToken(token: string): void {
-  setStoredToken("refresh_token", token);
-}
-
-export function clearAuthToken(): void {
-  removeStoredToken("auth_token");
-}
-
-export function clearRefreshToken(): void {
-  removeStoredToken("refresh_token");
-}
-
-export function clearAllTokens(): void {
-  clearAuthToken();
-  clearRefreshToken();
-  removeStoredToken("auth_scopes");
-}
-
-export function getScopesFromToken(token: string): string[] {
-  try {
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    return (payload.scopes as string[]) || [];
-  } catch {
-    return [];
-  }
-}
-
-// --- API functions ---
+// --- Login API ---
 
 export async function login(
   email: string,
@@ -116,6 +66,7 @@ export async function login(
 
   const res = await fetch(`${API_BASE}${API_V1}/login/access-token`, {
     method: "POST",
+    credentials: "include",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: formData,
   });
@@ -128,9 +79,12 @@ export async function login(
   return res.json();
 }
 
+// --- Token refresh ---
+
 export async function refreshToken(refresh_token: string): Promise<UpdateTokenResponse> {
   const res = await fetch(`${API_BASE}${API_V1}/login/refresh-token`, {
     method: "POST",
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ refresh_token }),
   });
@@ -143,9 +97,20 @@ export async function refreshToken(refresh_token: string): Promise<UpdateTokenRe
   return res.json();
 }
 
+export async function logout(): Promise<void> {
+  const res = await fetch(`${API_BASE}${API_V1}/login/logout`, {
+    method: "POST",
+    credentials: "include",
+  });
+  if (!res.ok) {
+    // Don't throw on logout failure — clear locally regardless
+  }
+}
+
 export async function revokeToken(token: string): Promise<void> {
   const res = await fetch(`${API_BASE}${API_V1}/login/revoke-token`, {
     method: "POST",
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ token }),
   });
@@ -172,33 +137,30 @@ export function googleLoginUrl(code_challenge: string): string {
   return `${API_BASE}${API_V1}/google/login/google?code_challenge=${encodeURIComponent(code_challenge)}&code_challenge_method=S256`;
 }
 
-// --- Auth-aware fetch ---
+// --- Auth-aware fetch (cookies auto-sent via credentials: "include") ---
 
 export async function fetchWithAuth(
   url: string,
   options: RequestInit = {},
   maxRetries: number = 1,
 ): Promise<Response> {
-  const token = getAuthToken();
-  const existingHeaders = { ...(options.headers as Record<string, string> || {}) };
-  const headers = token
-    ? { ...existingHeaders, Authorization: `Bearer ${token}` }
-    : existingHeaders;
-  const newOptions: RequestInit = { ...options, headers };
+  const newOptions: RequestInit = { ...options, credentials: "include" };
 
   let response = await fetch(url, newOptions);
 
   // Retry once on 401 (access token expired) by refreshing
   if (response.status === 401 && maxRetries > 0) {
-    const currentRefreshToken = getRefreshToken();
+    // The backend reads the refresh token from cookies in get_current_user
+    // We need the client to send the refresh_token in the body though.
+    // Read from cookie since httpOnly cookie can't be read by JS.
+    // Use the refresh_token cookie value from the response of a /me call.
+    const currentRefreshToken = getRefreshTokenFromCookie();
     if (currentRefreshToken) {
       try {
         const refreshed = await refreshToken(currentRefreshToken);
-        setAuthToken(refreshed.access_token);
-
-        const newHeaders = { ...headers, Authorization: `Bearer ${refreshed.access_token}` };
-        const newOpts: RequestInit = { ...newOptions, headers: newHeaders };
-        response = await fetch(url, newOpts);
+        // Cookies are updated by the backend refresh endpoint automatically
+        // Retry with fresh cookies
+        response = await fetch(url, { ...newOptions, credentials: "include" });
       } catch {
         // Refresh failed — user will be redirected to login by the context
       }
@@ -206,6 +168,18 @@ export async function fetchWithAuth(
   }
 
   return response;
+}
+
+// Helper to read refresh token from cookie (for the refresh flow only)
+function getRefreshTokenFromCookie(): string | null {
+  const match = document.cookie.match(/refresh_token=([^;]+)/);
+  return match ? match[1] : null;
+}
+
+// --- Check if user is authenticated ---
+
+export function isAuthenticated(): boolean {
+  return hasAuthCookie();
 }
 
 // --- Payment / Donation API functions ---
@@ -255,6 +229,7 @@ export interface PaymentRecord {
 export async function createPaymentIntent(data: DonationFormData): Promise<PaymentIntentResult> {
   const res = await fetch(`${API_BASE}${API_V1}/payments/create-intent`, {
     method: "POST",
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
@@ -270,6 +245,7 @@ export async function createPaymentIntent(data: DonationFormData): Promise<Payme
 export async function createSubscription(data: DonationFormData): Promise<CheckoutSessionResult> {
   const res = await fetch(`${API_BASE}${API_V1}/payments/create-subscription`, {
     method: "POST",
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });

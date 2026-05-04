@@ -32,7 +32,7 @@ class TestMediaRepositoryCreate:
         mock_result.scalar_one_or_none.return_value = None
 
         # Execute create
-        media = await repository.create(media_in=media_in)
+        media = await repository.create(media_in=media_in, owner_id=str(uuid.uuid4()))
 
         # Verify the media was created
         assert media is not None
@@ -62,7 +62,7 @@ class TestMediaRepositoryCreate:
         mock_execute = AsyncMock(return_value=mock_result)
         mock_async_session.execute = mock_execute
 
-        media = await repository.create(media_in=media_in)
+        media = await repository.create(media_in=media_in, owner_id=str(uuid.uuid4()))
 
         assert media.name == long_name
         assert mock_async_session.commit.called
@@ -78,7 +78,7 @@ class TestMediaRepositoryCreate:
         mock_async_session.execute = mock_execute
 
         # Should not raise, but will be handled by SQLModel validation
-        media = await repository.create(media_in=media_in)
+        media = await repository.create(media_in=media_in, owner_id=str(uuid.uuid4()))
 
         assert media.name == ""
 
@@ -96,6 +96,7 @@ class TestMediaRepositoryGetById:
         mock_media = Media(
             id=str(test_id),
             name="Existing Media",
+            owner_id=str(uuid.uuid4()),
             uploaded_on=datetime.now(timezone.utc),
             created_on=datetime.now(timezone.utc),
             updated_on=datetime.now(timezone.utc),
@@ -420,6 +421,7 @@ class TestMediaRepositoryDelete:
         mock_media = Media(
             id=str(test_id),
             name="To Be Deleted",
+            owner_id=str(uuid.uuid4()),
             uploaded_on=datetime.now(timezone.utc),
             created_on=datetime.now(timezone.utc),
             updated_on=datetime.now(timezone.utc),
@@ -500,7 +502,7 @@ class TestMediaRepositoryEdgeCases:
         mock_execute = AsyncMock(return_value=mock_result)
         mock_async_session.execute = mock_execute
 
-        media = await repository.create(media_in=media_in)
+        media = await repository.create(media_in=media_in, owner_id=str(uuid.uuid4()))
 
         assert media.name == unicode_name
 
@@ -516,7 +518,7 @@ class TestMediaRepositoryEdgeCases:
         mock_execute = AsyncMock(return_value=mock_result)
         mock_async_session.execute = mock_execute
 
-        media = await repository.create(media_in=media_in)
+        media = await repository.create(media_in=media_in, owner_id=str(uuid.uuid4()))
 
         assert media.name == ""
 
@@ -589,7 +591,7 @@ class TestMediaRepositoryEdgeCases:
 
         # This test demonstrates the repository's behavior
         # In a real scenario, exceptions would be raised
-        _ = await repository.create(media_in=media_in)
+        _ = await repository.create(media_in=media_in, owner_id=str(uuid.uuid4()))
 
         # Verify commit was called
         assert mock_async_session.commit.called
@@ -598,7 +600,7 @@ class TestMediaRepositoryEdgeCases:
         mock_async_session.reset_mock()
 
         # Try to create another one
-        _ = await repository.create(media_in=media_in)
+        _ = await repository.create(media_in=media_in, owner_id=str(uuid.uuid4()))
 
         # Commit should be called again
         assert mock_async_session.commit.called

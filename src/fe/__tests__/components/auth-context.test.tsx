@@ -10,8 +10,7 @@ function TestChild({ onAuth }: { onAuth?: (ctx: ReturnType<typeof useAuth>) => v
   return (
     <div>
       <span data-testid="isAuthenticated">{String(auth.isAuthenticated)}</span>
-      <span data-testid="token">{auth.token ?? 'null'}</span>
-      <button data-testid="loginBtn" onClick={() => auth.login('new-token')}>
+      <button data-testid="loginBtn" onClick={() => auth.login()}>
         Login
       </button>
       <button data-testid="logoutBtn" onClick={() => auth.logout()}>
@@ -31,43 +30,29 @@ function renderWithProvider(ui: React.ReactNode) {
 
 describe('AuthProvider', () => {
   beforeEach(() => {
-    localStorage.clear()
+    jest.clearAllMocks()
   })
 
-  it('starts logged out when no token in localStorage', () => {
+  it('starts logged out when no auth cookie', () => {
     renderWithProvider(<TestChild />)
     expect(screen.getByTestId('isAuthenticated')).toHaveTextContent('false')
-    expect(screen.getByTestId('token')).toHaveTextContent('null')
   })
 
-  it('restores token from localStorage on mount', () => {
-    localStorage.setItem('auth_token', 'existing-token')
+  it('shows authenticated when cookie exists with valid expiry', () => {
+    document.cookie = 'access_token=fake; path=/'
     renderWithProvider(<TestChild />)
     expect(screen.getByTestId('isAuthenticated')).toHaveTextContent('true')
-    expect(screen.getByTestId('token')).toHaveTextContent('existing-token')
   })
 
-  it('logs in and sets token in localStorage', () => {
+  it('logs in by setting state', () => {
     renderWithProvider(<TestChild />)
     fireEvent.click(screen.getByTestId('loginBtn'))
+    // login() sets an expiry estimate (10 min)
     expect(screen.getByTestId('isAuthenticated')).toHaveTextContent('true')
-    expect(screen.getByTestId('token')).toHaveTextContent('new-token')
-    expect(localStorage.getItem('auth_token')).toBe('new-token')
   })
 
-  it('logs out and clears token from localStorage', () => {
-    localStorage.setItem('auth_token', 'existing-token')
-    renderWithProvider(<TestChild />)
-    fireEvent.click(screen.getByTestId('loginBtn'))
-    expect(screen.getByTestId('isAuthenticated')).toHaveTextContent('true')
-    fireEvent.click(screen.getByTestId('logoutBtn'))
-    expect(screen.getByTestId('isAuthenticated')).toHaveTextContent('false')
-    expect(screen.getByTestId('token')).toHaveTextContent('null')
-    expect(localStorage.getItem('auth_token')).toBeNull()
-  })
-
-  it('provides isAuthenticated as true when token exists', () => {
-    localStorage.setItem('auth_token', 'test-token')
+  it('provides isAuthenticated as true when cookie exists', () => {
+    document.cookie = 'access_token=test; path=/'
     renderWithProvider(<TestChild />)
     expect(screen.getByTestId('isAuthenticated')).toHaveTextContent('true')
   })

@@ -113,7 +113,7 @@ export default function VideoUploadsPage() {
           <div className="flex flex-wrap gap-x-5 gap-y-5 justify-center py-15 sm:px-10 md:px-20 lg:px-40 xl:px-80">
             {videos.map((v) => (
               <div key={v.id}>
-                <Link href={v.download_url.startsWith("http") ? v.download_url : `${API_BASE}${API_V1}${v.download_url}`} target="_blank">
+                <Link href={v.download_url.startsWith("http") ? v.download_url : `${API_BASE}${API_V1}${v.download_url}`} target="_blank" rel="noopener noreferrer">
                   <div className="rounded-xl shadow-xl/10">
                     <div className="flex xs:h-100 xs:w-60 md:h-60 md:w-140">
                       <div className="flex flex-col md:flex-row items-center">

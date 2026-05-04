@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
@@ -164,16 +164,24 @@ async def auth_via_google(
     redirect = RedirectResponse(url=f"{settings.FRONTEND_HOST}/login/", status_code=302)
     redirect.delete_cookie("google_code_verifier")
 
-    # Redirect to frontend with tokens (both in URL query for the callback page to read)
-    refresh_secs = int((refresh_expires - datetime.now(timezone.utc)).total_seconds())
-    callback_url = (
-        f"{settings.FRONTEND_HOST}/google-callback?"
-        f"access_token={access_token}&"
-        f"refresh_token={refresh_token_str}&"
-        f"access_token_expires={access_expires}&"
-        f"refresh_token_expires={refresh_secs}"
+    # Set httpOnly session cookies — the callback page verifies via /auth/me
+    redirect = RedirectResponse(url=f"{settings.FRONTEND_HOST}/google-callback", status_code=302)
+    redirect.set_cookie(
+        key=settings.ACCESS_TOKEN_COOKIE_NAME,
+        value=access_token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=60 * int(settings.ACCESS_TOKEN_EXPIRE_MINUTES),
     )
-    redirect = RedirectResponse(url=callback_url, status_code=302)
+    redirect.set_cookie(
+        key=settings.REFRESH_TOKEN_COOKIE_NAME,
+        value=refresh_token_str,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=60 * 60 * 24 * int(settings.REFRESH_TOKEN_EXPIRE_DAYS),
+    )
     return redirect
 
 

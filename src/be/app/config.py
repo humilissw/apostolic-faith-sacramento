@@ -62,6 +62,9 @@ class Settings(BaseSettings):
     JWT_AUDIENCE: str
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
+    # Auth cookie settings
+    ACCESS_TOKEN_COOKIE_NAME: str = "access_token"
+    REFRESH_TOKEN_COOKIE_NAME: str = "refresh_token"
     # Stripe payment settings
     STRIPE_PUBLIC_KEY: str = ""
     STRIPE_SECRET_KEY: str = ""

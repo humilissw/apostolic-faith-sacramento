@@ -1,7 +1,7 @@
 "use client";
 
 import { loadStripe } from "@stripe/stripe-js";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +11,6 @@ import {
   createPaymentIntent,
   createSubscription,
   fetchDonationConfigs,
-  getAuthToken,
   type DonationConfig,
   type DonationFormData,
   type PaymentIntentResult,
@@ -42,7 +41,12 @@ export default function DonationForm({ onSuccess, initialAmount }: DonationFormP
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const isAuthenticated = getAuthToken() !== null;
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Check auth state on mount by looking for access_token cookie
+  useEffect(() => {
+    setIsAuthenticated(document.cookie.includes("access_token="));
+  }, []);
 
   const handleDonate = async () => {
     if (!STRIPE_PUBLIC_KEY) {

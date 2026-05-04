@@ -1,13 +1,18 @@
 from datetime import datetime, timedelta, timezone
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Body, Depends, HTTPException, status
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
+from fastapi.responses import HTMLResponse, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import CurrentUser, SessionDep, get_current_active_superuser, get_current_user
+from app.api.deps import (
+    CurrentUser,
+    SessionDep,
+    get_current_active_superuser,
+    get_current_user,
+)
 from app.core import security
 from app.core.scopes import Scope
 from app.config import settings
@@ -49,13 +54,27 @@ async def pkce_challenge() -> dict:
 @router.post("/login/access-token", response_model=Token)
 async def login_access_token(
     *,
+    request: Request,
+    response: Response,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     session: AsyncSession = Depends(get_db_session),
 ) -> Token:
     """
     OAuth2 compatible token login via password grant.
-    Returns both access_token and refresh_token.
+    Sets httpOnly cookies for access_token and refresh_token.
+    Returns tokens in JSON body for client-side navigation.
+    Rate limited to prevent brute-force attacks.
     """
+    # Rate limit check (5 requests per 15 minutes per IP)
+    ip = request.client.host if request.client else "unknown"
+    from app.core.rate_limiter import check_rate_limit
+
+    if not check_rate_limit(f"login:{ip}", 5, 15 * 60):
+        raise HTTPException(
+            status_code=429,
+            detail="Rate limit exceeded. Please try again later.",
+        )
+
     repository = UserRepository(session=session)
     user = await repository.get_by_email(email=form_data.username)
     if user is None:
@@ -90,6 +109,26 @@ async def login_access_token(
     session.add(db_refresh)
     await session.commit()
 
+    # Set httpOnly cookies for browser-based auth
+    access_expire_minutes = int(settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    refresh_expire_days = int(settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    response.set_cookie(
+        key=settings.ACCESS_TOKEN_COOKIE_NAME,
+        value=access_token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=60 * access_expire_minutes,
+    )
+    response.set_cookie(
+        key=settings.REFRESH_TOKEN_COOKIE_NAME,
+        value=refresh_token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=60 * 60 * 24 * refresh_expire_days,
+    )
+
     return Token(
         access_token=access_token,
         refresh_token=refresh_token,
@@ -104,10 +143,12 @@ async def login_access_token(
 async def refresh_token(
     body: TokenRefresh,
     session: AsyncSession = Depends(get_db_session),
+    response: Response = Response(),
 ) -> UpdateTokenResponse:
     """
     Exchange a valid refresh token for a new access token.
     The old refresh token is revoked after use (single-use refresh tokens).
+    Sets updated httpOnly cookies.
     """
     result = await session.execute(
         select(RefreshToken).where(
@@ -169,6 +210,26 @@ async def refresh_token(
     session.add(new_stored)
     await session.commit()
 
+    # Update httpOnly cookies with new token values
+    access_expire_minutes = int(settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    refresh_expire_days = int(settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    response.set_cookie(
+        key=settings.ACCESS_TOKEN_COOKIE_NAME,
+        value=new_access_token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=60 * access_expire_minutes,
+    )
+    response.set_cookie(
+        key=settings.REFRESH_TOKEN_COOKIE_NAME,
+        value=new_refresh_token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=60 * 60 * 24 * refresh_expire_days,
+    )
+
     return UpdateTokenResponse(
         access_token=new_access_token,
         token_type="bearer",
@@ -221,14 +282,58 @@ async def revoke_token(
     return Message(message="Token revoked")
 
 
-@router.post("/login/idp")
-async def logout(current_user: CurrentUser) -> Message:
+@router.post("/login/logout")
+async def logout_via_idp(current_user: CurrentUser) -> Message:
     return Message(message="Logged out via idp")
 
 
 @router.post("/login/clear")
 async def clear_token(current_user: CurrentUser) -> Message:
     return Message(message="Token cleared")
+
+
+@router.post("/login/logout")
+async def logout(
+    session: SessionDep,
+    current_user: CurrentUser,
+    response: Response,
+) -> Message:
+    """Revoke all tokens and clear auth cookies."""
+    # Revoke all refresh tokens for this user
+    await session.execute(
+        update(RefreshToken)
+        .where(RefreshToken.user_id == current_user.id)  # type: ignore[arg-type]
+        .where(RefreshToken.revoked != True)  # type: ignore[arg-type]
+        .values(revoked=True)
+    )
+    await session.commit()
+
+    # Clear auth cookies
+    response.set_cookie(
+        key=settings.ACCESS_TOKEN_COOKIE_NAME,
+        value="",
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=0,
+        path="/",
+    )
+    response.set_cookie(
+        key=settings.REFRESH_TOKEN_COOKIE_NAME,
+        value="",
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=0,
+        path="/",
+    )
+    return Message(message="Logged out")
+
+
+@router.get("/auth/me")
+async def me(current_user: CurrentUser) -> User:
+    """Return current user info. Validates the auth cookie."""
+    return current_user
 
 
 @router.post("/login/test-token", response_model=UserPublic)
@@ -240,10 +345,21 @@ def test_token(current_user: CurrentUser) -> Any:
 
 
 @router.post("/password-recovery/{email}")
-async def recover_password(email: str, session: SessionDep) -> Message:
+async def recover_password(email: str, session: SessionDep, request: Request) -> Message:
     """
     Password Recovery
+    Rate limited to prevent email spamming.
     """
+    # Rate limit check (3 requests per hour per IP)
+    ip = request.client.host if request.client else "unknown"
+    from app.core.rate_limiter import check_rate_limit
+
+    if not check_rate_limit(f"recovery:{ip}", 3, 60 * 60):
+        raise HTTPException(
+            status_code=429,
+            detail="Rate limit exceeded. Please try again later.",
+        )
+
     repository = UserRepository(session=session)
     auth_service = AuthService(user_repository=repository)
 

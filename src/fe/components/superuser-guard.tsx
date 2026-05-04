@@ -1,43 +1,40 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getAuthToken } from "@/lib/api";
 
-interface SuperuserGuardProps {
-  children: React.ReactNode;
-}
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://localhost:8000/";
 
-function decodeJwtPayload(token: string): { is_superuser?: boolean; scopes?: string[] } | null {
-  try {
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    return {
-      is_superuser: payload?.is_superuser,
-      scopes: payload?.scopes as string[] | undefined,
-    };
-  } catch {
-    return null;
-  }
-}
-
-export default function SuperuserGuard({ children }: SuperuserGuardProps) {
+export default function SuperuserGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [isSuperuser, setIsSuperuser] = useState(false);
 
   useEffect(() => {
-    const token = getAuthToken();
-    if (!token) {
-      router.push("/login");
-      return;
+    async function check() {
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/auth/me`, {
+          credentials: "include",
+        });
+        if (!res.ok) {
+          router.push("/login");
+          return;
+        }
+        const data = await res.json();
+        setIsSuperuser(data.is_superuser);
+        if (!data.is_superuser) {
+          router.push("/");
+        }
+      } catch {
+        router.push("/login");
+      } finally {
+        setLoading(false);
+      }
     }
-
-    const payload = decodeJwtPayload(token);
-    if (!payload?.is_superuser) {
-      router.push("/");
-    }
+    check();
   }, [router]);
 
-  const token = getAuthToken();
-  if (!token) {
+  if (loading) {
     return (
       <div className="flex justify-center items-center min-h-dvh">
         <p>Loading...</p>
@@ -45,8 +42,7 @@ export default function SuperuserGuard({ children }: SuperuserGuardProps) {
     );
   }
 
-  const payload = decodeJwtPayload(token);
-  if (!payload?.is_superuser) {
+  if (!isSuperuser) {
     return (
       <div className="flex justify-center items-center min-h-dvh">
         <p>Access denied</p>

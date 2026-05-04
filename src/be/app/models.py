@@ -55,7 +55,7 @@ class UpdatePassword(SQLModel):
 
 
 # Database model, database table inferred from class name
-class User(UserBase, table=True):
+class User(UserBase, table=True):  # type: ignore[call-arg]
     __tablename__ = "users"
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), max_length=36, primary_key=True)
     hashed_password: str = Field(max_length=4000)
@@ -98,7 +98,7 @@ class ItemUpdate(ItemBase):
 
 
 # Database model, database table inferred from class name
-class Item(ItemBase, table=True):
+class Item(ItemBase, table=True):  # type: ignore[call-arg]
     __tablename__ = "items"
     id: int | None = Field(primary_key=True, default=None)
     owner_id: str | None = Field(
@@ -156,7 +156,7 @@ class NewPassword(SQLModel):
 
 
 # Refresh token storage model
-class RefreshToken(SQLModel, table=True):
+class RefreshToken(SQLModel, table=True):  # type: ignore[call-arg]
     __tablename__ = "refresh_tokens"
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True, max_length=36)
     user_id: str = Field(nullable=False)
@@ -183,16 +183,17 @@ class RevokeTokenRequest(SQLModel):
     token: str = Field(min_length=8, max_length=4000)
 
 
-class Media(SQLModel, table=True):
+class Media(SQLModel, table=True):  # type: ignore[call-arg]
     __tablename__ = "media"
     id: str = Field(default_factory=uuid.uuid4, primary_key=True, max_length=36)
     name: str = Field(max_length=200)
+    owner_id: str = Field(max_length=36, nullable=False)
     uploaded_on: datetime.datetime
     created_on: datetime.datetime
     updated_on: datetime.datetime
 
 
-class Test(SQLModel, table=True):
+class Test(SQLModel, table=True):  # type: ignore[call-arg]
     id: str = Field(default_factory=uuid.uuid4, primary_key=True, max_length=36)
     test1: int
     test2: int
@@ -208,7 +209,7 @@ class DefaultBase(SQLModel):
     updated_on: datetime.datetime = Field(nullable=True)
 
 
-class Member(DefaultBase, table=True):
+class Member(DefaultBase, table=True):  # type: ignore[call-arg]
     __tablename__ = "members"
     first_name: str = Field(max_length=200, nullable=False)
     last_name: str = Field(max_length=200, nullable=False)
@@ -217,7 +218,7 @@ class Member(DefaultBase, table=True):
     baptism_date: datetime.datetime
 
 
-class ChurchService(DefaultBase, table=True):
+class ChurchService(DefaultBase, table=True):  # type: ignore[call-arg]
     __tablename__ = "church_services"
     service_date: datetime.datetime = Field(nullable=False)
     speaker: str = Field(max_length=200, nullable=True)
@@ -227,8 +228,9 @@ class ChurchService(DefaultBase, table=True):
     uploaded: bool = Field(nullable=False, default=False)
 
 
-class VideoUpload(DefaultBase, table=True):
+class VideoUpload(DefaultBase, table=True):  # type: ignore[call-arg]
     __tablename__ = "video_uploads"
+    owner_id: str = Field(max_length=36, nullable=False)
     upload_location: str = Field(max_length=1000)
     upload_name: str = Field(max_length=1000)
     media_association_date: datetime.datetime = Field(nullable=False)
@@ -248,7 +250,7 @@ class VideoUploadRequest(BaseModel):
     upload_name: str
 
 
-class Announcement(DefaultBase, table=True):
+class Announcement(DefaultBase, table=True):  # type: ignore[call-arg]
     __tablename__ = "announcements"
     sender: str = Field(max_length=200)
     recipients: str = Field(max_length=4000)
@@ -258,7 +260,7 @@ class Announcement(DefaultBase, table=True):
 # Payment / Donation models
 
 
-class Payment(DefaultBase, table=True):
+class Payment(DefaultBase, table=True):  # type: ignore[call-arg]
     __tablename__ = "payments"
     amount_cents: int = Field(nullable=False)
     currency: str = Field(default="usd", max_length=3)
@@ -271,7 +273,7 @@ class Payment(DefaultBase, table=True):
     metadata_json: str | None = Field(default=None, max_length=4000)
 
 
-class DonationConfig(DefaultBase, table=True):
+class DonationConfig(DefaultBase, table=True):  # type: ignore[call-arg]
     __tablename__ = "donation_configs"
     label: str = Field(max_length=100)
     amount_cents: int = Field(nullable=False)
@@ -339,7 +341,7 @@ class TestConnectionResponse(SQLModel):
     message: str = ""
 
 
-class IntegrationConfig(DefaultBase, table=True):
+class IntegrationConfig(DefaultBase, table=True):  # type: ignore[call-arg]
     """Third-party integration configuration with encrypted credentials."""
 
     __tablename__ = "integration_configs"

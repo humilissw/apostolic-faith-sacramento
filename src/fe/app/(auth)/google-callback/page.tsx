@@ -3,7 +3,8 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
-import { setRefreshToken } from "@/lib/api";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://localhost:8000/";
 
 function GoogleCallbackContent() {
   const router = useRouter();
@@ -13,19 +14,29 @@ function GoogleCallbackContent() {
 
   useEffect(() => {
     async function handleCallback() {
-      const access_token = searchParams.get("access_token");
-      const refresh_token = searchParams.get("refresh_token");
-
-      if (!access_token || !refresh_token) {
-        setError("Missing tokens from authentication server");
-        setTimeout(() => router.push("/login"), 3000);
+      // Check if cookies were already validated by a previous pass
+      if (searchParams.get("validated") === "true") {
+        login();
+        router.push("/");
         return;
       }
 
+      // Verify the session cookies set by the backend are valid
       try {
-        login(access_token, refresh_token);
-        setRefreshToken(refresh_token);
-        sessionStorage.removeItem("google_code_verifier");
+        const res = await fetch(`${API_BASE}/api/v1/auth/me`, {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (!res.ok) {
+          setError("Authentication failed — cookies invalid");
+          setTimeout(() => router.push("/login"), 3000);
+          return;
+        }
+
+        // Valid session — login and redirect
+        login();
+        // Avoid re-validation loops by not adding params
         router.push("/");
       } catch (err) {
         setError(err instanceof Error ? err.message : "Google login failed");

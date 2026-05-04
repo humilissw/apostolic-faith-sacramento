@@ -26,7 +26,7 @@ export default function LoginForm() {
 
     try {
       const res = await apiLogin(email, password, ["api:all"]);
-      login(res.access_token, res.refresh_token, res.scopes);
+      login(); // cookies are set by backend; client just triggers state update
       window.location.assign("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");

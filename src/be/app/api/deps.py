@@ -1,7 +1,7 @@
 from typing import Annotated, Callable, Generator
 
 import jwt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.openapi.models import OAuthFlowPassword, OAuthFlows
 from fastapi.security import OAuth2, OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
@@ -15,6 +15,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from app.models import TokenPayload, User
 from app.core.db import SyncSessionLocal, get_db_session
+
+
+async def get_token_from_cookie(request: Request) -> str | None:
+    """Extract access token from httpOnly cookie, if present."""
+    token = request.cookies.get(settings.ACCESS_TOKEN_COOKIE_NAME)
+    return str(token) if token else None  # type: ignore[no-any-return]
 
 
 reusable_oauth2 = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/login/access-token")
@@ -45,16 +51,23 @@ def get_sync_db_session() -> Generator[Session]:
 SyncSessionDep = Annotated[Session, Depends(get_sync_db_session)]
 
 
-async def get_current_user(session: SessionDep, token: TokenDep) -> User:
+async def get_current_user(
+    session: SessionDep,
+    token: TokenDep,
+    request: Request,
+) -> User:
     """Validate JWT token and return the current user.
 
-    Security fixes:
-    - Hardcodes RS256 algorithm to prevent algorithm confusion attacks
-    - Verifies iss and aud claims to prevent token confusion across services
+    Checks the httpOnly cookie first (primary), then falls back to
+    the Authorization header (backwards compat for Swagger/UI and
+    any clients that still send Bearer tokens).
     """
+    cookie_token = await get_token_from_cookie(request)
+    token_to_use = cookie_token or token
+
     try:
         payload = jwt.decode(
-            token,
+            token_to_use,
             security.PUBLIC_KEY,
             algorithms=[security.ALGORITHM],
             audience=settings.JWT_AUDIENCE,
@@ -71,13 +84,13 @@ async def get_current_user(session: SessionDep, token: TokenDep) -> User:
     db_user = db_user_result.scalar()
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
-    user = await session.get(User, db_user.id)
+    user = await session.get(User, db_user.id)  # type: ignore[arg-type]
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     if not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
-    return user
+    return user  # type: ignore[no-any-return]
 
 
 # async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
@@ -118,12 +131,15 @@ async def get_current_active_superuser(current_user: CurrentUser) -> User:
 
 
 async def get_current_user_with_scopes(
-    session: SessionDep, token: TokenDep
+    session: SessionDep, token: TokenDep, request: Request
 ) -> tuple[User, list[str]]:
     """Validate JWT token and return (user, scopes) tuple."""
+    cookie_token = await get_token_from_cookie(request)
+    token_to_use = cookie_token or token
+
     try:
         payload = jwt.decode(
-            token,
+            token_to_use,
             security.PUBLIC_KEY,
             algorithms=[security.ALGORITHM],
             audience=settings.JWT_AUDIENCE,

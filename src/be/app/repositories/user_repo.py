@@ -36,7 +36,7 @@ class UserRepository:
         self.session.add(db_obj)
         await self.session.commit()
         await self.session.refresh(db_obj)
-        return db_obj
+        return db_obj  # type: ignore[no-any-return]
 
     async def get_by_email(self, email: str) -> User | None:
         """
@@ -50,7 +50,7 @@ class UserRepository:
         """
         statement = select(User).where(User.email == email)  # type: ignore[arg-type]
         session_user = await self.session.execute(statement)
-        return session_user.scalar_one_or_none()
+        return session_user.scalar_one_or_none()  # type: ignore[no-any-return]
 
     async def get_by_id(self, user_id: int | str) -> User | None:
         """
@@ -60,10 +60,10 @@ class UserRepository:
         result = await self.session.execute(statement)
         user = result.scalar_one_or_none()
         if user:
-            return user
+            return user  # type: ignore[no-any-return]
         statement = select(User).where(User.new_id == str(user_id))  # type: ignore[arg-type]
         result = await self.session.execute(statement)
-        return result.scalar_one_or_none()
+        return result.scalar_one_or_none()  # type: ignore[no-any-return]
 
     async def get_all(self, skip: int = 0, limit: int = 100) -> tuple[list[User], int]:
         """
