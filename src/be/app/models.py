@@ -68,12 +68,25 @@ class User(UserBase, table=True):  # type: ignore[call-arg]
 
 
 # Properties to return via API, id is always required
+class UserScope(SQLModel, table=True):  # type: ignore[call-arg]
+    """Maps users to their assigned scopes (claims)."""
+
+    __tablename__ = "user_scopes"
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True, max_length=36)
+    user_id: str = Field(foreign_key="users.id", max_length=36, nullable=False)
+    scope: str = Field(max_length=50, nullable=False)
+    created_on: datetime.datetime = Field(
+        default=datetime.datetime.now(datetime.timezone.utc), nullable=False
+    )
+
+
 class UserPublic(SQLModel):
     email: EmailStr
     is_active: bool
     is_superuser: bool
     new_id: str
     full_name: Annotated[str | None, Field(exclude=True)]
+    assigned_scopes: list[str] = Field(default_factory=list)
 
 
 class UsersPublic(SQLModel):

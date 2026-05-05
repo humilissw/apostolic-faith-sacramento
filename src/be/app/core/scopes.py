@@ -22,3 +22,9 @@ class Scope(str, Enum):
     VIDEO_UPLOADS_READ = "video_uploads:read"
     VIDEO_UPLOADS_WRITE = "video_uploads:write"
     VIDEO_UPLOADS_DELETE = "video_uploads:delete"
+    VIDEO_UPLOADS_MANAGE = "video_uploads:manage"
+
+    # User management scopes
+    USERS_READ = "users:read"
+    USERS_WRITE = "users:write"
+    USERS_ADMIN = "users:admin"

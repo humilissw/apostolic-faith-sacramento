@@ -2,6 +2,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import delete
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import (
     CurrentUser,
@@ -15,6 +16,7 @@ from app.models import (
     Item,
     Message,
     UpdatePassword,
+    User,
     UserCreate,
     UserPublic,
     UserRegister,
@@ -24,9 +26,24 @@ from app.models import (
 )
 from app import crud
 from app.repositories.user_repo import UserRepository
+from app.repositories.user_scope_repo import UserScopeRepository
 from app.utils import generate_new_account_email, send_email
 
 router = APIRouter(prefix="/users", tags=["users"])
+
+
+async def _populate_scopes(session: AsyncSession, user: User) -> UserPublic:
+    """Return a UserPublic with assigned_scopes populated."""
+    repo = UserScopeRepository(session)
+    scopes = await repo.get_scopes(user.id)
+    return UserPublic(
+        email=user.email,
+        is_active=user.is_active,
+        is_superuser=user.is_superuser,
+        new_id=user.new_id,
+        full_name=user.full_name,
+        assigned_scopes=scopes,
+    )
 
 
 @router.get(
@@ -40,7 +57,8 @@ async def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> An
     """
     repository = UserRepository(session=session)
     users, total_count = await repository.get_all(skip=skip, limit=limit)
-    return UsersPublic(data=users, count=total_count)
+    populated = [await _populate_scopes(session, u) for u in users]
+    return UsersPublic(data=populated, count=total_count)
 
 
 @router.post("/", dependencies=[Depends(get_current_active_superuser)], response_model=UserPublic)
@@ -66,7 +84,7 @@ async def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
             subject=email_data.subject,
             html_content=email_data.html_content,
         )
-    return user
+    return await _populate_scopes(session, user)
 
 
 @router.patch(
@@ -175,14 +193,16 @@ async def read_user_by_id(user_id: str, session: SessionDep, current_user: Curre
     """
     repository = UserRepository(session=session)
     user = await repository.get_by_id(user_id=user_id)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
     if user == current_user:
-        return user
+        return await _populate_scopes(session, user)
     if not current_user.is_superuser:
         raise HTTPException(
             status_code=403,
             detail="The user doesn't have enough privileges",
         )
-    return user
+    return await _populate_scopes(session, user)
 
 
 @router.patch(
@@ -212,7 +232,7 @@ async def update_user(
             raise HTTPException(status_code=409, detail="User with this email already exists")
 
     db_user = await repository.update(db_user=db_user, user_in=user_in)
-    return db_user
+    return await _populate_scopes(session, db_user)
 
 
 @router.delete("/{user_id}", dependencies=[Depends(get_current_active_superuser)])

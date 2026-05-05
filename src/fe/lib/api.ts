@@ -426,3 +426,109 @@ export async function preSeedIntegrations(): Promise<IntegrationsResponse> {
   }
   return res.json();
 }
+
+// --- User management API ---
+
+export interface UserWithScopes {
+  email: string;
+  is_active: boolean;
+  is_superuser: boolean;
+  new_id: string;
+  full_name: string | null;
+  assigned_scopes: string[];
+}
+
+export interface UsersWithScopesResponse {
+  data: UserWithScopes[];
+  count: number;
+}
+
+export async function fetchUsersWithScopes(): Promise<UsersWithScopesResponse> {
+  const res = await fetchWithAuth(`${API_BASE}${API_V1}/users/`);
+  if (!res.ok) {
+    throw new Error("Failed to fetch users");
+  }
+  const body = await res.json();
+  return body as UsersWithScopesResponse;
+}
+
+export async function setUserScopes(userId: string, scopes: string[]): Promise<string[]> {
+  const res = await fetchWithAuth(
+    `${API_BASE}${API_V1}/users/admin/${userId}/scopes`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(scopes),
+    },
+  );
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(body || "Failed to set user scopes");
+  }
+  return res.json();
+}
+
+export async function removeUserScopes(userId: string): Promise<void> {
+  const res = await fetchWithAuth(
+    `${API_BASE}${API_V1}/users/admin/${userId}/scopes`,
+    {
+      method: "DELETE",
+    },
+  );
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(body || "Failed to remove user scopes");
+  }
+}
+
+// --- Video upload admin API ---
+
+export interface VideoUploadAdmin {
+  id: string;
+  upload_location: string;
+  upload_name: string;
+  media_association_date: string;
+  speaker_name: string | null;
+  reference_text: string | null;
+  description: string | null;
+  owner_id: string;
+  created_on: string;
+  updated_on: string | null;
+}
+
+export async function patchVideoUpload(
+  id: string,
+  data: Partial<VideoUploadAdmin>,
+): Promise<VideoUploadAdmin> {
+  const res = await fetchWithAuth(`${API_BASE}${API_V1}/video-uploads/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(body || "Failed to update video upload");
+  }
+  return res.json();
+}
+
+export async function deleteVideoUpload(id: string): Promise<void> {
+  const res = await fetchWithAuth(`${API_BASE}${API_V1}/video-uploads/${id}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(body || "Failed to delete video upload");
+  }
+}
+
+// --- All video uploads (for admin) ---
+
+export async function fetchAllVideoUploads(): Promise<{ data: VideoUploadAdmin[]; count: number }> {
+  const res = await fetchWithAuth(`${API_BASE}${API_V1}/video-uploads/`);
+  if (!res.ok) {
+    throw new Error("Failed to fetch video uploads");
+  }
+  const body = await res.json();
+  return body;
+}

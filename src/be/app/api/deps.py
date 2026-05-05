@@ -131,11 +131,18 @@ async def get_current_active_superuser(current_user: CurrentUser) -> User:
 
 
 async def get_current_user_with_scopes(
-    session: SessionDep, token: TokenDep, request: Request
+    session: SessionDep,
+    request: Request,
+    token: str = Depends(reusable_oauth2),
 ) -> tuple[User, list[str]]:
     """Validate JWT token and return (user, scopes) tuple."""
     cookie_token = await get_token_from_cookie(request)
-    token_to_use = cookie_token or token
+    # Fall back to Authorization header token
+    auth_header = request.headers.get("authorization", "")
+    header_token = None
+    if auth_header.startswith("Bearer "):
+        header_token = auth_header[7:]
+    token_to_use = cookie_token or header_token or token
 
     try:
         payload = jwt.decode(
@@ -163,6 +170,56 @@ async def get_current_user_with_scopes(
         raise HTTPException(status_code=400, detail="Inactive user")
     scopes = token_data.scopes or []
     return user, scopes
+
+
+async def _get_user_scopes(session: AsyncSession, user: User) -> list[str]:
+    """Get scopes for a user from DB, falling back to token scopes."""
+    from app.repositories.user_scope_repo import UserScopeRepository
+
+    repo = UserScopeRepository(session)
+    db_scopes = await repo.get_scopes(user.id)
+    if db_scopes:
+        return ["api:all"] if "api:all" in db_scopes else db_scopes
+    # Fall back to a default set of scopes for backward compat
+    return []
+
+
+async def get_current_active_superuser_bypass(
+    session: SessionDep,
+    request: Request,
+) -> User:
+    """Authenticate user and return them, without requiring superuser status."""
+    cookie_token = await get_token_from_cookie(request)
+    auth_header = request.headers.get("authorization", "")
+    header_token = None
+    if auth_header.startswith("Bearer "):
+        header_token = auth_header[7:]
+    token_to_use = cookie_token or header_token
+    try:
+        payload = jwt.decode(
+            token_to_use,
+            security.PUBLIC_KEY,
+            algorithms=[security.ALGORITHM],
+            audience=settings.JWT_AUDIENCE,
+            issuer=settings.JWT_ISSUER,
+        )
+        token_data = TokenPayload(**payload)
+    except (InvalidTokenError, ValidationError):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Could not validate credentials",
+        )
+    statement = select(User).where(User.email == token_data.sub)
+    db_user_result = await session.execute(statement)
+    db_user = db_user_result.scalar()  # type: ignore[assignment]
+    if db_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    user = await session.get(User, db_user.id)  # type: ignore[arg-type]
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if not user.is_active:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    return user
 
 
 def require_scope(required_scope: str) -> Callable:

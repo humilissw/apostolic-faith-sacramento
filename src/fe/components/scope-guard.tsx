@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/context/auth-context";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 interface ScopeGuardProps {
@@ -10,21 +10,27 @@ interface ScopeGuardProps {
 }
 
 export default function ScopeGuard({ requiredScopes, children }: ScopeGuardProps) {
-  const { isAuthenticated, hasScope, scopes } = useAuth();
+  const { isAuthenticated, hasScope, isLoadingToken } = useAuth();
   const router = useRouter();
+  const [hasAccess, setHasAccess] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (isLoadingToken) return;
     if (!isAuthenticated) {
       router.push("/login");
       return;
     }
-    const hasRequiredScope = requiredScopes.some((scope) => hasScope(scope));
-    if (!hasRequiredScope) {
+    // Check if user has at least one of the required scopes
+    const allowed = requiredScopes.some((scope) => hasScope(scope));
+    setHasAccess(allowed);
+    setLoading(false);
+    if (!allowed) {
       router.push("/");
     }
-  }, [isAuthenticated, hasScope, router, requiredScopes]);
+  }, [isAuthenticated, hasScope, isLoadingToken, requiredScopes, router]);
 
-  if (!isAuthenticated) {
+  if (loading) {
     return (
       <div className="flex justify-center items-center min-h-dvh">
         <p>Loading...</p>
@@ -32,8 +38,7 @@ export default function ScopeGuard({ requiredScopes, children }: ScopeGuardProps
     );
   }
 
-  const hasRequiredScope = requiredScopes.some((scope) => hasScope(scope));
-  if (!hasRequiredScope) {
+  if (!hasAccess) {
     return (
       <div className="flex justify-center items-center min-h-dvh">
         <p>Access denied</p>
@@ -44,17 +49,11 @@ export default function ScopeGuard({ requiredScopes, children }: ScopeGuardProps
   return <>{children}</>;
 }
 
-export function useScope(requiredScopes: string[]): {
+export function useScope(_requiredScopes: string[]): {
   isLoading: boolean;
   hasAccess: boolean;
-  scopes: string[];
 } {
-  const { isAuthenticated, hasScope, scopes: currentScopes } = useAuth();
-
-  if (!isAuthenticated) {
-    return { isLoading: true, hasAccess: false, scopes: currentScopes };
-  }
-
-  const hasAccess = requiredScopes.some((scope) => hasScope(scope));
-  return { isLoading: false, hasAccess, scopes: currentScopes };
+  const { isAuthenticated, isLoadingToken } = useAuth();
+  if (isLoadingToken) return { isLoading: true, hasAccess: false };
+  return { isLoading: false, hasAccess: !!isAuthenticated };
 }

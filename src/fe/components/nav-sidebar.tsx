@@ -144,6 +144,30 @@ function NavSidebarContent({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarGroup>
           </Collapsible>
         )}
+        {isAuthenticated && isSuperuser && (
+          <Collapsible key="user-management" className="group/collapsible">
+            <SidebarGroup>
+              <SidebarGroupLabel
+                asChild
+                className="group/label font-normal text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-2xl"
+              >
+                <Link href="/users-admin/">User Management</Link>
+              </SidebarGroupLabel>
+            </SidebarGroup>
+          </Collapsible>
+        )}
+        {isAuthenticated && isSuperuser && (
+          <Collapsible key="video-admin" className="group/collapsible">
+            <SidebarGroup>
+              <SidebarGroupLabel
+                asChild
+                className="group/label font-normal text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-2xl"
+              >
+                <Link href="/video-uploads-admin/">Video Uploads</Link>
+              </SidebarGroupLabel>
+            </SidebarGroup>
+          </Collapsible>
+        )}
         {/* We create a collapsible SidebarGroup for each parent. */}
         {data.navMain.map((item) => (
           <Collapsible

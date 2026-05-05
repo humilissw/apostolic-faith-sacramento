@@ -30,6 +30,7 @@ from app.models import (
     UserPublic,
 )
 from app.repositories.user_repo import UserRepository
+from app.repositories.user_scope_repo import UserScopeRepository
 from app.services.auth_service import AuthService
 
 router = APIRouter(tags=["login"])
@@ -84,12 +85,13 @@ async def login_access_token(
     elif not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
 
-    # Resolve scopes: superusers get all, regular users get requested scopes
-    requested_scopes = form_data.scopes if form_data.scopes else ["api:all"]
+    # Resolve scopes: superusers get all, regular users get api:all + assigned scopes
     if user.is_superuser:
         token_scopes = [s.value for s in Scope]
     else:
-        token_scopes = requested_scopes
+        scope_repo = UserScopeRepository(session)
+        assigned = await scope_repo.get_scopes(user.id)
+        token_scopes = list(set(["api:all"]) | set(assigned))
 
     access_token, access_expires = security.create_access_token_with_claims(
         user.email,
@@ -190,8 +192,13 @@ async def refresh_token(
     stored.revoked = True
     await session.commit()
 
-    # Issue new access token (superusers get all scopes, regular users get api:all)
-    new_scopes = [s.value for s in Scope] if user.is_superuser else ["api:all"]
+    # Issue new access token (superusers get all scopes, regular users get api:all + assigned)
+    if user.is_superuser:
+        new_scopes = [s.value for s in Scope]
+    else:
+        scope_repo = UserScopeRepository(session)
+        assigned = await scope_repo.get_scopes(user.id)
+        new_scopes = list(set(["api:all"]) | set(assigned))
     new_access_token, new_expires = security.create_access_token_with_claims(
         user.email,
         timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),

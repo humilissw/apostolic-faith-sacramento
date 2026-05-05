@@ -1,7 +1,7 @@
 """payments
 
 Revision ID: e7562edf08a2
-Revises: 482d25a6fc5d
+Revises: a1b2c3d4e5f6
 Create Date: 2026-05-03 08:04:26.845523
 
 """
