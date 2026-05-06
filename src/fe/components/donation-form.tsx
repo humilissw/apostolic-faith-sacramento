@@ -108,7 +108,9 @@ export default function DonationForm({ onSuccess, initialAmount }: DonationFormP
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-green-700">Thank You!</CardTitle>
+          <CardTitle className="text-green-700" data-testid="success-title">
+            Thank You!
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-zinc-600">

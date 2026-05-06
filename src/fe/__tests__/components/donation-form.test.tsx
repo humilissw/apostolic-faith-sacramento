@@ -66,7 +66,7 @@ describe('DonationForm', () => {
     fireEvent.click(donateButton)
 
     await waitFor(() => {
-      expect(screen.getByText(/Thank You!/i)).toBeInTheDocument()
+      expect(screen.getByTestId('success-title')).toBeInTheDocument()
     })
 
     await waitFor(() => {
