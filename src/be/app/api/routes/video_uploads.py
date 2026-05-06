@@ -27,7 +27,11 @@ async def readiness_check() -> str:
     return "Ready"
 
 
-@router.get("/", response_model=VideoUploadsPublic)
+@router.get(
+    "/",
+    response_model=VideoUploadsPublic,
+    # dependencies=[require_any_scope(["video_uploads:read", "video_uploads:manage"])],
+)
 async def read_video_uploads(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
     """
     Retrieve all video uploads.
@@ -57,7 +61,11 @@ async def read_video_uploads(session: SessionDep, skip: int = 0, limit: int = 10
     return VideoUploadsPublic(data=video_upload_data, count=total_count)
 
 
-@router.get("/{video_upload_id}", response_model=VideoUploadPublic)
+@router.get(
+    "/{video_upload_id}",
+    response_model=VideoUploadPublic,
+    # dependencies=[require_any_scope(["video_uploads:read", "video_uploads:manage"])],
+)
 async def read_video_upload_by_id(video_upload_id: str, session: SessionDep) -> Any:
     """
     Get video upload by ID.
@@ -85,7 +93,12 @@ async def read_video_upload_by_id(video_upload_id: str, session: SessionDep) -> 
     )
 
 
-@router.post("/", response_model=VideoUploadPublic, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/",
+    response_model=VideoUploadPublic,
+    status_code=status.HTTP_201_CREATED,
+    # dependencies=[require_any_scope(["video_uploads:write", "video_uploads:manage"])],
+)
 async def create_video_upload_endpoint(
     *,
     session: SessionDep,
@@ -99,7 +112,9 @@ async def create_video_upload_endpoint(
     Requires authentication.
     """
     repository = VideoUploadRepository(session=session)
-    video_upload = await repository.create(video_upload_in=video_upload_in)
+    video_upload = await repository.create(
+        video_upload_in=video_upload_in, owner_id=current_user.id
+    )
     return VideoUploadPublic(
         id=video_upload.id,
         upload_location=video_upload.upload_location,
@@ -113,17 +128,22 @@ async def create_video_upload_endpoint(
     )
 
 
-@router.patch("/{video_upload_id}", response_model=VideoUploadPublic)
+@router.patch(
+    "/{video_upload_id}",
+    response_model=VideoUploadPublic,
+    # dependencies=[require_any_scope(["video_uploads:write", "video_uploads:manage"])],
+)
 async def update_video_upload_endpoint(
     *,
     session: SessionDep,
+    current_user: CurrentUser,
     video_upload_id: str,
     video_upload_in: VideoUploadUpdate,
 ) -> Any:
     """
     Update a video upload entry.
 
-    Updates an existing video upload entry by ID.
+    Updates an existing video upload entry by ID. Requires ownership.
     """
     repository = VideoUploadRepository(session=session)
     video_upload = await repository.get_by_id(video_upload_id=video_upload_id)
@@ -131,6 +151,11 @@ async def update_video_upload_endpoint(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Video upload not found",
+        )
+    if current_user.id != video_upload.owner_id and not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to update this video upload",
         )
 
     video_upload = await repository.update(
@@ -149,12 +174,18 @@ async def update_video_upload_endpoint(
     )
 
 
-@router.delete("/{video_upload_id}", response_model=Message)
-async def delete_video_upload_endpoint(video_upload_id: str, session: SessionDep) -> Any:
+@router.delete(
+    "/{video_upload_id}",
+    response_model=Message,
+    # dependencies=[require_any_scope(["video_uploads:delete", "video_uploads:manage"])],
+)
+async def delete_video_upload_endpoint(
+    video_upload_id: str, session: SessionDep, current_user: CurrentUser
+) -> Any:
     """
     Delete a video upload entry.
 
-    Deletes a video upload entry by ID.
+    Deletes a video upload entry by ID. Requires ownership.
     """
     repository = VideoUploadRepository(session=session)
     video_upload = await repository.get_by_id(video_upload_id=video_upload_id)
@@ -162,6 +193,11 @@ async def delete_video_upload_endpoint(video_upload_id: str, session: SessionDep
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Video upload not found",
+        )
+    if current_user.id != video_upload.owner_id and not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to delete this video upload",
         )
 
     await repository.delete(db_video_upload=video_upload)

@@ -3,13 +3,17 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from sqlmodel import func, select
 
-from app.api.deps import CurrentUser, SessionDep
+from app.api.deps import CurrentUser, SessionDep, require_scope
 from app.models import Item, ItemCreate, ItemPublic, ItemsPublic, ItemUpdate, Message
 
 router = APIRouter(prefix="/items", tags=["items"])
 
 
-@router.get("/", response_model=ItemsPublic)
+@router.get(
+    "/",
+    response_model=ItemsPublic,
+    dependencies=[require_scope("api:all")],
+)
 async def read_items(
     session: SessionDep, current_user: CurrentUser, skip: int = 0, limit: int = 100
 ) -> Any:
@@ -33,7 +37,11 @@ async def read_items(
     return ItemsPublic(data=items, count=count)
 
 
-@router.get("/{id}", response_model=ItemPublic)
+@router.get(
+    "/{id}",
+    response_model=ItemPublic,
+    dependencies=[require_scope("api:all")],
+)
 async def read_item(session: SessionDep, current_user: CurrentUser, id: int) -> Any:
     """
     Get item by ID.
@@ -46,7 +54,11 @@ async def read_item(session: SessionDep, current_user: CurrentUser, id: int) -> 
     return item
 
 
-@router.post("/", response_model=ItemPublic)
+@router.post(
+    "/",
+    response_model=ItemPublic,
+    dependencies=[require_scope("api:all")],
+)
 async def create_item(
     *, session: SessionDep, current_user: CurrentUser, item_in: ItemCreate
 ) -> Any:
@@ -63,7 +75,11 @@ async def create_item(
     return item
 
 
-@router.put("/{id}", response_model=ItemPublic)
+@router.put(
+    "/{id}",
+    response_model=ItemPublic,
+    dependencies=[require_scope("api:all")],
+)
 async def update_item(
     *,
     session: SessionDep,
@@ -87,7 +103,10 @@ async def update_item(
     return item
 
 
-@router.delete("/{id}")
+@router.delete(
+    "/{id}",
+    dependencies=[require_scope("api:all")],
+)
 async def delete_item(session: SessionDep, current_user: CurrentUser, id: int) -> Message:
     """
     Delete an item.

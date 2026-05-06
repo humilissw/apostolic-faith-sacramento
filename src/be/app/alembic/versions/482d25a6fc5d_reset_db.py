@@ -12,7 +12,6 @@ from alembic import op
 import sqlalchemy as sa
 import sqlmodel
 
-
 # revision identifiers, used by Alembic.
 revision: str = "482d25a6fc5d"
 down_revision: Union[str, Sequence[str], None] = None
@@ -112,6 +111,38 @@ def upgrade() -> None:
     )
     op.create_index(op.f("ix_users_email"), "users", ["email"], unique=True)
     op.create_table(
+        "donation_configs",
+        sa.Column("id", sqlmodel.sql.sqltypes.AutoString(length=36), nullable=False),
+        sa.Column("created_on", sa.DateTime(), nullable=False),
+        sa.Column("updated_on", sa.DateTime(), nullable=True),
+        sa.Column("label", sqlmodel.sql.sqltypes.AutoString(length=100), nullable=False),
+        sa.Column("amount_cents", sa.Integer(), nullable=False),
+        sa.Column("is_default", sa.Boolean(), nullable=False),
+        sa.Column("frequency", sqlmodel.sql.sqltypes.AutoString(length=20), nullable=False),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_table(
+        "payments",
+        sa.Column("id", sqlmodel.sql.sqltypes.AutoString(length=36), nullable=False),
+        sa.Column("created_on", sa.DateTime(), nullable=False),
+        sa.Column("updated_on", sa.DateTime(), nullable=True),
+        sa.Column("amount_cents", sa.Integer(), nullable=False),
+        sa.Column("currency", sqlmodel.sql.sqltypes.AutoString(length=3), nullable=False),
+        sa.Column("status", sqlmodel.sql.sqltypes.AutoString(length=20), nullable=False),
+        sa.Column(
+            "stripe_payment_intent_id", sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False
+        ),
+        sa.Column(
+            "stripe_subscription_id", sqlmodel.sql.sqltypes.AutoString(length=255), nullable=True
+        ),
+        sa.Column("donor_email", sqlmodel.sql.sqltypes.AutoString(length=255), nullable=True),
+        sa.Column("donor_name", sqlmodel.sql.sqltypes.AutoString(length=255), nullable=True),
+        sa.Column("receipt_url", sqlmodel.sql.sqltypes.AutoString(length=1000), nullable=True),
+        sa.Column("metadata_json", sqlmodel.sql.sqltypes.AutoString(length=4000), nullable=True),
+        sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("stripe_payment_intent_id"),
+    )
+    op.create_table(
         "video_uploads",
         sa.Column("id", sqlmodel.sql.sqltypes.AutoString(length=36), nullable=False),
         sa.Column("created_on", sa.DateTime(), nullable=False),
@@ -140,4 +171,6 @@ def downgrade() -> None:
     op.drop_table("items")
     op.drop_table("church_services")
     op.drop_table("announcements")
+    op.drop_table("payments")
+    op.drop_table("donation_configs")
     # ### end Alembic commands ###

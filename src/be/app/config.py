@@ -62,6 +62,20 @@ class Settings(BaseSettings):
     JWT_AUDIENCE: str
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
+    # Auth cookie settings
+    ACCESS_TOKEN_COOKIE_NAME: str = "access_token"
+    REFRESH_TOKEN_COOKIE_NAME: str = "refresh_token"
+    COOKIE_SECURE: bool = True
+    COOKIE_DOMAIN: str = ""
+    COOKIE_PATH: str = "/"
+    COOKIE_SAMESITE: str = "none"
+    # Stripe payment settings
+    STRIPE_PUBLIC_KEY: str = ""
+    STRIPE_SECRET_KEY: str = ""
+    STRIPE_WEBHOOK_SECRET: str = ""
+    STRIPE_CURRENCY: str = "usd"
+    # Third-party integration encryption
+    INTEGRATION_ENCRYPTION_KEY: str = ""
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -91,5 +105,5 @@ class Settings(BaseSettings):
 settings = Settings()
 
 print("---------------------")
-print(str(settings.SQLALCHEMY_DATABASE_URI))
+print("From config: " + str(settings.SQLALCHEMY_DATABASE_URI))
 print("---------------------")

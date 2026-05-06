@@ -37,4 +37,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())  # type: ignore[func-returns-value]
+    asyncio.run(main())  # type: ignore[arg-type, func-returns-value]

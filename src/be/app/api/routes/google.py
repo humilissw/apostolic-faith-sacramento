@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
@@ -6,8 +6,10 @@ from fastapi.responses import RedirectResponse
 from app.api.deps import CurrentUser, SessionDep
 from app.config import settings
 from app.core import security
+from app.core.scopes import Scope
 from app.models import Message, RefreshToken, UserCreate
 from app.repositories.user_repo import UserRepository
+from app.repositories.user_scope_repo import UserScopeRepository
 from sqlalchemy import update as sa_update
 
 router = APIRouter(prefix="/google", tags=["authentication"])
@@ -140,10 +142,19 @@ async def auth_via_google(
             detail="Inactive user",
         )
 
-    # Issue our own tokens
+    # Issue our own tokens (superuser scope grants all, otherwise use assigned scopes)
+    scope_repo = UserScopeRepository(session)
+    db_scopes = await scope_repo.get_scopes(user.id)
+    if "superuser" in db_scopes:
+        user_scopes = [s.value for s in Scope]
+    elif db_scopes:
+        user_scopes = db_scopes
+    else:
+        user_scopes = ["api:all"]
     access_token, access_expires = security.create_access_token_with_claims(
         user.email,
         timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
+        scopes=user_scopes,
     )
     refresh_token_str, refresh_expires = security.create_refresh_token_with_expiry(
         timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
@@ -161,16 +172,28 @@ async def auth_via_google(
     redirect = RedirectResponse(url=f"{settings.FRONTEND_HOST}/login/", status_code=302)
     redirect.delete_cookie("google_code_verifier")
 
-    # Redirect to frontend with tokens (both in URL query for the callback page to read)
-    refresh_secs = int((refresh_expires - datetime.now(timezone.utc)).total_seconds())
-    callback_url = (
-        f"{settings.FRONTEND_HOST}/google-callback?"
-        f"access_token={access_token}&"
-        f"refresh_token={refresh_token_str}&"
-        f"access_token_expires={access_expires}&"
-        f"refresh_token_expires={refresh_secs}"
+    # Set httpOnly session cookies — the callback page verifies via /auth/me
+    scopes_param = ",".join(user_scopes)
+    redirect = RedirectResponse(
+        url=f"{settings.FRONTEND_HOST}/google-callback?scopes={scopes_param}",
+        status_code=302,
     )
-    redirect = RedirectResponse(url=callback_url, status_code=302)
+    redirect.set_cookie(
+        key=settings.ACCESS_TOKEN_COOKIE_NAME,
+        value=access_token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=60 * int(settings.ACCESS_TOKEN_EXPIRE_MINUTES),
+    )
+    redirect.set_cookie(
+        key=settings.REFRESH_TOKEN_COOKIE_NAME,
+        value=refresh_token_str,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=60 * 60 * 24 * int(settings.REFRESH_TOKEN_EXPIRE_DAYS),
+    )
     return redirect
 
 

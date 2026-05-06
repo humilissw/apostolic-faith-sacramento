@@ -9,7 +9,18 @@ from app.config import settings
 from app.main import app
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy import select, delete
-from app.models import User, UserCreate, Media, VideoUpload
+from app.models import (
+    User,
+    UserCreate,
+    Media,
+    VideoUpload,
+    ClientCredentials,
+    IntegrationConfig,
+    Payment,
+    DonationConfig,
+    RefreshToken,
+    AuthorizationCode,
+)
 from app import crud
 
 
@@ -44,6 +55,13 @@ async def db_session() -> AsyncSession:
     async_engine = create_async_engine(
         str(settings.SQLALCHEMY_ASYNC_DATABASE_URI), echo=False, future=True
     )
+
+    # Create all tables (including new ones like authorization_codes)
+    from sqlmodel import SQLModel
+
+    async with async_engine.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.create_all)
+
     async_session_maker = async_sessionmaker(
         bind=async_engine,
         expire_on_commit=False,
@@ -51,15 +69,47 @@ async def db_session() -> AsyncSession:
     )
     session = async_session_maker()
 
-    # print(f'Test Settings: {settings}')
-
     try:
         try:
-            await session.execute(delete(VideoUpload))
-            await session.execute(delete(Media))
+            for model in [
+                RefreshToken,
+                AuthorizationCode,
+                ClientCredentials,
+                IntegrationConfig,
+                Payment,
+                DonationConfig,
+                VideoUpload,
+                Media,
+            ]:
+                await session.execute(delete(model))
             await session.commit()
         except Exception:
             await session.rollback()
+
+        # Ensure FIRST_SUPERUSER exists in the test database
+        from app.core.security import get_password_hash, verify_password
+
+        stmt = select(User).where(User.email == settings.FIRST_SUPERUSER)
+        user_result = await session.execute(stmt)
+        user = user_result.scalar_one_or_none()
+        if not user:
+            user_in = UserCreate(
+                email=settings.FIRST_SUPERUSER,
+                password=settings.FIRST_SUPERUSER_PASSWORD,
+                is_active=True,
+                is_superuser=True,
+            )
+            await crud.create_user(session=session, user_create=user_in)
+        else:
+            if not verify_password(settings.FIRST_SUPERUSER_PASSWORD, user.hashed_password):
+                user.hashed_password = get_password_hash(settings.FIRST_SUPERUSER_PASSWORD)
+                user.is_superuser = True
+                session.add(user)
+                await session.commit()
+
+        from app.core.rate_limiter import reset_rate_limit
+
+        reset_rate_limit()
 
         yield session
     finally:
@@ -97,6 +147,18 @@ async def superuser_token_headers(
         user.hashed_password = get_password_hash(settings.FIRST_SUPERUSER_PASSWORD)
         db_session.add(user)
         await db_session.commit()
+        # Ensure superuser scope is seeded (for scope-based auth)
+        from app.models import UserScope
+
+        has_scope = await db_session.execute(
+            select(UserScope).where(
+                UserScope.user_id == user.id,  # type: ignore[arg-type]
+                UserScope.scope == "superuser",  # type: ignore[arg-type]
+            )
+        )
+        if not has_scope.scalar_one_or_none():
+            db_session.add(UserScope(user_id=user.id, scope="superuser"))
+            await db_session.commit()
 
     response = await client.post(
         f"{settings.API_V1_STR}/login/access-token",

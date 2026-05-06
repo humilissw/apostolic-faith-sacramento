@@ -20,17 +20,19 @@ class VideoUploadRepository:
         """
         self.session = session
 
-    async def create(self, video_upload_in: VideoUploadCreate) -> VideoUpload:
+    async def create(self, video_upload_in: VideoUploadCreate, owner_id: str) -> VideoUpload:
         """
         Create a new video upload entry.
 
         Args:
             video_upload_in: VideoUploadCreate object containing upload data
+            owner_id: ID of the user creating the upload
 
         Returns:
             VideoUpload: Created video upload object
         """
         video_upload = VideoUpload(
+            owner_id=owner_id,
             upload_location=video_upload_in.upload_location,
             upload_name=video_upload_in.upload_name,
             description=video_upload_in.description,
@@ -59,7 +61,7 @@ class VideoUploadRepository:
             VideoUpload.id == video_upload_id  # type: ignore[arg-type]
         )
         result = await self.session.execute(statement)
-        return result.scalar_one_or_none()
+        return result.scalar_one_or_none()  # type: ignore[no-any-return]
 
     async def get_all(self, skip: int = 0, limit: int = 100) -> tuple[list[VideoUpload], int]:
         """

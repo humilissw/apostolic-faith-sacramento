@@ -39,7 +39,7 @@ class TestMediaRepositoryBasicOperations:
         mock_execute = AsyncMock(return_value=mock_result)
         mock_async_session.execute = mock_execute
 
-        media = await repository.create(media_in=media_in)
+        media = await repository.create(media_in=media_in, owner_id=str(uuid.uuid4()))
 
         assert media is not None
         assert media.name == "Test Media"
@@ -54,6 +54,7 @@ class TestMediaRepositoryBasicOperations:
         mock_media = Media(
             id=str(test_id),
             name="Found Media",
+            owner_id=str(uuid.uuid4()),
             uploaded_on=datetime.now(timezone.utc),
             created_on=datetime.now(timezone.utc),
             updated_on=datetime.now(timezone.utc),
@@ -93,6 +94,7 @@ class TestMediaRepositoryBasicOperations:
         mock_media = Media(
             id=str(test_id),
             name="Original",
+            owner_id=str(uuid.uuid4()),
             uploaded_on=datetime.now(timezone.utc),
             created_on=datetime.now(timezone.utc),
             updated_on=datetime.now(timezone.utc),
@@ -127,6 +129,7 @@ class TestMediaRepositoryBasicOperations:
         mock_media = Media(
             id=str(test_id),
             name="To Delete",
+            owner_id=str(uuid.uuid4()),
             uploaded_on=datetime.now(timezone.utc),
             created_on=datetime.now(timezone.utc),
             updated_on=datetime.now(timezone.utc),
@@ -185,6 +188,7 @@ class TestMediaRepositoryPagination:
             mock_media = Media(
                 id=str(uuid.uuid4()),
                 name=f"Media {i}",
+                owner_id=str(uuid.uuid4()),
                 uploaded_on=datetime.now(timezone.utc),
                 created_on=datetime.now(timezone.utc),
                 updated_on=datetime.now(timezone.utc),
@@ -221,6 +225,7 @@ class TestMediaRepositoryPagination:
             mock_media = Media(
                 id=str(uuid.uuid4()),
                 name=f"Media {i}",
+                owner_id=str(uuid.uuid4()),
                 uploaded_on=datetime.now(timezone.utc),
                 created_on=datetime.now(timezone.utc),
                 updated_on=datetime.now(timezone.utc),
@@ -263,7 +268,7 @@ class TestMediaRepositoryEdgeCases:
         mock_execute = AsyncMock(return_value=mock_result)
         mock_async_session.execute = mock_execute
 
-        media = await repository.create(media_in=media_in)
+        media = await repository.create(media_in=media_in, owner_id=str(uuid.uuid4()))
 
         assert media.name == long_name
 
@@ -278,7 +283,7 @@ class TestMediaRepositoryEdgeCases:
         mock_execute = AsyncMock(return_value=mock_result)
         mock_async_session.execute = mock_execute
 
-        media = await repository.create(media_in=media_in)
+        media = await repository.create(media_in=media_in, owner_id=str(uuid.uuid4()))
 
         assert media.name == emoji_name
 
@@ -293,7 +298,7 @@ class TestMediaRepositoryEdgeCases:
         mock_execute = AsyncMock(return_value=mock_result)
         mock_async_session.execute = mock_execute
 
-        media = await repository.create(media_in=media_in)
+        media = await repository.create(media_in=media_in, owner_id=str(uuid.uuid4()))
 
         assert media.name == unicode_name
 
@@ -305,6 +310,7 @@ class TestMediaRepositoryEdgeCases:
         mock_media = Media(
             id=str(test_id),
             name="Test",
+            owner_id=str(uuid.uuid4()),
             uploaded_on=datetime.now(timezone.utc),
             created_on=datetime.now(timezone.utc),
             updated_on=datetime.now(timezone.utc),
@@ -334,6 +340,7 @@ class TestMediaRepositoryEdgeCases:
         mock_media = Media(
             id=str(uuid.uuid4()),
             name="Non-existent",
+            owner_id=str(uuid.uuid4()),
             uploaded_on=datetime.now(timezone.utc),
             created_on=datetime.now(timezone.utc),
             updated_on=datetime.now(timezone.utc),
@@ -380,7 +387,9 @@ class TestMediaRepositoryIntegrationScenarios:
         mock_create_result.scalar_one_or_none.return_value = None
         mock_async_session.execute = AsyncMock(return_value=mock_create_result)
 
-        created_media = await repository.create(media_in=create_media_in)
+        created_media = await repository.create(
+            media_in=create_media_in, owner_id=str(uuid.uuid4())
+        )
 
         assert created_media is not None
         assert created_media.name == "First Media"

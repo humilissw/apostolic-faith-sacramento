@@ -3,6 +3,13 @@
 
 Mono Repo for AFC Sacramento
 
+## Documentation
+
+- [Architecture](./ARCHITECTURE.md) - System architecture, design patterns, and API reference
+- [Database Schema](./erDiagram.mmd) - Entity-relationship diagram (Mermaid)
+- [Backend](./src/be/CLAUDE.md) - Backend development guide
+- [Frontend](./src/fe/CLAUDE.md) - Frontend development guide
+
 # Generate an SSL-cert
 
 ## Linux/Mac OS

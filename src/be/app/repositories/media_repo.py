@@ -21,12 +21,13 @@ class MediaRepository:
         """
         self.session = session
 
-    async def create(self, media_in: MediaCreate) -> Media:
+    async def create(self, media_in: MediaCreate, owner_id: str) -> Media:
         """
         Create a new media entry.
 
         Args:
             media_in: MediaCreate object containing media data
+            owner_id: ID of the user creating the media
 
         Returns:
             Media: Created media object
@@ -34,6 +35,7 @@ class MediaRepository:
         try:
             media = Media(
                 name=media_in.name,
+                owner_id=owner_id,
                 uploaded_on=datetime.now(timezone.utc),
                 created_on=datetime.now(timezone.utc),
                 updated_on=datetime.now(timezone.utc),
@@ -60,7 +62,7 @@ class MediaRepository:
         try:
             statement = select(Media).where(Media.id == media_id)  # type: ignore[arg-type]
             result = await self.session.execute(statement)
-            return result.scalar_one_or_none()
+            return result.scalar_one_or_none()  # type: ignore[no-any-return]
         except Exception:
             raise HTTPException(
                 status_code=500, detail="Database error occurred while retrieving media"

@@ -107,12 +107,11 @@ def generate_code_challenge(verifier: str) -> str:
 
 
 def create_access_token_with_claims(
-    subject: str, expires_delta: timedelta | None = None
+    subject: str,
+    expires_delta: timedelta | None = None,
+    scopes: list[str] | None = None,
 ) -> tuple[str, int]:
-    """Create an access token with iss, aud, and jti claims.
-
-    Returns (token_string, expires_in_seconds).
-    """
+    """Create an access token with iss, aud, jti, and scopes claims."""
     expire_delta = expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     expire = datetime.now(timezone.utc) + expire_delta
     jti = str(uuid.uuid4())
@@ -122,6 +121,7 @@ def create_access_token_with_claims(
         "iss": settings.JWT_ISSUER,
         "aud": settings.JWT_AUDIENCE,
         "jti": jti,
+        "scopes": scopes or [],
     }
     encoded_jwt = jwt.encode(  # type: ignore[return-value]
         payload=to_encode, key=PRIVATE_KEY, algorithm=ALGORITHM

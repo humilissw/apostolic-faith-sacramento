@@ -107,7 +107,7 @@ async def test_google_login_returns_redirect_with_pkce_cookie(google_client) -> 
 
 @pytest.mark.asyncio
 async def test_google_auth_returns_redirect_with_tokens(google_client) -> None:
-    """Google OAuth callback should redirect to frontend with tokens in URL."""
+    """Google OAuth callback should redirect to frontend with httpOnly cookies."""
     mock_payload = {"email": "test@example.com", "name": "Test User", "email_verified": True}
     mock_credentials = MagicMock()
     mock_new_user = MagicMock()
@@ -142,8 +142,11 @@ async def test_google_auth_returns_redirect_with_tokens(google_client) -> None:
             assert response.status_code == 302
             location = response.headers.get("location", "")
             assert "http://localhost:3000/google-callback" in location
-            assert "access_token=" in location
-            assert "refresh_token=" in location
+            # Tokens are now set as httpOnly cookies, not in URL
+            set_cookie = response.headers.get("set-cookie", "")
+            assert "access_token=" in set_cookie
+            assert "refresh_token=" in set_cookie
+            assert "httponly" in set_cookie.lower()
 
 
 @pytest.mark.asyncio
@@ -250,5 +253,6 @@ async def test_google_auth_auto_provisions_user(google_client) -> None:
                 "/api/v1/google/auth/google?code=mock_code&state=mock_state"
             )
             assert response.status_code == 302
-            location = response.headers.get("location", "")
-            assert "access_token=" in location
+            # Token is now set as httpOnly cookie, not in URL
+            set_cookie = response.headers.get("set-cookie", "")
+            assert "access_token=" in set_cookie

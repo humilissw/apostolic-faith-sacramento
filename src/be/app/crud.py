@@ -26,7 +26,13 @@ async def create_user(*, session: AsyncSession, user_create: UserCreate) -> User
     session.add(db_obj)
     await session.commit()
     await session.refresh(db_obj)
-    return db_obj
+    # Seed superuser scope if requested
+    if user_create.is_superuser:
+        from app.models import UserScope
+
+        session.add(UserScope(user_id=db_obj.id, scope="superuser"))
+        await session.commit()
+    return db_obj  # type: ignore[no-any-return]
 
 
 async def update_user(*, session: AsyncSession, db_user: User, user_in: UserUpdate) -> Any:
@@ -46,7 +52,7 @@ async def update_user(*, session: AsyncSession, db_user: User, user_in: UserUpda
 async def get_user_by_email(*, session: AsyncSession, email: str) -> User | None:
     statement = select(User).where(User.email == email)  # type: ignore[arg-type]
     session_user = await session.execute(statement)
-    return session_user.scalar()
+    return session_user.scalar()  # type: ignore[no-any-return]
 
 
 async def authenticate(*, session: AsyncSession, email: str, password: str) -> User | None:
@@ -63,14 +69,15 @@ async def create_item(*, session: AsyncSession, item_in: ItemCreate, owner_id: u
     session.add(db_item)
     await session.commit()
     await session.refresh(db_item)
-    return db_item
+    return db_item  # type: ignore[no-any-return]
 
 
 # Media CRUD operations
-async def create_media(*, session: AsyncSession, media_in: MediaCreate) -> Media:
+async def create_media(*, session: AsyncSession, media_in: MediaCreate, owner_id: str) -> Media:
     """Create a new media entry."""
     media = Media(
         name=media_in.name,
+        owner_id=owner_id,
         uploaded_on=datetime.now(timezone.utc),
         created_on=datetime.now(timezone.utc),
         updated_on=datetime.now(timezone.utc),
@@ -85,7 +92,7 @@ async def get_media_by_id(*, session: AsyncSession, media_id: str) -> Media | No
     """Get media by ID."""
     statement = select(Media).where(Media.id == media_id)  # type: ignore[arg-type]
     result = await session.execute(statement)
-    return result.scalar_one_or_none()
+    return result.scalar_one_or_none()  # type: ignore[no-any-return]
 
 
 async def get_media(*, session: AsyncSession, skip: int = 0, limit: int = 100) -> list[Media]:
@@ -119,12 +126,14 @@ async def delete_media(*, session: AsyncSession, db_media: Media) -> None:
 
 # Video Upload CRUD operations
 async def create_video_upload(
-    *, session: AsyncSession, video_upload_in: VideoUploadCreate
+    *, session: AsyncSession, video_upload_in: VideoUploadCreate, owner_id: str
 ) -> VideoUpload:
     """Create a new video upload entry."""
     video_upload = VideoUpload(
+        owner_id=owner_id,
         upload_location=video_upload_in.upload_location,
         upload_name=video_upload_in.upload_name,
+        media_association_date=datetime.now(timezone.utc),
         created_on=datetime.now(timezone.utc),
         updated_on=datetime.now(timezone.utc),
     )
@@ -142,7 +151,7 @@ async def get_video_upload_by_id(
         VideoUpload.id == video_upload_id  # type: ignore[arg-type]
     )
     result = await session.execute(statement)
-    return result.scalar_one_or_none()
+    return result.scalar_one_or_none()  # type: ignore[no-any-return]
 
 
 async def get_video_upload(

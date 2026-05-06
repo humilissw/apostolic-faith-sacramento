@@ -1,33 +1,10 @@
 /** @jest-environment jsdom */
 
-import { login, getAuthToken, setAuthToken, clearAuthToken } from '@/lib/api'
+import { login } from '@/lib/api'
 
 describe('API utilities', () => {
   beforeEach(() => {
-    localStorage.clear()
     jest.restoreAllMocks()
-  })
-
-  describe('token helpers', () => {
-    it('returns null for getAuthToken when nothing is set', () => {
-      expect(getAuthToken()).toBeNull()
-    })
-
-    it('returns the stored token from localStorage', () => {
-      setAuthToken('test-token')
-      expect(getAuthToken()).toBe('test-token')
-    })
-
-    it('clears the token from localStorage', () => {
-      setAuthToken('test-token')
-      clearAuthToken()
-      expect(getAuthToken()).toBeNull()
-    })
-
-    it('sets the token in localStorage', () => {
-      setAuthToken('my-token')
-      expect(localStorage.getItem('auth_token')).toBe('my-token')
-    })
   })
 
   describe('login', () => {
@@ -46,6 +23,7 @@ describe('API utilities', () => {
         expect.stringContaining('/api/v1/login/access-token'),
         expect.objectContaining({
           method: 'POST',
+          credentials: 'include',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         }),
       )
@@ -75,22 +53,6 @@ describe('API utilities', () => {
       global.fetch = mockFetch
 
       await expect(login('bad@example.com', 'wrong')).rejects.toThrow('Incorrect email or password')
-    })
-
-    it('uses the configured API base URL', async () => {
-      const mockFetch = jest.fn(() =>
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve({ access_token: 'token', token_type: 'bearer' }),
-        }),
-      )
-      global.fetch = mockFetch
-
-      await login('user@example.com', 'password123')
-
-      expect(mockFetch).toHaveBeenCalled()
-      const calledUrl = (mockFetch as jest.Mock).mock.calls[0][0]
-      expect(calledUrl).toContain('/api/v1/login/access-token')
     })
 
     it('appends username and password to the form body', async () => {

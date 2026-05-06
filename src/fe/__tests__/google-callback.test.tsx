@@ -24,10 +24,6 @@ jest.mock('@/context/auth-context', () => ({
   useAuth: jest.fn(() => ({ login: mockLogin, logout: mockLogout })),
 }))
 
-jest.mock('@/lib/api', () => ({
-  setRefreshToken: jest.fn(),
-}))
-
 import GoogleCallbackPage from '@/app/(auth)/google-callback/page'
 
 describe('GoogleCallbackPage', () => {
@@ -38,14 +34,17 @@ describe('GoogleCallbackPage', () => {
     mockLogout.mockClear()
     jest.useFakeTimers()
     window.history.pushState({}, '', '/')
+    // Mock /auth/me to return success when cookie is present
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ email: 'test@test.com', is_superuser: false }),
+      }),
+    )
   })
 
   it('renders login complete message', async () => {
-    window.history.pushState(
-      {},
-      '',
-      '/google-callback?access_token=fake-jwt&refresh_token=fake-refresh',
-    )
+    window.history.pushState({}, '', '/google-callback')
 
     await act(async () => {
       render(<GoogleCallbackPage />)
@@ -54,12 +53,8 @@ describe('GoogleCallbackPage', () => {
     expect(screen.getByText('Completing Google sign-in...')).toBeInTheDocument()
   })
 
-  it('completes login when tokens are present', async () => {
-    window.history.pushState(
-      {},
-      '',
-      '/google-callback?access_token=fake-jwt&refresh_token=fake-refresh',
-    )
+  it('completes login when /auth/me returns valid user', async () => {
+    window.history.pushState({}, '', '/google-callback')
 
     await act(async () => {
       render(<GoogleCallbackPage />)
@@ -69,11 +64,15 @@ describe('GoogleCallbackPage', () => {
       jest.runAllTimers()
     })
 
-    expect(mockLogin).toHaveBeenCalledWith('fake-jwt', 'fake-refresh')
-    expect(mockLogout).not.toHaveBeenCalled()
+    expect(mockLogin).toHaveBeenCalled()
+    expect(mockPush).toHaveBeenCalledWith('/')
   })
 
-  it('shows error and redirects when tokens are missing', async () => {
+  it('shows error and redirects when /auth/me fails', async () => {
+    global.fetch = jest.fn(() =>
+      Promise.resolve({ ok: false, status: 401, text: () => Promise.resolve('') }),
+    )
+
     window.history.pushState({}, '', '/google-callback')
 
     await act(async () => {
@@ -81,7 +80,7 @@ describe('GoogleCallbackPage', () => {
     })
 
     expect(
-      screen.getByText('Missing tokens from authentication server'),
+      screen.getByText('Authentication failed — cookies invalid'),
     ).toBeInTheDocument()
 
     await act(async () => {

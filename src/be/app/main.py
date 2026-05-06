@@ -8,6 +8,8 @@ from sqlalchemy.ext.asyncio import (
 
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.main import api_router
+from app.api.deps import oauth2_scheme
+from app.core.scopes import Scope
 from app.config import settings
 
 
@@ -103,11 +105,18 @@ origins = [
 ]
 
 route_prefix = f"/{settings.API_V1_STR}"
-app.include_router(api_router, prefix=route_prefix)
 app.add_middleware(
     CORSMiddleware,
+    # allow_origins=["*"],
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.include_router(api_router, prefix=route_prefix)
+
+# OAuth2 scope definitions for OpenAPI/Swagger UI
+app.security_schemes = {
+    "OAuth2PasswordBearer": oauth2_scheme,
+}
+app.security = [{"OAuth2PasswordBearer": [s.value for s in Scope]}]

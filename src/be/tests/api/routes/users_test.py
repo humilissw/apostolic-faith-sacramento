@@ -1,3 +1,4 @@
+from typing import AsyncGenerator
 from unittest.mock import patch
 
 import pytest
@@ -9,15 +10,30 @@ from sqlmodel import select
 from app import crud
 from app.config import settings
 from app.core.security import verify_password
+from app.core.db import get_db_session
 from app.main import app
 from app.models import User, UserCreate
 from tests.utils.utils import random_email, random_lower_string
 
 
 @pytest.fixture(scope="function")
-async def users_client() -> httpx.AsyncClient:
+async def users_client(db_session: AsyncSession) -> httpx.AsyncClient:
+    """Test client that shares the test's db_session with the app."""
+    # Use dependency_overrides to share the test's db_session with the app
+    # Store the original override if any
+    _original = app.dependency_overrides.pop(get_db_session, None)
+
+    async def _override() -> AsyncGenerator[AsyncSession, None]:
+        yield db_session
+
+    app.dependency_overrides[get_db_session] = _override
     async with httpx.AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
         yield c
+    # Restore original override
+    if _original is not None:
+        app.dependency_overrides[get_db_session] = _original
+    else:
+        app.dependency_overrides.pop(get_db_session, None)
 
 
 @pytest.mark.asyncio
@@ -28,7 +44,7 @@ async def test_get_users_superuser_me(
     current_user = r.json()
     assert current_user
     assert current_user["is_active"] is True
-    assert current_user["is_superuser"]
+    assert "superuser" in current_user.get("assigned_scopes", [])
     assert current_user["email"] == settings.FIRST_SUPERUSER
 
 
@@ -40,7 +56,7 @@ async def test_get_users_normal_user_me(
     current_user = r.json()
     assert current_user
     assert current_user["is_active"] is True
-    assert current_user["is_superuser"] is False
+    assert "superuser" not in current_user.get("assigned_scopes", [])
     assert current_user["email"] == settings.EMAIL_TEST_USER
 
 

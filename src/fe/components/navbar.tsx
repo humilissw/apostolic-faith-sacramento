@@ -3,6 +3,7 @@
 import AFCLogo from "@/components/afc-logo";
 import Link from "next/link";
 import * as React from "react";
+import { useEffect, useState } from "react";
 
 import {
   NavigationMenu,
@@ -24,18 +25,7 @@ import CustomSidebarTrigger from "@/components/custom-sidebar-trigger";
 
 export default function Navbar() {
   const isMobile = useIsMobile();
-  let isAuthenticated = false;
-  let logout = () => {};
-  try {
-    const auth = useAuth();
-    isAuthenticated = auth.isAuthenticated;
-    logout = () => {
-      auth.logout();
-      window.location.assign("/");
-    };
-  } catch {
-    // outside AuthProvider, default to logged out
-  }
+  const auth = useAuth();
 
   return (
     <div className="relative flex gap-35 justify-center items-center py-2 md:py-5 lg:gap-35 xl:gap-10 text-black bg-white">
@@ -72,6 +62,7 @@ export default function Navbar() {
                     <NavigationMenuLink asChild>
                       <Link
                         target="_blank"
+                        rel="noopener noreferrer"
                         href="https://www.youtube.com/@ApostolicFaithSacramento/streams"
                       >
                         Sermons
@@ -80,6 +71,7 @@ export default function Navbar() {
                     <NavigationMenuLink asChild>
                       <Link
                         target="_blank"
+                        rel="noopener noreferrer"
                         href="https://www.apostolicfaith.org/library/this-weeks-lessons"
                       >
                         Sunday School Lessons
@@ -88,6 +80,7 @@ export default function Navbar() {
                     <NavigationMenuLink asChild>
                       <Link
                         target="_blank"
+                        rel="noopener noreferrer"
                         href="https://www.apostolicfaith.org/apostolic-faith-magazine"
                       >
                         Apostolic Faith Magazine
@@ -116,7 +109,16 @@ export default function Navbar() {
               </Link>
             </NavigationMenuItem>
 
-            {isAuthenticated && (
+            <NavigationMenuItem className="hidden md:block">
+              <Link
+                href="/donate/"
+                className='group inline-flex h-9 w-max items-center justify-center rounded-md cursor-pointer px-7 py-2 text-base tracking-[0.04em] font-medium bg-green-600 text-white hover:bg-green-700 focus:bg-green-700 focus:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 data-[state=open]:hover:bg-green-700 data-[state=open]:text-accent-foreground data-[state=open]:focus:bg-green-700 data-[state=open]:bg-green-700/50 focus-visible:ring-ring/50 outline-none transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1"'
+              >
+                Donate
+              </Link>
+            </NavigationMenuItem>
+
+            {auth.isAuthenticated && (
               <NavigationMenuItem className="hidden md:block">
                 <Link
                   href="/video-uploads/"
@@ -126,17 +128,47 @@ export default function Navbar() {
                 </Link>
               </NavigationMenuItem>
             )}
+            {auth.isAuthenticated && (
+              <NavigationMenuItem className="hidden md:block">
+                <Link
+                  href="/integrations/"
+                  className='group inline-flex h-9 w-max items-center justify-center rounded-md cursor-pointer px-7 py-2 text-base tracking-[0.04em] font-medium hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 data-[state=open]:hover:bg-accent data-[state=open]:text-accent-foreground data-[state=open]:focus:bg-accent data-[state=open]:bg-accent/50 focus-visible:ring-ring/50 outline-none transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1"'
+                >
+                  Integrations
+                </Link>
+              </NavigationMenuItem>
+            )}
+            {auth.isAuthenticated && auth.hasScope("superuser") && (
+              <NavigationMenuItem className="hidden md:block">
+                <Link
+                  href="/users-admin/"
+                  className='group inline-flex h-9 w-max items-center justify-center rounded-md cursor-pointer px-7 py-2 text-base tracking-[0.04em] font-medium hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 data-[state=open]:hover:bg-accent data-[state=open]:text-accent-foreground data-[state=open]:focus:bg-accent data-[state=open]:bg-accent/50 focus-visible:ring-ring/50 outline-none transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1"'
+                >
+                  User Management
+                </Link>
+              </NavigationMenuItem>
+            )}
+            {auth.isAuthenticated && auth.hasScope("superuser") && (
+              <NavigationMenuItem className="hidden md:block">
+                <Link
+                  href="/video-uploads-admin/"
+                  className='group inline-flex h-9 w-max items-center justify-center rounded-md cursor-pointer px-7 py-2 text-base tracking-[0.04em] font-medium hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 data-[state=open]:hover:bg-accent data-[state=open]:text-accent-foreground data-[state=open]:focus:bg-accent data-[state=open]:bg-accent/50 focus-visible:ring-ring/50 outline-none transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1"'
+                >
+                  Video Upload Admin
+                </Link>
+              </NavigationMenuItem>
+            )}
           </NavigationMenuList>
         </NavigationMenu>
 
         <div className="absolute right-8 hidden lg:block gap-4 flex items-center">
-          {isAuthenticated ? (
+          {auth.isAuthenticated ? (
             <>
               <Button
                 className="font-noto-sans bg-black text-white hover:bg-gray-700"
                 size="default"
                 variant="default"
-                onClick={() => logout()}
+                onClick={() => auth.logout()}
               >
                 Logout
               </Button>

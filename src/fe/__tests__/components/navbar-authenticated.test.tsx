@@ -31,12 +31,18 @@ jest.mock('@/hooks/use-mobile', () => ({
   useIsMobile: jest.fn(() => false),
 }))
 
+global.fetch = jest.fn().mockResolvedValue({
+  ok: true,
+  json: () => Promise.resolve({ is_superuser: false }),
+})
+
 jest.mock('@/context/auth-context', () => ({
   useAuth: jest.fn(() => ({
     isAuthenticated: true,
     token: 'fake-token',
     login: jest.fn(),
     logout: jest.fn(),
+    hasScope: jest.fn(() => false),
   })),
 }))
 

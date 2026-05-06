@@ -4,28 +4,43 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
 
+function getLocalStorageItem(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch (err) {
+    console.debug("🚀 ~ setLocalStorageItem ~ err:", err)
+    return null;
+  }
+}
+
+function setLocalStorageItem(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch (err) {
+    // localStorage unavailable (static export, private browsing)
+    console.debug("🚀 ~ setLocalStorageItem ~ err:", err)
+  }
+}
+
 import {
-  clearAllTokens,
-  getAuthToken,
-  getRefreshToken,
-  revokeToken,
-  setAuthToken,
-  setRefreshToken,
+  isAuthenticated,
+  logout as apiLogout,
   refreshToken as apiRefreshToken,
 } from "@/lib/api";
 
 interface AuthContextValue {
-  token: string | null;
   isAuthenticated: boolean;
   isLoadingToken: boolean;
-  login: (access_token: string, refresh_token: string) => void;
+  login: () => void;
   logout: () => Promise<void>;
   refreshAccessToken: () => Promise<void>;
+  hasScope: (requiredScope: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -34,24 +49,45 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 let pendingRefresh: Promise<void> | null = null;
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [token, setToken] = useState<string | null>(() => getAuthToken());
   const [isLoadingToken, setIsLoadingToken] = useState(true);
+  const [tokenExpiry, setTokenExpiry] = useState<number | null>(null);
+  const [hasLoggedIn, setHasLoggedIn] = useState(false);
   const retryCount = useRef(0);
 
-  const isAuthenticated = token !== null;
+  // Check if cookies exist (client-side only)
+  const hasCookie = (() => {
+    try {
+      return !!getLocalStorageItem("access_token");
+    } catch (err) {
+      return false;
+    }
+  })();
 
-  const login = useCallback((access_token: string, refresh_token: string) => {
-    setAuthToken(access_token);
-    setRefreshToken(refresh_token);
-    setToken(access_token);
+  // Authenticated if user has successfully logged in AND token hasn't expired.
+  const hasTokenExpired = tokenExpiry !== null && tokenExpiry < Date.now();
+  const isAuthenticatedState =
+    (hasLoggedIn || hasCookie) && (tokenExpiry === null || !hasTokenExpired);
+
+  // Mark auth check as done after first render
+  useEffect(() => {
+    setIsLoadingToken(false);
+  }, []);
+
+  const login = useCallback(() => {
+    // Cookies are set by the backend login endpoint.
+    // Just need to set an initial expiry estimate (client doesn't have the exact value).
+    // The actual auth state is validated by the backend on each request.
+    setHasLoggedIn(true);
+    setTokenExpiry(Date.now() + 600 * 1000); // 10 min default estimate
     retryCount.current = 0;
   }, []);
 
   const refreshAccessToken = useCallback(async () => {
-    const currentRefreshToken = getRefreshToken();
+    // Read refresh token from localStorage (where the login page stores it).
+    // Cannot read httpOnly cookies from JS.
+    const currentRefreshToken = getLocalStorageItem("refresh_token");
     if (!currentRefreshToken) {
-      setToken(null);
-      clearAllTokens();
+      setTokenExpiry(null);
       return;
     }
 
@@ -62,15 +98,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const response = await apiRefreshToken(currentRefreshToken);
-      setAuthToken(response.access_token);
-      setToken(response.access_token);
-      // The response doesn't include a new refresh token (server issues one)
-      // We keep the existing refresh_token; the server handles rotation
+      setTokenExpiry(Date.now() + response.access_token_expires * 1000);
+      setLocalStorageItem("auth_scopes", JSON.stringify(response.scopes));
       retryCount.current = 0;
     } catch {
-      // Refresh failed — revoke and clear
-      clearAllTokens();
-      setToken(null);
+      setTokenExpiry(null);
       throw new Error("Session expired. Please log in again.");
     } finally {
       pendingRefresh = null;
@@ -78,28 +110,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    const currentToken = getAuthToken();
-    const currentRefresh = getRefreshToken();
-    // Fire-and-forget revoke (don't block the UI)
-    if (currentRefresh) {
-      revokeToken(currentRefresh).catch(() => {});
-    } else if (currentToken) {
-      revokeToken(currentToken).catch(() => {});
-    }
-    clearAllTokens();
-    setToken(null);
+    // Call backend logout to revoke tokens and clear cookies
+    await apiLogout().catch(() => {});
+    setHasLoggedIn(false);
+    setTokenExpiry(null);
+    setLocalStorageItem("auth_scopes", "[]");
+    setLocalStorageItem("refresh_token", "");
+    setLocalStorageItem("access_token", "");
+    window.location.assign("/login")
   }, []);
+
+  const scopes = useMemo(() => {
+    const stored = getLocalStorageItem("auth_scopes");
+    return stored ? JSON.parse(stored) : [];
+  }, []);
+
+  const hasScope = useCallback(
+    (requiredScope: string) => {
+      // Client-side scope check is approximate — the backend is the source of truth.
+      // Superusers bypass scope checks entirely.
+      if (scopes.includes("api:all")) return true;
+      return scopes.includes(requiredScope);
+    },
+    [scopes],
+  );
 
   const value = useMemo(
     () => ({
-      token,
-      isAuthenticated,
+      isAuthenticated: isAuthenticatedState,
       isLoadingToken,
       login,
       logout,
       refreshAccessToken,
+      hasScope,
     }),
-    [token, isAuthenticated, isLoadingToken, login, logout, refreshAccessToken],
+    [
+      isAuthenticatedState,
+      isLoadingToken,
+      login,
+      logout,
+      refreshAccessToken,
+      hasScope,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
