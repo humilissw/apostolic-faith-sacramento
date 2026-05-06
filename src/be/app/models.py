@@ -83,7 +83,6 @@ class UserScope(SQLModel, table=True):  # type: ignore[call-arg]
 class UserPublic(SQLModel):
     email: EmailStr
     is_active: bool
-    is_superuser: bool
     new_id: str
     full_name: Annotated[str | None, Field(exclude=True)]
     assigned_scopes: list[str] = Field(default_factory=list)
@@ -147,7 +146,7 @@ class Message(SQLModel):
 # JSON payload containing access token
 class Token(SQLModel):
     access_token: str = Field(default=None, min_length=8, max_length=4000)
-    refresh_token: str = Field(default=None, min_length=8, max_length=4000)
+    refresh_token: str | None = Field(default=None, max_length=4000)
     token_type: str = "bearer"
     access_token_expires: int = Field(default=0)
     refresh_token_expires: int = Field(default=0)
@@ -292,6 +291,56 @@ class DonationConfig(DefaultBase, table=True):  # type: ignore[call-arg]
     amount_cents: int = Field(nullable=False)
     is_default: bool = Field(default=False)
     frequency: str = Field(max_length=20)  # one_time or recurring
+
+
+# OAuth2 client credentials model
+
+
+class AuthorizationCode(SQLModel, table=True):  # type: ignore[call-arg]
+    """Stores authorization codes for the authorization code flow with PKCE."""
+
+    __tablename__ = "authorization_codes"
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True, max_length=36)
+    code: str = Field(max_length=200, unique=True)
+    client_id: str = Field(max_length=100)
+    code_challenge: str = Field(max_length=200)
+    redirect_uri: str = Field(default="", max_length=1000)
+    used: bool = Field(default=False)
+    expires_at: datetime.datetime = Field(nullable=False)
+    created_on: datetime.datetime = Field(
+        default=datetime.datetime.now(datetime.timezone.utc), nullable=False
+    )
+
+
+class ClientCredentials(SQLModel, table=True):  # type: ignore[call-arg]
+    """OAuth2 client credentials for service-to-service auth."""
+
+    __tablename__ = "client_credentials"
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True, max_length=36)
+    client_id: str = Field(max_length=100, unique=True)
+    client_secret_hash: str = Field(max_length=4000)
+    scopes: str = Field(max_length=1000)  # comma-separated scope values
+    is_active: bool = Field(default=True)
+    created_on: datetime.datetime = Field(
+        default=datetime.datetime.now(datetime.timezone.utc), nullable=False
+    )
+
+
+class ClientCredentialsPublic(SQLModel):
+    id: str
+    client_id: str
+    scopes: list[str]
+    is_active: bool
+
+
+class ClientCredentialsCreate(SQLModel):
+    client_id: str
+    scopes: list[str]
+
+
+class ClientCredentialsUpdate(SQLModel):
+    scopes: list[str] | None = None
+    is_active: bool | None = None
 
 
 # Third-party integration configuration models

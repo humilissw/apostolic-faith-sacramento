@@ -75,7 +75,7 @@ async def init_db_async() -> None:
     """Initialize database - creates superuser if it doesn't exist."""
     session = AsyncSessionLocal()
     try:
-        from app.models import User, UserCreate
+        from app.models import User, UserCreate, UserScope
         from app import crud
 
         statement = select(User).where(User.email == settings.FIRST_SUPERUSER)
@@ -93,6 +93,9 @@ async def init_db_async() -> None:
                 is_superuser=True,
             )
             user = await crud.create_user(session=session, user_create=user_in)
+            # Seed superuser scope
+            session.add(UserScope(user_id=user.id, scope="superuser"))
+            await session.commit()
     except Exception as error:
         print(error)
     finally:
@@ -101,7 +104,7 @@ async def init_db_async() -> None:
 
 def init_db(session: Session) -> None:
     """Initialize database - creates superuser if it doesn't exist (sync version)."""
-    from app.models import UserCreate
+    from app.models import UserCreate, UserScope
 
     statement = select(User).where(User.email == settings.FIRST_SUPERUSER)
     user_result = session.execute(statement)
@@ -114,4 +117,8 @@ def init_db(session: Session) -> None:
         )
         db_user = User.model_validate(user_in, update={"hashed_password": ""})
         session.add(db_user)
+        session.commit()
+        session.refresh(db_user)
+        # Seed superuser scope
+        session.add(UserScope(user_id=db_user.id, scope="superuser"))
         session.commit()

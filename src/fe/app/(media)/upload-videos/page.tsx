@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useAuth } from "@/context/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +10,6 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://localhost:8000/";
 const API_V1 = "api/v1";
 
 export default function UploadVideosPage() {
-  const { token } = useAuth();
   const [uploading, setUploading] = useState(false);
   const [uploadLocation, setUploadLocation] = useState("");
   const [uploadName, setUploadName] = useState("");
@@ -24,7 +22,9 @@ export default function UploadVideosPage() {
 
   async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!token) return;
+
+    const valid = (e.target as HTMLFormElement).checkValidity();
+    if (!valid) return;
 
     setUploading(true);
     setError(null);
@@ -36,13 +36,12 @@ export default function UploadVideosPage() {
         {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            upload_location: uploadLocation,
-            upload_name: uploadName,
-            media_association_date: mediaDate,
+            upload_location: uploadLocation.trim(),
+            upload_name: uploadName.trim(),
+            media_association_date: new Date(mediaDate).toISOString(),
             ...(speakerName && { speaker_name: speakerName }),
             ...(referenceText && { reference_text: referenceText }),
             ...(description && { description }),

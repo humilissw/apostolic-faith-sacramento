@@ -26,19 +26,6 @@ import CustomSidebarTrigger from "@/components/custom-sidebar-trigger";
 export default function Navbar() {
   const isMobile = useIsMobile();
   const auth = useAuth();
-  const [isSuperuser, setIsSuperuser] = useState(false);
-
-  useEffect(() => {
-    if (!auth.isAuthenticated) {
-      setIsSuperuser(false);
-      return;
-    }
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://localhost:8000/";
-    fetch(`${API_BASE}/api/v1/auth/me`, { credentials: "include" })
-      .then((res) => (res.ok ? res.json() : Promise.reject()))
-      .then((data) => setIsSuperuser(data.is_superuser))
-      .catch(() => setIsSuperuser(false));
-  }, [auth.isAuthenticated]);
 
   return (
     <div className="relative flex gap-35 justify-center items-center py-2 md:py-5 lg:gap-35 xl:gap-10 text-black bg-white">
@@ -151,7 +138,7 @@ export default function Navbar() {
                 </Link>
               </NavigationMenuItem>
             )}
-            {auth.isAuthenticated && isSuperuser && (
+            {auth.isAuthenticated && auth.hasScope("superuser") && (
               <NavigationMenuItem className="hidden md:block">
                 <Link
                   href="/users-admin/"
@@ -161,7 +148,7 @@ export default function Navbar() {
                 </Link>
               </NavigationMenuItem>
             )}
-            {auth.isAuthenticated && isSuperuser && (
+            {auth.isAuthenticated && auth.hasScope("superuser") && (
               <NavigationMenuItem className="hidden md:block">
                 <Link
                   href="/video-uploads-admin/"

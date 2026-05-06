@@ -15,7 +15,7 @@ class UserScopeRepository:
     async def get_scopes(self, user_id: str) -> list[str]:
         statement = select(UserScope).where(UserScope.user_id == user_id)  # type: ignore[arg-type]
         result = await self.session.execute(statement)
-        return [row[0] for row in result.all()]  # type: ignore[no-any-return]
+        return [row[0].scope for row in result.all()]  # type: ignore[no-any-return]
 
     async def set_scopes(self, user_id: str, scopes: list[str]) -> None:
         # Remove existing scopes

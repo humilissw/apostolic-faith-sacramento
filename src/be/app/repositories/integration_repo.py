@@ -1,6 +1,6 @@
 """Repository for integration_configs table."""
 
-from sqlmodel import select
+from sqlmodel import func, select
 
 from app.models import IntegrationConfig
 
@@ -27,7 +27,7 @@ class IntegrationConfigRepository:
         return result.scalar_one_or_none()  # type: ignore[no-any-return]
 
     async def get_all(self, skip: int = 0, limit: int = 100) -> tuple[list[IntegrationConfig], int]:
-        count_stmt = select(self._count_expr())
+        count_stmt = select(func.count(IntegrationConfig.id))  # type: ignore[arg-type]
         count_result = await self.session.execute(count_stmt)
         total = count_result.scalar() or 0
 

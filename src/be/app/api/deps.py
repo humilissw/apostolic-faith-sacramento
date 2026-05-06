@@ -2,7 +2,13 @@ from typing import Annotated, Callable, Generator
 
 import jwt
 from fastapi import Depends, HTTPException, Request, status
-from fastapi.openapi.models import OAuthFlowPassword, OAuthFlows
+from fastapi.openapi.models import (
+    OAuthFlowAuthorizationCode,
+    OAuthFlowClientCredentials,
+    OAuthFlowImplicit,
+    OAuthFlowPassword,
+    OAuthFlows,
+)
 from fastapi.security import OAuth2, OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
@@ -25,13 +31,42 @@ async def get_token_from_cookie(request: Request) -> str | None:
 
 reusable_oauth2 = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/login/access-token")
 
-# OAuth2 security scheme with scopes for OpenAPI/Swagger UI
+# Per-flow OAuth2 dependencies
+reusable_oauth2_implicit = OAuth2PasswordBearer(
+    tokenUrl=f"{settings.API_V1_STR}/login/implicit-token",
+    scheme_name="implicit_grant",
+)
+reusable_oauth2_auth_code = OAuth2PasswordBearer(
+    tokenUrl=f"{settings.API_V1_STR}/login/auth-code",
+    scheme_name="authorization_code",
+)
+reusable_oauth2_client_creds = OAuth2PasswordBearer(
+    tokenUrl=f"{settings.API_V1_STR}/login/client-credentials",
+    scheme_name="client_credentials",
+)
+
+# OAuth2 security scheme with all flows for OpenAPI/Swagger UI
 oauth2_scheme = OAuth2(
     flows=OAuthFlows(
         password=OAuthFlowPassword(
             tokenUrl=f"{settings.API_V1_STR}/login/access-token",
             scopes={s.value: s.value for s in Scope},
-        )
+        ),
+        implicit=OAuthFlowImplicit(
+            authorizationUrl=f"{settings.API_V1_STR}/login/implicit-authorize",
+            tokenUrl=f"{settings.API_V1_STR}/login/implicit-token",
+            scopes={"spa:all": "Full SPA access"},
+        ),
+        authorizationCode=OAuthFlowAuthorizationCode(
+            authorizationUrl=f"{settings.API_V1_STR}/login/authorize",
+            tokenUrl=f"{settings.API_V1_STR}/login/auth-code",
+            refreshUrl=f"{settings.API_V1_STR}/login/refresh-token",
+            scopes={s.value: s.value for s in Scope},
+        ),
+        clientCredentials=OAuthFlowClientCredentials(
+            tokenUrl=f"{settings.API_V1_STR}/login/client-credentials",
+            scopes={"client": "Service-to-service access"},
+        ),
     )
 )
 
@@ -49,6 +84,11 @@ def get_sync_db_session() -> Generator[Session]:
 
 
 SyncSessionDep = Annotated[Session, Depends(get_sync_db_session)]
+
+# Per-flow typed dependencies
+ImplicitTokenDep = Annotated[str, Depends(reusable_oauth2_implicit)]
+AuthCodeTokenDep = Annotated[str, Depends(reusable_oauth2_auth_code)]
+ClientCredsTokenDep = Annotated[str, Depends(reusable_oauth2_client_creds)]
 
 
 async def get_current_user(
@@ -124,8 +164,20 @@ async def get_current_active_user(
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
-async def get_current_active_superuser(current_user: CurrentUser) -> User:
-    if not current_user.is_superuser:
+async def get_current_active_superuser(current_user: CurrentUser, token: TokenDep) -> User:
+    """Check token scopes for superuser, not the is_superuser flag."""
+    try:
+        payload = jwt.decode(
+            token,
+            security.PUBLIC_KEY,
+            algorithms=[security.ALGORITHM],
+            audience=settings.JWT_AUDIENCE,
+            issuer=settings.JWT_ISSUER,
+        )
+        token_data = TokenPayload(**payload)
+        if "superuser" not in (token_data.scopes or []):
+            raise HTTPException(status_code=403, detail="The user doesn't have enough privileges")
+    except (InvalidTokenError, ValidationError):
         raise HTTPException(status_code=403, detail="The user doesn't have enough privileges")
     return current_user
 
@@ -179,7 +231,9 @@ async def _get_user_scopes(session: AsyncSession, user: User) -> list[str]:
     repo = UserScopeRepository(session)
     db_scopes = await repo.get_scopes(user.id)
     if db_scopes:
-        return ["api:all"] if "api:all" in db_scopes else db_scopes
+        if "api:all" in db_scopes or "superuser" in db_scopes:
+            return ["api:all"]
+        return db_scopes
     # Fall back to a default set of scopes for backward compat
     return []
 
@@ -219,20 +273,20 @@ async def get_current_active_superuser_bypass(
         raise HTTPException(status_code=404, detail="User not found")
     if not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
-    return user
+    return user  # type: ignore[no-any-return]
 
 
 def require_scope(required_scope: str) -> Callable:
     """Return a dependency that checks if the user has the required scope.
 
-    Superusers bypass scope checks entirely.
+    Users with "superuser" scope bypass all scope checks.
     """
 
     async def scope_checker(
         user_scopes: Annotated[tuple[User, list[str]], Depends(get_current_user_with_scopes)],
     ) -> User:
         user, scopes = user_scopes
-        if user.is_superuser:
+        if "superuser" in scopes:
             return user
         if required_scope not in scopes:
             raise HTTPException(
@@ -245,13 +299,16 @@ def require_scope(required_scope: str) -> Callable:
 
 
 def require_any_scope(required_scopes: list[str]) -> Callable:
-    """Return a dependency that checks if the user has any of the required scopes."""
+    """Return a dependency that checks if the user has any of the required scopes.
+
+    Users with "superuser" scope bypass the check.
+    """
 
     async def scope_checker(
         user_scopes: Annotated[tuple[User, list[str]], Depends(get_current_user_with_scopes)],
     ) -> User:
         user, scopes = user_scopes
-        if user.is_superuser:
+        if "superuser" in scopes:
             return user
         if not any(s in scopes for s in required_scopes):
             raise HTTPException(

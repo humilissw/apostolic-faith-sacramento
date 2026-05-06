@@ -65,6 +65,10 @@ class Settings(BaseSettings):
     # Auth cookie settings
     ACCESS_TOKEN_COOKIE_NAME: str = "access_token"
     REFRESH_TOKEN_COOKIE_NAME: str = "refresh_token"
+    COOKIE_SECURE: bool = True
+    COOKIE_DOMAIN: str = ""
+    COOKIE_PATH: str = "/"
+    COOKIE_SAMESITE: str = "none"
     # Stripe payment settings
     STRIPE_PUBLIC_KEY: str = ""
     STRIPE_SECRET_KEY: str = ""

@@ -141,11 +141,11 @@ async def update_password_me(
     response_model=UserPublic,
     dependencies=[require_scope("api:all")],
 )
-def read_user_me(current_user: CurrentUser) -> Any:
+async def read_user_me(current_user: CurrentUser, session: SessionDep) -> Any:
     """
     Get current user.
     """
-    return current_user
+    return await _populate_scopes(session, current_user)
 
 
 @router.delete(

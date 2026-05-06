@@ -105,14 +105,15 @@ origins = [
 ]
 
 route_prefix = f"/{settings.API_V1_STR}"
-app.include_router(api_router, prefix=route_prefix)
 app.add_middleware(
     CORSMiddleware,
+    # allow_origins=["*"],
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.include_router(api_router, prefix=route_prefix)
 
 # OAuth2 scope definitions for OpenAPI/Swagger UI
 app.security_schemes = {

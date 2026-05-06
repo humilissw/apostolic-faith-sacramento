@@ -4,8 +4,12 @@ import DonationForm from "@/components/donation-form";
 import DonationHistory from "@/components/donation-history";
 
 function getCookie(name: string): string | null {
-  const match = document.cookie.match("(^| )" + name + "=([^;]+)");
-  return match ? decodeURIComponent(match[2]) : null;
+  try {
+    const match = document.cookie.match("(^| )" + name + "=([^;]+)");
+    return match ? decodeURIComponent(match[2]) : null;
+  } catch {
+    return null;
+  }
 }
 
 export default function DonatePage() {

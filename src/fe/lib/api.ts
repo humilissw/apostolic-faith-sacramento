@@ -144,17 +144,23 @@ export async function fetchWithAuth(
   options: RequestInit = {},
   maxRetries: number = 1,
 ): Promise<Response> {
+  // Add Bearer token from localStorage (login page stores tokens there as JSON strings)
   const newOptions: RequestInit = { ...options, credentials: "include" };
+  const accessToken = localStorage.getItem("access_token");
+  if (accessToken) {
+    try {
+      newOptions.headers = { ...newOptions.headers, Authorization: `Bearer ${JSON.parse(accessToken)}` };
+    } catch {
+      // access_token may be a raw string
+      newOptions.headers = { ...newOptions.headers, Authorization: `Bearer ${accessToken}` };
+    }
+  }
 
   let response = await fetch(url, newOptions);
 
   // Retry once on 401 (access token expired) by refreshing
   if (response.status === 401 && maxRetries > 0) {
-    // The backend reads the refresh token from cookies in get_current_user
-    // We need the client to send the refresh_token in the body though.
-    // Read from cookie since httpOnly cookie can't be read by JS.
-    // Use the refresh_token cookie value from the response of a /me call.
-    const currentRefreshToken = getRefreshTokenFromCookie();
+    const currentRefreshToken = localStorage.getItem("refresh_token");
     if (currentRefreshToken) {
       try {
         const refreshed = await refreshToken(currentRefreshToken);
@@ -168,12 +174,6 @@ export async function fetchWithAuth(
   }
 
   return response;
-}
-
-// Helper to read refresh token from cookie (for the refresh flow only)
-function getRefreshTokenFromCookie(): string | null {
-  const match = document.cookie.match(/refresh_token=([^;]+)/);
-  return match ? match[1] : null;
 }
 
 // --- Check if user is authenticated ---
@@ -432,7 +432,6 @@ export async function preSeedIntegrations(): Promise<IntegrationsResponse> {
 export interface UserWithScopes {
   email: string;
   is_active: boolean;
-  is_superuser: boolean;
   new_id: string;
   full_name: string | null;
   assigned_scopes: string[];
@@ -508,6 +507,19 @@ export async function patchVideoUpload(
   if (!res.ok) {
     const body = await res.text();
     throw new Error(body || "Failed to update video upload");
+  }
+  return res.json();
+}
+
+export async function createVideoUpload(data: Partial<VideoUploadAdmin>): Promise<VideoUploadAdmin> {
+  const res = await fetchWithAuth(`${API_BASE}${API_V1}/video-uploads/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(body || "Failed to create video upload");
   }
   return res.json();
 }

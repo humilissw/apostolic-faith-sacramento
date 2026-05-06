@@ -10,7 +10,29 @@ import {
   useState,
 } from "react";
 
-import { isAuthenticated, logout as apiLogout, refreshToken as apiRefreshToken } from "@/lib/api";
+function getLocalStorageItem(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch (err) {
+    console.debug("🚀 ~ setLocalStorageItem ~ err:", err)
+    return null;
+  }
+}
+
+function setLocalStorageItem(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch (err) {
+    // localStorage unavailable (static export, private browsing)
+    console.debug("🚀 ~ setLocalStorageItem ~ err:", err)
+  }
+}
+
+import {
+  isAuthenticated,
+  logout as apiLogout,
+  refreshToken as apiRefreshToken,
+} from "@/lib/api";
 
 interface AuthContextValue {
   isAuthenticated: boolean;
@@ -29,23 +51,41 @@ let pendingRefresh: Promise<void> | null = null;
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoadingToken, setIsLoadingToken] = useState(true);
   const [tokenExpiry, setTokenExpiry] = useState<number | null>(null);
+  const [hasLoggedIn, setHasLoggedIn] = useState(false);
   const retryCount = useRef(0);
 
-  // Authenticated if there's an auth cookie AND (either has a valid expiry or expiry hasn't been set yet, meaning the user just loaded the page)
-  const isAuthenticatedState = document.cookie.includes("access_token=") && (tokenExpiry === null || tokenExpiry > Date.now());
+  // Check if cookies exist (client-side only)
+  const hasCookie = (() => {
+    try {
+      return !!getLocalStorageItem("access_token");
+    } catch (err) {
+      return false;
+    }
+  })();
+
+  // Authenticated if user has successfully logged in AND token hasn't expired.
+  const hasTokenExpired = tokenExpiry !== null && tokenExpiry < Date.now();
+  const isAuthenticatedState =
+    (hasLoggedIn || hasCookie) && (tokenExpiry === null || !hasTokenExpired);
+
+  // Mark auth check as done after first render
+  useEffect(() => {
+    setIsLoadingToken(false);
+  }, []);
 
   const login = useCallback(() => {
     // Cookies are set by the backend login endpoint.
     // Just need to set an initial expiry estimate (client doesn't have the exact value).
     // The actual auth state is validated by the backend on each request.
+    setHasLoggedIn(true);
     setTokenExpiry(Date.now() + 600 * 1000); // 10 min default estimate
     retryCount.current = 0;
   }, []);
 
   const refreshAccessToken = useCallback(async () => {
-    // Read refresh token from cookie
-    const match = document.cookie.match(/refresh_token=([^;]+)/);
-    const currentRefreshToken = match ? match[1] : null;
+    // Read refresh token from localStorage (where the login page stores it).
+    // Cannot read httpOnly cookies from JS.
+    const currentRefreshToken = getLocalStorageItem("refresh_token");
     if (!currentRefreshToken) {
       setTokenExpiry(null);
       return;
@@ -59,6 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await apiRefreshToken(currentRefreshToken);
       setTokenExpiry(Date.now() + response.access_token_expires * 1000);
+      setLocalStorageItem("auth_scopes", JSON.stringify(response.scopes));
       retryCount.current = 0;
     } catch {
       setTokenExpiry(null);
@@ -71,12 +112,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(async () => {
     // Call backend logout to revoke tokens and clear cookies
     await apiLogout().catch(() => {});
+    setHasLoggedIn(false);
     setTokenExpiry(null);
-    document.cookie = "auth_scopes=; max-age=0; path=/";
+    setLocalStorageItem("auth_scopes", "[]");
+    setLocalStorageItem("refresh_token", "");
+    setLocalStorageItem("access_token", "");
+    window.location.assign("/login")
   }, []);
 
   const scopes = useMemo(() => {
-    const stored = localStorage.getItem("auth_scopes");
+    const stored = getLocalStorageItem("auth_scopes");
     return stored ? JSON.parse(stored) : [];
   }, []);
 
@@ -90,11 +135,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [scopes],
   );
 
-  // Check auth state on mount
-  useEffect(() => {
-    setIsLoadingToken(false);
-  }, []);
-
   const value = useMemo(
     () => ({
       isAuthenticated: isAuthenticatedState,
@@ -104,7 +144,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       refreshAccessToken,
       hasScope,
     }),
-    [isAuthenticatedState, isLoadingToken, login, logout, refreshAccessToken, hasScope],
+    [
+      isAuthenticatedState,
+      isLoadingToken,
+      login,
+      logout,
+      refreshAccessToken,
+      hasScope,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

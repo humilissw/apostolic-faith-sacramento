@@ -1,7 +1,5 @@
 import * as React from "react";
 import { ChevronRight } from "lucide-react";
-import { useState, useEffect } from "react";
-
 import {
   Collapsible,
   CollapsibleContent,
@@ -28,8 +26,6 @@ import Link from "next/link";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useAuth } from "@/context/auth-context";
 import { Button } from "./ui/button";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://localhost:8000/";
 
 const data = {
   navMain: [
@@ -93,25 +89,9 @@ const data = {
 };
 
 function NavSidebarContent({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { isAuthenticated, logout } = useAuth();
-  const [isSuperuser, setIsSuperuser] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const { isAuthenticated, hasScope, logout } = useAuth();
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      setIsSuperuser(false);
-      setLoading(false);
-      return;
-    }
-    setLoading(false);
-    // Fetch superuser status from backend
-    fetch(`${API_BASE}/api/v1/auth/me`, { credentials: "include" })
-      .then((res) => (res.ok ? res.json() : Promise.reject()))
-      .then((data) => setIsSuperuser(data.is_superuser))
-      .catch(() => setIsSuperuser(false));
-  }, [isAuthenticated]);
-
-  if (loading) return null;
+  if (!isAuthenticated) return null;
 
   return (
     <Sidebar className="" side="right" {...props}>
@@ -132,7 +112,7 @@ function NavSidebarContent({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarGroup>
           </Collapsible>
         )}
-        {isAuthenticated && isSuperuser && (
+        {isAuthenticated && hasScope("superuser") && (
           <Collapsible key="integrations" className="group/collapsible">
             <SidebarGroup>
               <SidebarGroupLabel
@@ -144,7 +124,7 @@ function NavSidebarContent({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarGroup>
           </Collapsible>
         )}
-        {isAuthenticated && isSuperuser && (
+        {isAuthenticated && hasScope("superuser") && (
           <Collapsible key="user-management" className="group/collapsible">
             <SidebarGroup>
               <SidebarGroupLabel
@@ -156,7 +136,7 @@ function NavSidebarContent({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarGroup>
           </Collapsible>
         )}
-        {isAuthenticated && isSuperuser && (
+        {isAuthenticated && hasScope("superuser") && (
           <Collapsible key="video-admin" className="group/collapsible">
             <SidebarGroup>
               <SidebarGroupLabel

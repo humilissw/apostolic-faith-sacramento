@@ -28,3 +28,8 @@ class Scope(str, Enum):
     USERS_READ = "users:read"
     USERS_WRITE = "users:write"
     USERS_ADMIN = "users:admin"
+
+    # Superuser claim (replaces is_superuser boolean)
+    SUPERUSER = "superuser"
+    # Service-to-service auth
+    CLIENT = "client"

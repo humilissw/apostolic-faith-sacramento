@@ -52,7 +52,7 @@ export default function UserScopeDialog({
         const user = data.data.find((u) => u.new_id === userId);
         if (user) {
           setScopes(user.assigned_scopes);
-          setIsSuperuser(user.is_superuser);
+          setIsSuperuser(user.assigned_scopes.includes("superuser"));
         }
       })
       .catch(() => setScopes([]))

@@ -42,6 +42,7 @@ jest.mock('@/context/auth-context', () => ({
     token: 'fake-token',
     login: jest.fn(),
     logout: jest.fn(),
+    hasScope: jest.fn(() => false),
   })),
 }))
 

@@ -36,13 +36,17 @@ export default function IntegrationsPage() {
         const data = await fetchIntegrations();
         if (!cancelled) setIntegrations(data.data);
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Failed to load");
+        console.debug("🚀 ~ load ~ err:", err)
+        if (!cancelled)
+          setError(err instanceof Error ? err.message : "Failed to load");
       } finally {
         if (!cancelled) setLoading(false);
       }
     }
     load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleDelete = async (id: string) => {
@@ -143,10 +147,17 @@ export default function IntegrationsPage() {
                 <TableCell className="font-medium">
                   <span className="text-lg">{integration.icon}</span>
                 </TableCell>
-                <TableCell className="font-mono text-sm">{integration.type}</TableCell>
+                <TableCell className="font-mono text-sm">
+                  {integration.type}
+                </TableCell>
                 <TableCell>{integration.display_name}</TableCell>
                 <TableCell>
-                  <span className={cn("inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium", statusColor(integration.status))}>
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium",
+                      statusColor(integration.status),
+                    )}
+                  >
                     {integration.status === "connected" ? (
                       <Check className="w-3 h-3" />
                     ) : integration.status === "error" ? (

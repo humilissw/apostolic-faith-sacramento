@@ -52,8 +52,17 @@ async def list_integrations(
     """List all integration configurations (superuser only)."""
     service = _get_service(session)
     items, total = await service.get_all(skip, limit)
+    integrations = []
+    for item in items:
+        try:
+            is_valid = IntegrationConfigPublic.model_validate(item)
+            print(is_valid)
+            if is_valid:
+                integrations.append(is_valid)
+        except Exception as error:
+            print(error)
     return IntegrationsPublic(
-        data=[IntegrationConfigPublic.model_validate(i) for i in items],
+        data=integrations,
         count=total,
     )
 

@@ -26,6 +26,12 @@ async def create_user(*, session: AsyncSession, user_create: UserCreate) -> User
     session.add(db_obj)
     await session.commit()
     await session.refresh(db_obj)
+    # Seed superuser scope if requested
+    if user_create.is_superuser:
+        from app.models import UserScope
+
+        session.add(UserScope(user_id=db_obj.id, scope="superuser"))
+        await session.commit()
     return db_obj  # type: ignore[no-any-return]
 
 

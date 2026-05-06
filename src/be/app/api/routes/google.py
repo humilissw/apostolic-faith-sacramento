@@ -9,6 +9,7 @@ from app.core import security
 from app.core.scopes import Scope
 from app.models import Message, RefreshToken, UserCreate
 from app.repositories.user_repo import UserRepository
+from app.repositories.user_scope_repo import UserScopeRepository
 from sqlalchemy import update as sa_update
 
 router = APIRouter(prefix="/google", tags=["authentication"])
@@ -141,8 +142,15 @@ async def auth_via_google(
             detail="Inactive user",
         )
 
-    # Issue our own tokens (superusers get all scopes)
-    user_scopes = [s.value for s in Scope] if user.is_superuser else ["api:all"]
+    # Issue our own tokens (superuser scope grants all, otherwise use assigned scopes)
+    scope_repo = UserScopeRepository(session)
+    db_scopes = await scope_repo.get_scopes(user.id)
+    if "superuser" in db_scopes:
+        user_scopes = [s.value for s in Scope]
+    elif db_scopes:
+        user_scopes = db_scopes
+    else:
+        user_scopes = ["api:all"]
     access_token, access_expires = security.create_access_token_with_claims(
         user.email,
         timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
@@ -165,7 +173,11 @@ async def auth_via_google(
     redirect.delete_cookie("google_code_verifier")
 
     # Set httpOnly session cookies — the callback page verifies via /auth/me
-    redirect = RedirectResponse(url=f"{settings.FRONTEND_HOST}/google-callback", status_code=302)
+    scopes_param = ",".join(user_scopes)
+    redirect = RedirectResponse(
+        url=f"{settings.FRONTEND_HOST}/google-callback?scopes={scopes_param}",
+        status_code=302,
+    )
     redirect.set_cookie(
         key=settings.ACCESS_TOKEN_COOKIE_NAME,
         value=access_token,

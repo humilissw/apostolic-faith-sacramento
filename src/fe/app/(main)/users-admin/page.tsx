@@ -121,7 +121,7 @@ export default function UsersAdminPage() {
                   </span>
                 </TableCell>
                 <TableCell>
-                  {user.is_superuser ? (
+                  {user.assigned_scopes.includes("superuser") ? (
                     <span className="flex items-center gap-1 text-amber-600 text-sm">
                       <ShieldCheck className="w-4 h-4" /> Yes
                     </span>
@@ -130,7 +130,7 @@ export default function UsersAdminPage() {
                   )}
                 </TableCell>
                 <TableCell>
-                  {user.is_superuser ? (
+                  {user.assigned_scopes.includes("superuser") ? (
                     <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
                       <ShieldCheck className="w-3 h-3" /> ALL SCOPES
                     </span>

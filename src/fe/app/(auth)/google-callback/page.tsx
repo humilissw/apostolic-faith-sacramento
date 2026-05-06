@@ -14,6 +14,12 @@ function GoogleCallbackContent() {
 
   useEffect(() => {
     async function handleCallback() {
+      // Write scopes from URL to localStorage
+      const scopesParam = searchParams.get("scopes");
+      if (scopesParam) {
+        try { localStorage.setItem("auth_scopes", JSON.stringify(scopesParam.split(",").filter(Boolean))); } catch { /* static export */ }
+      }
+
       // Check if cookies were already validated by a previous pass
       if (searchParams.get("validated") === "true") {
         login();

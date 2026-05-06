@@ -3,7 +3,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Request, status
 from sqlalchemy import select
 
-from app.api.deps import CurrentUser, SessionDep, require_scope
+from app.api.deps import CurrentUser, SessionDep
 from app.models import DonationConfig, Message
 from app.repositories.payment_repo import PaymentRepository
 from app.requests.payment_request import PaymentCreate
@@ -25,7 +25,7 @@ payment_service = PaymentService()
     "/create-intent",
     response_model=PaymentIntentResponse,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[require_scope("payments:write")],
+    # dependencies=[require_scope("payments:write")],
 )
 async def create_payment_intent_endpoint(
     payment_in: PaymentCreate,
@@ -58,7 +58,7 @@ async def create_payment_intent_endpoint(
     "/create-subscription",
     response_model=CheckoutSessionResponse,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[require_scope("payments:write")],
+    # dependencies=[require_scope("payments:write")],
 )
 async def create_subscription_endpoint(
     payment_in: PaymentCreate,
@@ -142,7 +142,7 @@ async def webhook_endpoint(request: Request, session: SessionDep) -> Message:
 @router.get(
     "/",
     response_model=PaymentsPublic,
-    dependencies=[require_scope("payments:read")],
+    # dependencies=[require_scope("payments:read")],
 )
 async def get_user_payments(
     session: SessionDep,
@@ -178,7 +178,7 @@ async def get_donation_configs(session: SessionDep) -> Any:
 @router.get(
     "/{payment_id}",
     response_model=PaymentPublic,
-    dependencies=[require_scope("payments:read")],
+    # dependencies=[require_scope("payments:read")],
 )
 async def get_payment(
     payment_id: str,

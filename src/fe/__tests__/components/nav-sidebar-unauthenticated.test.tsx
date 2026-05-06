@@ -1,7 +1,7 @@
 /** @jest-environment jsdom */
 
 import '@testing-library/jest-dom'
-import { render, screen } from '@testing-library/react'
+import { render } from '@testing-library/react'
 import { NavSidebar } from '@/components/nav-sidebar'
 
 Object.defineProperty(window, 'matchMedia', {
@@ -44,6 +44,7 @@ jest.mock('@/context/auth-context', () => ({
     token: null,
     login: jest.fn(),
     logout: jest.fn(),
+    hasScope: jest.fn(() => false),
   })),
 }))
 
@@ -54,30 +55,10 @@ jest.mock('@/components/custom-sidebar-trigger', () => {
 })
 
 describe('NavSidebar (unauthenticated)', () => {
-  it('renders Our Beliefs link', () => {
+  it('renders nothing when not logged in', () => {
     const { container } = render(<NavSidebar />)
-    const triggers = container.querySelectorAll('[data-slot="collapsible-trigger"]')
-    const aboutTrigger = [...triggers].find((t) => t.textContent?.includes('About'))
-    expect(aboutTrigger).toBeInTheDocument()
-  })
-
-  it('renders Login button', () => {
-    render(<NavSidebar />)
-    expect(screen.getByRole('button', { name: /login/i })).toBeInTheDocument()
-  })
-
-  it('does not render Video Uploads when not logged in', () => {
-    render(<NavSidebar />)
-    expect(screen.queryByText('Video Uploads')).not.toBeInTheDocument()
-  })
-
-  it('renders Media item', () => {
-    render(<NavSidebar />)
-    expect(screen.getByText('Media')).toBeInTheDocument()
-  })
-
-  it('renders Contact Us item', () => {
-    render(<NavSidebar />)
-    expect(screen.getByText('Contact Us')).toBeInTheDocument()
+    // NavSidebarContent returns null for unauthenticated users
+    // (Login button is in Navbar, not NavSidebar)
+    expect(container.querySelector('[data-testid="sidebar"]')).toBeNull()
   })
 })

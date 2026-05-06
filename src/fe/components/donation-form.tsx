@@ -45,7 +45,11 @@ export default function DonationForm({ onSuccess, initialAmount }: DonationFormP
 
   // Check auth state on mount by looking for access_token cookie
   useEffect(() => {
-    setIsAuthenticated(document.cookie.includes("access_token="));
+    try {
+      setIsAuthenticated(document.cookie.includes("access_token="));
+    } catch {
+      setIsAuthenticated(false);
+    }
   }, []);
 
   const handleDonate = async () => {
