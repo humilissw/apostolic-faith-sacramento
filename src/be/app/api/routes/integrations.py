@@ -55,8 +55,7 @@ async def list_integrations(
     integrations = []
     for item in items:
         try:
-            is_valid = IntegrationConfigPublic.model_validate(item)
-            print(is_valid)
+            is_valid = IntegrationConfigPublic.model_validate(item.model_dump())
             if is_valid:
                 integrations.append(is_valid)
         except Exception as error:
@@ -94,7 +93,7 @@ async def get_integration(
 
     creds = await service.get_credentials(integration)
     return IntegrationConfigPublicWithCreds(
-        **IntegrationConfigPublic.model_validate(integration).model_dump(),
+        **IntegrationConfigPublic.model_validate(integration.model_dump()).model_dump(),
         credential_fields=_mask_credentials(creds),
     )
 
@@ -137,7 +136,7 @@ async def create_integration(
 
     creds = await service.get_credentials(integration)
     return IntegrationConfigPublicWithCreds(
-        **IntegrationConfigPublic.model_validate(integration).model_dump(),
+        **IntegrationConfigPublic.model_validate(integration.model_dump()).model_dump(),
         credential_fields=_mask_credentials(creds),
     )
 
@@ -164,7 +163,7 @@ async def update_integration(
 
     creds = await service.get_credentials(updated)
     return IntegrationConfigPublicWithCreds(
-        **IntegrationConfigPublic.model_validate(updated).model_dump(),
+        **IntegrationConfigPublic.model_validate(updated.model_dump()).model_dump(),
         credential_fields=_mask_credentials(creds),
     )
 
@@ -189,7 +188,7 @@ async def update_credentials(
     updated = await service.update_credentials(integration, cred_in.credentials)
     creds = await service.get_credentials(updated)
     return IntegrationConfigPublicWithCreds(
-        **IntegrationConfigPublic.model_validate(updated).model_dump(),
+        **IntegrationConfigPublic.model_validate(updated.model_dump()).model_dump(),
         credential_fields=_mask_credentials(creds),
     )
 
@@ -256,7 +255,7 @@ async def sync_status(
         raise HTTPException(status_code=404, detail="Integration not found")
 
     updated = await service.sync_status(integration, "connected")
-    return IntegrationConfigPublic.model_validate(updated)  # type: ignore[no-any-return]
+    return IntegrationConfigPublic.model_validate(updated.model_dump())
 
 
 @router.post(
@@ -288,6 +287,6 @@ async def pre_seed_integrations(
 
     items, total = await service.get_all()
     return IntegrationsPublic(
-        data=[IntegrationConfigPublic.model_validate(i) for i in items],
+        data=[IntegrationConfigPublic.model_validate(i.model_dump()) for i in items],
         count=total,
     )

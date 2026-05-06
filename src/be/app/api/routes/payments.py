@@ -158,7 +158,7 @@ async def get_user_payments(
         limit=limit,
     )
     return PaymentsPublic(
-        data=[PaymentPublic.model_validate(p) for p in payments],
+        data=[PaymentPublic.model_validate(p.model_dump()) for p in payments],
         count=count,
     )
 
@@ -170,7 +170,7 @@ async def get_donation_configs(session: SessionDep) -> Any:
     result = await session.execute(statement)
     configs = list(result.scalars().all())
     return DonationConfigsPublic(
-        data=[DonationConfigPublic.model_validate(c) for c in configs],
+        data=[DonationConfigPublic.model_validate(c.model_dump()) for c in configs],
         count=len(configs),
     )
 
@@ -192,4 +192,4 @@ async def get_payment(
         raise HTTPException(status_code=404, detail="Payment not found")
     if payment.donor_email != current_user.email:
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    return PaymentPublic.model_validate(payment)
+    return PaymentPublic.model_validate(payment.model_dump())

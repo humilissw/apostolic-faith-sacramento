@@ -417,3 +417,7 @@ class IntegrationConfig(DefaultBase, table=True):  # type: ignore[call-arg]
     cred_key_id: str | None = Field(default=None, max_length=100)
     cred_encrypted_iv: str | None = Field(default=None, max_length=255)
     cred_encrypted_blob: str | None = Field(default=None, max_length=4000)
+    updated_on: datetime.datetime | None = Field(  # type: ignore
+        default_factory=lambda: datetime.datetime.now(datetime.timezone.utc),
+        nullable=True,
+    )

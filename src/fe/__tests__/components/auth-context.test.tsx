@@ -1,7 +1,7 @@
 /** @jest-environment jsdom */
 
 import '@testing-library/jest-dom'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { AuthProvider, useAuth } from '@/context/auth-context'
 
 function TestChild({ onAuth }: { onAuth?: (ctx: ReturnType<typeof useAuth>) => void }) {
@@ -38,8 +38,8 @@ describe('AuthProvider', () => {
     expect(screen.getByTestId('isAuthenticated')).toHaveTextContent('false')
   })
 
-  it('shows authenticated when cookie exists with valid expiry', () => {
-    document.cookie = 'access_token=fake; path=/'
+  it('shows authenticated when localStorage has access_token', () => {
+    localStorage.setItem('access_token', 'fake')
     renderWithProvider(<TestChild />)
     expect(screen.getByTestId('isAuthenticated')).toHaveTextContent('true')
   })

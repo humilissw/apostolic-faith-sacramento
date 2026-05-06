@@ -39,6 +39,7 @@ class DonationConfigPublic(BaseModel):
     is_default: bool
     frequency: str
     created_on: datetime
+    updated_on: datetime | None
 
 
 class DonationConfigsPublic(BaseModel):

@@ -9,7 +9,18 @@ from app.config import settings
 from app.main import app
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy import select, delete
-from app.models import User, UserCreate, Media, VideoUpload
+from app.models import (
+    User,
+    UserCreate,
+    Media,
+    VideoUpload,
+    ClientCredentials,
+    IntegrationConfig,
+    Payment,
+    DonationConfig,
+    RefreshToken,
+    AuthorizationCode,
+)
 from app import crud
 
 
@@ -60,8 +71,17 @@ async def db_session() -> AsyncSession:
 
     try:
         try:
-            await session.execute(delete(VideoUpload))
-            await session.execute(delete(Media))
+            for model in [
+                RefreshToken,
+                AuthorizationCode,
+                ClientCredentials,
+                IntegrationConfig,
+                Payment,
+                DonationConfig,
+                VideoUpload,
+                Media,
+            ]:
+                await session.execute(delete(model))
             await session.commit()
         except Exception:
             await session.rollback()
