@@ -13,6 +13,7 @@ from app.api.routes import (
     members,
     payments,
     private,
+    scheduler,
     user_scopes,
     users,
     utils,
@@ -36,6 +37,7 @@ api_router.include_router(payments.router)
 api_router.include_router(integrations.router)
 api_router.include_router(user_scopes.router)
 api_router.include_router(client_credentials.router)
+api_router.include_router(scheduler.router)
 
 
 if settings.ENVIRONMENT == "local":

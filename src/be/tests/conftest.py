@@ -10,6 +10,7 @@ from app.main import app
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy import select, delete
 from app.models import (
+    Assignment,
     User,
     UserCreate,
     Media,
@@ -72,6 +73,7 @@ async def db_session() -> AsyncSession:
     try:
         try:
             for model in [
+                Assignment,
                 RefreshToken,
                 AuthorizationCode,
                 ClientCredentials,

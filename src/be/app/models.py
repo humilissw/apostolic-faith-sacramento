@@ -1,8 +1,10 @@
 import datetime
+from enum import Enum
 from typing import Annotated, Optional
 import uuid
 
 from pydantic import BaseModel, EmailStr
+from sqlalchemy import Index as saIndex
 from sqlmodel import Field, SQLModel
 
 # notes for future self:
@@ -421,3 +423,70 @@ class IntegrationConfig(DefaultBase, table=True):  # type: ignore[call-arg]
         default_factory=lambda: datetime.datetime.now(datetime.timezone.utc),
         nullable=True,
     )
+
+
+# Scheduler models
+
+
+class AssignmentType(str, Enum):
+    music = "music"
+    service = "service"
+
+
+class Assignment(DefaultBase, table=True):  # type: ignore[call-arg]
+    """Assignment of a user to a church service or music event."""
+
+    __tablename__ = "assignments"
+    user_id: str = Field(max_length=36, nullable=False)
+    event_date: datetime.datetime = Field(nullable=False)
+    type: AssignmentType = Field(max_length=10, nullable=False)
+    role: str = Field(default="", max_length=200, nullable=False)
+    instrument: str | None = Field(default=None, max_length=200)
+    notes: str | None = Field(default=None, max_length=4000)
+    __table_args__ = (
+        saIndex("ix_assignments_user_id", "user_id"),
+        saIndex("ix_assignments_event_date", "event_date"),
+    )
+
+
+class AssignmentPublic(BaseModel):
+    """Assignment response schema."""
+
+    model_config = {"from_attributes": True}
+    id: str
+    user_id: str
+    event_date: datetime.datetime
+    type: str
+    role: str
+    instrument: str | None
+    notes: str | None
+    created_on: datetime.datetime
+    updated_on: datetime.datetime | None
+
+
+class AssignmentCreate(BaseModel):
+    """Assignment creation request schema."""
+
+    user_id: str = Field(max_length=36)
+    event_date: datetime.datetime
+    type: AssignmentType
+    role: str = Field(default="", max_length=200)
+    instrument: str | None = Field(default=None, max_length=200)
+    notes: str | None = Field(default=None, max_length=4000)
+
+
+class AssignmentUpdate(BaseModel):
+    """Assignment update request schema (all fields optional)."""
+
+    event_date: datetime.datetime | None = None
+    type: AssignmentType | None = None
+    role: str | None = Field(default=None, max_length=200)
+    instrument: str | None = None
+    notes: str | None = None
+
+
+class AssignmentsPublic(BaseModel):
+    """Paginated assignments response schema."""
+
+    data: list[AssignmentPublic]
+    count: int

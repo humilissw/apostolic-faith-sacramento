@@ -29,6 +29,10 @@ class Scope(str, Enum):
     USERS_WRITE = "users:write"
     USERS_ADMIN = "users:admin"
 
+    # Scheduler scopes
+    SCHEDULER_ADMIN = "scheduler:admin"
+    MEMBER_LIMITED = "member:limited"
+
     # Superuser claim (replaces is_superuser boolean)
     SUPERUSER = "superuser"
     # Service-to-service auth

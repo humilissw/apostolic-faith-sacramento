@@ -148,6 +148,42 @@ function NavSidebarContent({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarGroup>
           </Collapsible>
         )}
+        {isAuthenticated && hasScope("scheduler:admin") && (
+          <Collapsible key="scheduler-admin" className="group/collapsible">
+            <SidebarGroup>
+              <SidebarGroupLabel
+                asChild
+                className="group/label font-normal text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-2xl"
+              >
+                <Link href="/scheduler-admin/">Scheduler Admin</Link>
+              </SidebarGroupLabel>
+            </SidebarGroup>
+          </Collapsible>
+        )}
+        {isAuthenticated && hasScope("member:limited") && (
+          <Collapsible key="my-scheduler" className="group/collapsible">
+            <SidebarGroup>
+              <SidebarGroupLabel
+                asChild
+                className="group/label font-normal text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-2xl"
+              >
+                <Link href="/my-scheduler/">My Scheduler</Link>
+              </SidebarGroupLabel>
+            </SidebarGroup>
+          </Collapsible>
+        )}
+        {isAuthenticated && hasScope("member:limited") && (
+          <Collapsible key="scheduler-calendar" className="group/collapsible">
+            <SidebarGroup>
+              <SidebarGroupLabel
+                asChild
+                className="group/label font-normal text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-2xl"
+              >
+                <Link href="/scheduler-calendar/">Scheduler Calendar</Link>
+              </SidebarGroupLabel>
+            </SidebarGroup>
+          </Collapsible>
+        )}
         {/* We create a collapsible SidebarGroup for each parent. */}
         {data.navMain.map((item) => (
           <Collapsible

@@ -188,13 +188,17 @@ async def get_current_user_with_scopes(
     token: str = Depends(reusable_oauth2),
 ) -> tuple[User, list[str]]:
     """Validate JWT token and return (user, scopes) tuple."""
-    cookie_token = await get_token_from_cookie(request)
-    # Fall back to Authorization header token
+    # Authorization header takes priority when present (tests, API clients)
     auth_header = request.headers.get("authorization", "")
     header_token = None
     if auth_header.startswith("Bearer "):
         header_token = auth_header[7:]
-    token_to_use = cookie_token or header_token or token
+    if header_token:
+        token_to_use = header_token
+    else:
+        # Fall back to cookie token, then to oauth2 parameter
+        cookie_token = await get_token_from_cookie(request)
+        token_to_use = cookie_token or token
 
     try:
         payload = jwt.decode(

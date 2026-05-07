@@ -544,3 +544,109 @@ export async function fetchAllVideoUploads(): Promise<{ data: VideoUploadAdmin[]
   const body = await res.json();
   return body;
 }
+
+// --- Scheduler API functions ---
+
+export interface Assignment {
+  id: string;
+  user_id: string;
+  event_date: string;
+  type: "music" | "service";
+  role: string;
+  instrument: string | null;
+  notes: string | null;
+  created_on: string;
+  updated_on: string | null;
+}
+
+export interface AssignmentCreateInput {
+  user_id: string;
+  event_date: string;
+  type: "music" | "service";
+  role?: string;
+  instrument?: string | null;
+  notes?: string | null;
+}
+
+export interface AssignmentUpdateInput {
+  event_date?: string;
+  type?: "music" | "service";
+  role?: string;
+  instrument?: string | null;
+  notes?: string | null;
+}
+
+export interface AssignmentsResponse {
+  data: Assignment[];
+  count: number;
+}
+
+export async function fetchAssignments(): Promise<AssignmentsResponse> {
+  const res = await fetchWithAuth(`${API_BASE}${API_V1}/scheduler/`);
+  if (!res.ok) {
+    throw new Error("Failed to fetch assignments");
+  }
+  return res.json();
+}
+
+export async function fetchAssignment(id: string): Promise<Assignment> {
+  const res = await fetchWithAuth(`${API_BASE}${API_V1}/scheduler/${id}`);
+  if (!res.ok) {
+    throw new Error("Failed to fetch assignment");
+  }
+  return res.json();
+}
+
+export async function createAssignment(data: AssignmentCreateInput): Promise<Assignment> {
+  const res = await fetchWithAuth(`${API_BASE}${API_V1}/scheduler/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(body || "Failed to create assignment");
+  }
+  return res.json();
+}
+
+export async function updateAssignment(id: string, data: AssignmentUpdateInput): Promise<Assignment> {
+  const res = await fetchWithAuth(`${API_BASE}${API_V1}/scheduler/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(body || "Failed to update assignment");
+  }
+  return res.json();
+}
+
+export async function deleteAssignment(id: string): Promise<void> {
+  const res = await fetchWithAuth(`${API_BASE}${API_V1}/scheduler/${id}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(body || "Failed to delete assignment");
+  }
+}
+
+export async function fetchMyAssignments(): Promise<AssignmentsResponse> {
+  const res = await fetchWithAuth(`${API_BASE}${API_V1}/scheduler/my-assignments`);
+  if (!res.ok) {
+    throw new Error("Failed to fetch my assignments");
+  }
+  return res.json();
+}
+
+export async function fetchCalendarAssignments(startDate: string, endDate: string): Promise<AssignmentsResponse> {
+  const res = await fetchWithAuth(
+    `${API_BASE}${API_V1}/scheduler/calendar?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`
+  );
+  if (!res.ok) {
+    throw new Error("Failed to fetch calendar assignments");
+  }
+  return res.json();
+}
