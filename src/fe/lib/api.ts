@@ -442,8 +442,8 @@ export interface UsersWithScopesResponse {
   count: number;
 }
 
-export async function fetchUsersWithScopes(): Promise<UsersWithScopesResponse> {
-  const res = await fetchWithAuth(`${API_BASE}${API_V1}/users/`);
+export async function fetchUsersWithScopes(skip: number = 0, limit: number = 50): Promise<UsersWithScopesResponse> {
+  const res = await fetchWithAuth(`${API_BASE}${API_V1}/users/?skip=${skip}&limit=${limit}`);
   if (!res.ok) {
     throw new Error("Failed to fetch users");
   }
@@ -467,16 +467,31 @@ export async function setUserScopes(userId: string, scopes: string[]): Promise<s
   return res.json();
 }
 
-export async function removeUserScopes(userId: string): Promise<void> {
+export async function deleteUser(userId: string): Promise<void> {
   const res = await fetchWithAuth(
-    `${API_BASE}${API_V1}/users/admin/${userId}/scopes`,
+    `${API_BASE}${API_V1}/users/${userId}`,
     {
       method: "DELETE",
     },
   );
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(body || "Failed to remove user scopes");
+    throw new Error(body || "Failed to delete user");
+  }
+}
+
+export async function deleteUsers(userIds: string[]): Promise<void> {
+  const res = await fetchWithAuth(
+    `${API_BASE}${API_V1}/users/admin/bulk-delete`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(userIds),
+    },
+  );
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(body || "Failed to delete users");
   }
 }
 

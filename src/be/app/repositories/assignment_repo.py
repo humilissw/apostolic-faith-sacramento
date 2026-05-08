@@ -11,21 +11,26 @@ class AssignmentRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def create(self, assignment_in: AssignmentCreate) -> Assignment:
-        assignment = Assignment(
-            user_id=assignment_in.user_id,
-            event_date=assignment_in.event_date,
-            type=assignment_in.type,
-            role=assignment_in.role,
-            instrument=assignment_in.instrument,
-            notes=assignment_in.notes,
-            created_on=datetime.now(timezone.utc),
-            updated_on=datetime.now(timezone.utc),
-        )
-        self.session.add(assignment)
-        await self.session.commit()
-        await self.session.refresh(assignment)
-        return assignment
+    async def create(self, assignment_in: AssignmentCreate) -> Assignment | None:
+        try:
+            assignment = Assignment(
+                user_id=assignment_in.user_id,
+                event_date=assignment_in.event_date,
+                type=assignment_in.type,
+                role=assignment_in.role,
+                instrument=assignment_in.instrument,
+                notes=assignment_in.notes,
+                created_on=datetime.now(timezone.utc),
+                updated_on=datetime.now(timezone.utc),
+            )
+            self.session.add(assignment)
+            await self.session.commit()
+            await self.session.refresh(assignment)
+            return assignment
+        except Exception as err:
+            print(err)
+            await self.session.rollback()
+            return None
 
     async def get_by_id(self, assignment_id: str) -> Assignment | None:
         statement = select(Assignment).where(

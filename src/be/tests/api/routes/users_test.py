@@ -533,3 +533,75 @@ async def test_delete_user_without_privileges(
     )
     assert r.status_code == 403
     assert r.json()["detail"] == "The user doesn't have enough privileges"
+
+
+@pytest.mark.asyncio
+async def test_bulk_delete_users(
+    users_client: httpx.AsyncClient,
+    superuser_token_headers: dict[str, str],
+    db_session: AsyncSession,
+) -> None:
+    emails = []
+    for _ in range(3):
+        username = random_email()
+        password = random_lower_string()
+        user_in = UserCreate(email=username, password=password)
+        user = await crud.create_user(session=db_session, user_create=user_in)
+        emails.append(username)
+        assert user
+
+    r = await users_client.post(
+        f"{settings.API_V1_STR}/users/admin/bulk-delete",
+        headers=superuser_token_headers,
+        json=[
+            str(user.id)
+            for user in [await crud.get_user_by_email(session=db_session, email=e) for e in emails]
+        ],
+    )
+    assert r.status_code == 200
+    assert "Deleted" in r.json()["message"]
+
+    for email in emails:
+        existing = await crud.get_user_by_email(session=db_session, email=email)
+        assert existing is None, f"User {email} was not deleted"
+
+
+@pytest.mark.asyncio
+async def test_bulk_delete_users_partial(
+    users_client: httpx.AsyncClient,
+    superuser_token_headers: dict[str, str],
+    db_session: AsyncSession,
+) -> None:
+    users = []
+    for _ in range(2):
+        username = random_email()
+        password = random_lower_string()
+        user_in = UserCreate(email=username, password=password)
+        user = await crud.create_user(session=db_session, user_create=user_in)
+        users.append(user)
+
+    fake_id = "00000000-0000-0000-0000-000000000000"
+    r = await users_client.post(
+        f"{settings.API_V1_STR}/users/admin/bulk-delete",
+        headers=superuser_token_headers,
+        json=[str(u.new_id) for u in users] + [fake_id],
+    )
+    assert r.status_code == 200
+    assert "Deleted 2" in r.json()["message"]
+
+    for u in users:
+        existing = await crud.get_user_by_email(session=db_session, email=u.email)
+        assert existing is None
+
+
+@pytest.mark.asyncio
+async def test_bulk_delete_users_no_privileges(
+    users_client: httpx.AsyncClient,
+    normal_user_token_headers: dict[str, str],
+) -> None:
+    r = await users_client.post(
+        f"{settings.API_V1_STR}/users/admin/bulk-delete",
+        headers=normal_user_token_headers,
+        json=["1"],
+    )
+    assert r.status_code == 403
