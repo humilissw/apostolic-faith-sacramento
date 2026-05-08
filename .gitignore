@@ -142,9 +142,67 @@ vite.config.ts.timestamp-*
 __pycache__/
 *.py[codz]
 *$py.class
-.env
-prod.env
-*.pem
-.DS_Store
+*.pyc
+*.pyo
+*.pyd
 
+# Python
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.tox/
+.hypothesis/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+.env.prod
+.env.*.prod
+*.pem
+cert.pem
+key.pem
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+*.sql.gz
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Temporary files
+*.tmp
+*.temp
+.cache
+tmp/
+temp/
+
+# Infrastructure
 infrastructure/db/public_app/
+
+# Documentation builds
+docs/_build/

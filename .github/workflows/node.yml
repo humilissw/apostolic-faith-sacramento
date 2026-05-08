@@ -22,6 +22,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v5
+    - name: Setup Node.js 25
+      uses: actions/setup-node@v4
+      with:
+        node-version: '25'
     - uses: oven-sh/setup-bun@v2
     - name: Restore cached package install
       id: cache-restore
@@ -42,7 +46,11 @@ jobs:
     - run: bun install
       # if: steps.cache.outputs.cache-hit != 'true'
       working-directory: src/fe
-    - run: bun test:ci
+    - run: bun run test:ci
+      working-directory: src/fe
+    - name: Install Playwright browsers
+      run: npx playwright install --with-deps chromium
+    - run: npx playwright test
       working-directory: src/fe
     - name: run bun build
       # working-directory: src/fe

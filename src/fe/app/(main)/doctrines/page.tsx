@@ -5,7 +5,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 
-export default function Doctrines() {   
+export default function Doctrines() {
 
   return (
     <div>
@@ -131,7 +131,7 @@ export default function Doctrines() {
         <p className="pb-10">The Second Coming of Jesus will be just as literal and visible as His going away. Acts 1:9-11. There will be two appearances under one coming: First, to catch away His waiting Bride. Matthew 24:40-44; 1 Thessalonians 4:15-17. Second, to execute judgment upon the ungodly. (2 Thessalonians 1:7-10; Jude 14-15)</p>
         <AccordionContent className="flex flex-col gap-4 text-balance">
           <p>
-           The second coming of Jesus will be as literal as was His going away. See John 14:3; Acts 1:9-11. The general term, the "second coming of Christ," encompasses two separate events.
+          The second coming of Jesus will be as literal as was His going away. See John 14:3; Acts 1:9-11. The general term, the "second coming of Christ," encompasses two separate events.
 
             First is the Rapture of the Church, when Jesus comes to catch away His waiting Bride. The word rapture means, "being carried away in body or spirit," and this is literally what will happen. This will be experienced only by those who are part of the Bride of Christ (Revelation 19:6-9). Scripture is very plain concerning the fact that no man knows the day nor the hour of the Rapture. It will be an instantaneous happening, and numerous warnings are given in Scripture concerning the dangers of neglecting to prepare for this event.
 
@@ -286,7 +286,7 @@ export default function Doctrines() {
         </AccordionContent>
       </AccordionItem>
 
-    
+
     <AccordionItem value="item-18">
         <AccordionTrigger className="flex text-2xl lg:text-3xl cursor-pointer">
             <h1>WASHING THE DISCIPLE'S FEET</h1>
@@ -300,7 +300,7 @@ export default function Doctrines() {
           </p>
         </AccordionContent>
       </AccordionItem>
-      
+
         </Accordion>
       </div>
     </div>

@@ -1,7 +1,7 @@
 from typing import Any
 
 from pydantic import (
-    MariaDBDsn,
+    MySQLDsn,
     computed_field,
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -18,10 +18,10 @@ def parse_cors(v: Any) -> list[str] | str:
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         # Use top level .env file (one level above ./backend/)
-        env_file = ".env",
-        env_file_encoding='utf-8',
-        env_ignore_empty = False,
-        arbitrary_types_allowed = True
+        env_file=".env",
+        env_file_encoding="utf-8",
+        env_ignore_empty=False,
+        arbitrary_types_allowed=True,
     )
     API_V1_STR: str
     EMAIL_TEST_USER: str
@@ -50,13 +50,50 @@ class Settings(BaseSettings):
     DOCKER_IMAGE_BACKEND: str
     DOCKER_IMAGE_FRONTEND: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 30
+    EMAIL_RESET_TOKEN_EXPIRE_HOURS: int = 1
     emails_enabled: bool = False
-    
+    cert_file: str
+    cert_key: str
+    rsa_pub_key: str
+    rsa_private_key: str
+    # OAuth 2.0 settings
+    JWT_ISSUER: str = "apostolic-faith-sacramento"
+    JWT_AUDIENCE: str
+    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: str = ""
+    # Auth cookie settings
+    ACCESS_TOKEN_COOKIE_NAME: str = "access_token"
+    REFRESH_TOKEN_COOKIE_NAME: str = "refresh_token"
+    COOKIE_SECURE: bool = True
+    COOKIE_DOMAIN: str = ""
+    COOKIE_PATH: str = "/"
+    COOKIE_SAMESITE: str = "none"
+    # Stripe payment settings
+    STRIPE_PUBLIC_KEY: str = ""
+    STRIPE_SECRET_KEY: str = ""
+    STRIPE_WEBHOOK_SECRET: str = ""
+    STRIPE_CURRENCY: str = "usd"
+    # Third-party integration encryption
+    INTEGRATION_ENCRYPTION_KEY: str = ""
+
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def SQLALCHEMY_DATABASE_URI(self) -> MariaDBDsn:
-        return MariaDBDsn.build(
-            scheme="mariadb+mariadbconnector",
+    def SQLALCHEMY_DATABASE_URI(self) -> MySQLDsn:
+        return MySQLDsn.build(
+            scheme="mysql+pymysql",
+            username=self.DB_USER,
+            password=self.DB_PASSWORD,
+            host=self.DB_SERVER,
+            port=self.DB_PORT,
+            path=self.DB_DB,
+        )
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def SQLALCHEMY_ASYNC_DATABASE_URI(self) -> MySQLDsn:
+        return MySQLDsn.build(
+            scheme="mysql+asyncmy",
             username=self.DB_USER,
             password=self.DB_PASSWORD,
             host=self.DB_SERVER,
@@ -65,9 +102,8 @@ class Settings(BaseSettings):
         )
 
 
-
 settings = Settings()
 
 print("---------------------")
-print(str(settings.SQLALCHEMY_DATABASE_URI))
+print("From config: " + str(settings.SQLALCHEMY_DATABASE_URI))
 print("---------------------")

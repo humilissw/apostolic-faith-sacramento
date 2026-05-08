@@ -1,5 +1,14 @@
+[![Main Workflow (parent triggers others)](https://github.com/humilissw/apostolic-faith-sacramento/actions/workflows/main.yml/badge.svg)](https://github.com/humilissw/apostolic-faith-sacramento/actions/workflows/main.yml)
 # apostolic-faith-sacramento
-Mono Repo for AFC Sacramento 
+
+Mono Repo for AFC Sacramento
+
+## Documentation
+
+- [Architecture](./ARCHITECTURE.md) - System architecture, design patterns, and API reference
+- [Database Schema](./erDiagram.mmd) - Entity-relationship diagram (Mermaid)
+- [Backend](./src/be/CLAUDE.md) - Backend development guide
+- [Frontend](./src/fe/CLAUDE.md) - Frontend development guide
 
 # Generate an SSL-cert
 
@@ -44,3 +53,9 @@ mkcert -install
 ```pwsh
 mkcert -key-file key.pem -cert-file cert.pem example.com *.example.com localhost
 ```
+
+# setup precommit
+
+`pipx install pre-commit`
+
+`pre-commit install`
