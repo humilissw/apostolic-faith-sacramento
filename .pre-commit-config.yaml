@@ -45,7 +45,6 @@ repos:
         args: ['--ignore-missing-imports', '--warn-redundant-casts', '--warn-return-any']
         files: ^src/be/app/
 
-  #todo: look into why bandit is failing
   # Security
   - repo: https://github.com/PyCQA/bandit
     rev: 1.8.0

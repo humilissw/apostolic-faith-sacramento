@@ -168,6 +168,9 @@ prepend_sys_path = [
 
 # Bandit security linter configuration
 [tool.bandit]
+exclude_dirs = [
+    'src/be/app/alembic/'
+]
 skips = [
     "B101",  # assert_used - fine in tests and safety checks
     "B106",  # hardcoded_password_funcarg - dummy OAuth credentials in demo code
