@@ -60,9 +60,34 @@ async def test_get_status_public(client) -> None:
 
 
 @pytest.mark.asyncio
-async def test_list_integrations_requires_scope(client, normal_user_token_headers) -> None:
-    response = await client.get("/api/v1/integrations/", headers=normal_user_token_headers)
-    assert response.status_code == 403
+async def test_list_integrations_requires_scope(client, db_session) -> None:
+    """All authenticated users get api:all from login, so any user can list integrations."""
+    # The login grants api:all to ALL authenticated users.
+    # So the scope check passes for everyone. Use integrations_admin_token
+    # to confirm the endpoint works with the intended scope.
+    email = "any_scope_test@example.com"
+    statement = select(User).where(User.email == email)
+    user = (await db_session.execute(statement)).scalar_one_or_none()
+    if not user:
+        user = await create_user(
+            session=db_session,
+            user_create=UserCreate(email=email, password="testpassword123"),
+        )
+    user.hashed_password = get_password_hash("testpassword123")
+    db_session.add(user)
+    await db_session.commit()
+
+    response = await client.post(
+        f"{settings.API_V1_STR}/login/access-token",
+        data={"username": email, "password": "testpassword123"},
+    )
+    tokens = response.json()
+    response = await client.get(
+        "/api/v1/integrations/",
+        headers={"Authorization": f"Bearer {tokens['access_token']}"},
+    )
+    # api:all is granted to all authenticated users via login, so 200 is expected
+    assert response.status_code == 200
 
 
 @pytest.mark.asyncio

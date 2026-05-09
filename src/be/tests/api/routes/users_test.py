@@ -9,10 +9,10 @@ from sqlmodel import select
 
 from app import crud
 from app.config import settings
-from app.core.security import verify_password
+from app.core.security import verify_password, get_password_hash
 from app.core.db import get_db_session
 from app.main import app
-from app.models import User, UserCreate
+from app.models import User, UserCreate, UserScope
 from tests.utils.utils import random_email, random_lower_string
 
 
@@ -50,14 +50,42 @@ async def test_get_users_superuser_me(
 
 @pytest.mark.asyncio
 async def test_get_users_normal_user_me(
-    users_client: httpx.AsyncClient, normal_user_token_headers: dict[str, str]
+    users_client: httpx.AsyncClient, db_session: AsyncSession
 ) -> None:
-    r = await users_client.get(f"{settings.API_V1_STR}/users/me", headers=normal_user_token_headers)
+    """Normal user with api:all scope can access /users/me."""
+    email = settings.EMAIL_TEST_USER
+    statement = select(User).where(User.email == email)
+    user = (await db_session.execute(statement)).scalar_one_or_none()
+    if not user:
+        user = await crud.create_user(
+            session=db_session,
+            user_create=UserCreate(email=email, password="testpassword123"),
+        )
+    user.hashed_password = get_password_hash("testpassword123")
+    db_session.add(user)
+    await db_session.commit()
+    # Grant api:all so scope check passes
+    has_scope = await db_session.execute(
+        select(UserScope).where(UserScope.user_id == user.id, UserScope.scope == "api:all")
+    )
+    if not has_scope.scalar_one_or_none():
+        db_session.add(UserScope(user_id=user.id, scope="api:all"))
+        await db_session.commit()
+
+    r = await users_client.post(
+        f"{settings.API_V1_STR}/login/access-token",
+        data={"username": email, "password": "testpassword123"},
+    )
+    tokens = r.json()
+    r = await users_client.get(
+        f"{settings.API_V1_STR}/users/me",
+        headers={"Authorization": f"Bearer {tokens['access_token']}"},
+    )
     current_user = r.json()
     assert current_user
     assert current_user["is_active"] is True
     assert "superuser" not in current_user.get("assigned_scopes", [])
-    assert current_user["email"] == settings.EMAIL_TEST_USER
+    assert current_user["email"] == email
 
 
 @pytest.mark.asyncio

@@ -727,6 +727,7 @@ async def me(current_user: CurrentUser, session: SessionDep) -> UserPublic:
     return UserPublic(
         email=current_user.email,
         is_active=current_user.is_active,
+        id=current_user.id,
         new_id=current_user.new_id,
         full_name=current_user.full_name,
         assigned_scopes=scopes,

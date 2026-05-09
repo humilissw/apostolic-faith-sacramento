@@ -40,7 +40,7 @@ async def _populate_scopes(session: AsyncSession, user: User) -> UserPublic:
     return UserPublic(
         email=user.email,
         is_active=user.is_active,
-        is_superuser=user.is_superuser,
+        id=user.id,
         new_id=user.new_id,
         full_name=user.full_name,
         assigned_scopes=scopes,

@@ -13,6 +13,7 @@ from app.models import (
     Assignment,
     User,
     UserCreate,
+    UserScope,
     Media,
     VideoUpload,
     ClientCredentials,
@@ -177,7 +178,7 @@ async def superuser_token_headers(
 async def normal_user_token_headers(
     client: httpx.AsyncClient, db_session: AsyncSession
 ) -> dict[str, str]:
-    """Normal user authentication headers."""
+    """Normal user authentication headers with api:all scope."""
     statement = select(User).where(User.email == settings.EMAIL_TEST_USER)
     user_result = await db_session.execute(statement)
     user = user_result.scalar()
@@ -193,6 +194,14 @@ async def normal_user_token_headers(
 
         user.hashed_password = get_password_hash("testpassword123")
         db_session.add(user)
+        await db_session.commit()
+
+    # Grant api:all so normal tests can exercise API endpoints
+    has_scope = await db_session.execute(
+        select(UserScope).where(UserScope.user_id == user.id, UserScope.scope == "api:all")
+    )
+    if not has_scope.scalar_one_or_none():
+        db_session.add(UserScope(user_id=user.id, scope="api:all"))
         await db_session.commit()
 
     response = await client.post(

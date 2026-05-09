@@ -153,7 +153,7 @@ export default function UsersAdminPage() {
 
   const toggleAll = () => {
     if (selectedUsers.size === users.length) setSelectedUsers(new Set());
-    else setSelectedUsers(new Set(users.map((u) => u.new_id)));
+    else setSelectedUsers(new Set(users.map((u) => u.id)));
   };
 
   const handleRemoveUser = async (id: string) => {
@@ -161,7 +161,7 @@ export default function UsersAdminPage() {
     setRemovingUserId(id);
     try {
       await deleteUser(id);
-      setUsers((prev) => prev.filter((u) => u.new_id !== id));
+      setUsers((prev) => prev.filter((u) => u.id !== id));
       setSelectedUsers((prev) => {
         const next = new Set(prev);
         next.delete(id);
@@ -178,7 +178,7 @@ export default function UsersAdminPage() {
     if (!confirm(`Delete ${selectedUsers.size} selected users?`)) return;
     try {
       await deleteUsers(Array.from(selectedUsers));
-      setUsers((prev) => prev.filter((u) => !selectedUsers.has(u.new_id)));
+      setUsers((prev) => prev.filter((u) => !selectedUsers.has(u.id)));
       setSelectedUsers(new Set());
     } catch {
       setError("Failed to delete users");
@@ -186,7 +186,7 @@ export default function UsersAdminPage() {
   };
 
   const handleOpenDialog = (user: UserWithScopes) => {
-    setEditingUser({ id: user.new_id, email: user.email });
+    setEditingUser({ id: user.id, email: user.email });
     setDialogOpen(true);
   };
 
@@ -306,15 +306,15 @@ export default function UsersAdminPage() {
             <Table className="w-full" style={{ tableLayout: "fixed" }}>
               <TableBody>
                 {sortedUsers.map((user) => (
-                  <TableRow key={user.new_id}>
+                  <TableRow key={user.id}>
                     <TableCell
                       style={getBodyCellStyle(0)}
                       className="shrink-0 w-12"
                     >
                       <input
                         type="checkbox"
-                        checked={selectedUsers.has(user.new_id)}
-                        onChange={() => toggleUser(user.new_id)}
+                        checked={selectedUsers.has(user.id)}
+                        onChange={() => toggleUser(user.id)}
                         className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       />
                     </TableCell>
@@ -383,8 +383,8 @@ export default function UsersAdminPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          disabled={removingUserId === user.new_id}
-                          onClick={() => handleRemoveUser(user.new_id)}
+                          disabled={removingUserId === user.id}
+                          onClick={() => handleRemoveUser(user.id)}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>

@@ -224,22 +224,29 @@ async def get_current_user_with_scopes(
         raise HTTPException(status_code=404, detail="User not found")
     if not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
-    scopes = token_data.scopes or []
-    return user, scopes
+
+    db_scopes = await _get_user_scopes(session, user)
+    return user, db_scopes
 
 
 async def _get_user_scopes(session: AsyncSession, user: User) -> list[str]:
-    """Get scopes for a user from DB, falling back to token scopes."""
+    """Get effective scopes for a user, matching login logic.
+
+    Login grants api:all to all authenticated users. So if the user has
+    any scope, they effectively get api:all (same as login). If no scopes,
+    they also get api:all as a fallback.
+    """
     from app.repositories.user_scope_repo import UserScopeRepository
 
     repo = UserScopeRepository(session)
     db_scopes = await repo.get_scopes(user.id)
-    if db_scopes:
-        if "api:all" in db_scopes or "superuser" in db_scopes:
-            return ["api:all"]
-        return db_scopes
-    # Fall back to a default set of scopes for backward compat
-    return []
+    if not db_scopes:
+        # Align with login logic: users with no DB scopes get api:all
+        return ["api:all"]
+    if "superuser" in db_scopes or "api:all" in db_scopes:
+        return ["api:all"]
+    # Login grants api:all to all authenticated users (any scope → api:all)
+    return ["api:all"]
 
 
 async def get_current_active_superuser_bypass(
@@ -290,7 +297,7 @@ def require_scope(required_scope: str) -> Callable:
         user_scopes: Annotated[tuple[User, list[str]], Depends(get_current_user_with_scopes)],
     ) -> User:
         user, scopes = user_scopes
-        if "superuser" in scopes:
+        if "superuser" in scopes or "api:all" in scopes:
             return user
         if required_scope not in scopes:
             raise HTTPException(

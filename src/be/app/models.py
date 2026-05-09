@@ -85,6 +85,7 @@ class UserScope(SQLModel, table=True):  # type: ignore[call-arg]
 class UserPublic(SQLModel):
     email: EmailStr
     is_active: bool
+    id: str = Field(max_length=36)
     new_id: str
     full_name: Annotated[str | None, Field(exclude=True)]
     assigned_scopes: list[str] = Field(default_factory=list)

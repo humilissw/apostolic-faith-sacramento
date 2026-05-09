@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,14 +47,15 @@ export default function AssignmentDialog({
   const [formNotes, setFormNotes] = useState(assignment?.notes ?? "");
 
   // Sync form when a new assignment is selected
-  if (assignment) {
+  useEffect(() => {
+    if (!assignment) return;
     setFormUserId(assignment.user_id);
     setFormEventDate(new Date(assignment.event_date).toISOString().split("T")[0]);
     setFormType(assignment.type);
     setFormRole(assignment.role);
     setFormInstrument(assignment.instrument ?? "");
     setFormNotes(assignment.notes ?? "");
-  }
+  }, [assignment]);
 
   const handleSubmit = async () => {
     setSaving(true);

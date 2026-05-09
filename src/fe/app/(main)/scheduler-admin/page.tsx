@@ -110,7 +110,7 @@ export default function SchedulerAdminPage() {
   };
 
   const getUserEmail = (userId: string) => {
-    return users.find((u) => u.new_id === userId)?.email ?? userId;
+    return users.find((u) => u.id === userId)?.email ?? userId;
   };
 
   const handleApprove = async (id: string) => {
@@ -322,7 +322,7 @@ export default function SchedulerAdminPage() {
           open={dialogOpen}
           onOpenChange={setDialogOpen}
           assignment={editingAssignment}
-          users={users.map((u) => ({ id: u.new_id, email: u.email }))}
+          users={users.map((u) => ({ id: u.id, email: u.email }))}
           onSuccess={() => {
             fetchAssignments().then((data) => setAssignments(data.data));
           }}

@@ -432,6 +432,7 @@ export async function preSeedIntegrations(): Promise<IntegrationsResponse> {
 export interface UserWithScopes {
   email: string;
   is_active: boolean;
+  id: string;
   new_id: string;
   full_name: string | null;
   assigned_scopes: string[];
