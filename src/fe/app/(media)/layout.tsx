@@ -1,4 +1,5 @@
 import { AuthProvider } from "@/context/auth-context";
+import { FeatureFlagProvider } from "@/context/feature-flag-context";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import AuthGuard from "@/components/auth-guard";
@@ -40,6 +41,7 @@ const barlow_condensed = Barlow_Condensed({
 export default function MediaLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
+      <FeatureFlagProvider>
       <div
         className={
           `${playfair.variable} ${lora.variable} ${libre.variable} ${merriweather.variable} ` +
@@ -53,6 +55,7 @@ export default function MediaLayout({ children }: { children: React.ReactNode })
         </main>
         <Footer />
       </div>
+      </FeatureFlagProvider>
     </AuthProvider>
   );
 }

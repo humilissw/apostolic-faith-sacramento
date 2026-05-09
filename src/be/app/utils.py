@@ -99,6 +99,31 @@ def generate_new_account_email(email_to: str, username: str, password: str) -> E
     return EmailData(html_content=html_content, subject=subject)
 
 
+def generate_assignment_email(
+    email_to: str,
+    assignment_type: str,
+    role: str,
+    event_date: str,
+    instrument: str | None = None,
+    notes: str | None = None,
+) -> EmailData:
+    project_name = settings.PROJECT_NAME
+    subject = f"{project_name} - Scheduler assignment"
+    html_content = render_email_template(
+        template_name="assignment.html",
+        context={
+            "project_name": settings.PROJECT_NAME,
+            "email": email_to,
+            "assignment_type": assignment_type,
+            "role": role,
+            "instrument": instrument or "",
+            "event_date": event_date,
+            "notes": notes or "",
+        },
+    )
+    return EmailData(html_content=html_content, subject=subject)
+
+
 def generate_password_reset_token(email: str) -> str:
     delta = timedelta(hours=settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS)
     now = datetime.now(timezone.utc)

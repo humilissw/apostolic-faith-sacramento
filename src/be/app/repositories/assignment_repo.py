@@ -1,3 +1,4 @@
+from pydantic import BaseModel
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import Assignment
@@ -5,11 +6,51 @@ from app.requests.assignment_request import AssignmentCreate, AssignmentUpdate
 from datetime import datetime, timezone
 
 
+class AssignmentConflict(BaseModel):
+    """Represents a scheduling conflict."""
+
+    model_config = {"from_attributes": True}
+    id: str
+    type: str
+    role: str
+    event_date: datetime
+
+
 class AssignmentRepository:
     """Repository for Assignment entity operations."""
 
     def __init__(self, session: AsyncSession):
         self.session = session
+
+    async def check_conflicts(
+        self, user_id: str, event_date: datetime, assignment_id: str | None = None
+    ) -> list[AssignmentConflict]:
+        """Return conflicts for the given user on the given date (same day, any type)."""
+        stmt = (
+            select(Assignment)
+            .where(Assignment.user_id == user_id)  # type: ignore[arg-type]
+            .where(
+                Assignment.event_date
+                >= event_date.replace(hour=0, minute=0, second=0)  # type: ignore[arg-type]
+            )
+            .where(
+                Assignment.event_date
+                < event_date.replace(hour=23, minute=59, second=59)  # type: ignore[arg-type]
+            )
+        )
+        if assignment_id:
+            stmt = stmt.where(Assignment.id != assignment_id)  # type: ignore[arg-type]
+        result = await self.session.execute(stmt)
+        conflicts = result.scalars().all()
+        return [
+            AssignmentConflict(
+                id=a.id,
+                type=a.type.value if hasattr(a.type, "value") else str(a.type),
+                role=a.role,
+                event_date=a.event_date,
+            )
+            for a in conflicts
+        ]
 
     async def create(self, assignment_in: AssignmentCreate) -> Assignment | None:
         try:
@@ -60,6 +101,19 @@ class AssignmentRepository:
     async def get_by_user_id(self, user_id: str) -> list[Assignment]:
         statement = select(Assignment).where(
             Assignment.user_id == user_id  # type: ignore[arg-type]
+        )
+        result = await self.session.execute(statement)
+        return list(result.scalars().all())
+
+    async def get_by_user_and_date_range(
+        self, user_id: str, start_date: datetime, end_date: datetime
+    ) -> list[Assignment]:
+        statement = (
+            select(Assignment)
+            .where(Assignment.user_id == user_id)  # type: ignore[arg-type]
+            .where(Assignment.event_date >= start_date)  # type: ignore[arg-type]
+            .where(Assignment.event_date <= end_date)  # type: ignore[arg-type]
+            .order_by(Assignment.event_date)  # type: ignore[arg-type]
         )
         result = await self.session.execute(statement)
         return list(result.scalars().all())

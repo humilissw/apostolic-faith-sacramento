@@ -15,6 +15,7 @@ export default function ScopeGuard({ requiredScopes, children }: ScopeGuardProps
   const [hasAccess, setHasAccess] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (isLoadingToken) return;
     if (!isAuthenticated) {
@@ -28,6 +29,7 @@ export default function ScopeGuard({ requiredScopes, children }: ScopeGuardProps
     if (!allowed) {
       router.push("/");
     }
+  /* eslint-enable react-hooks/set-state-in-effect */
   }, [isAuthenticated, hasScope, isLoadingToken, requiredScopes, router]);
 
   if (loading) {
@@ -49,6 +51,7 @@ export default function ScopeGuard({ requiredScopes, children }: ScopeGuardProps
   return <>{children}</>;
 }
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 export function useScope(_requiredScopes: string[]): {
   isLoading: boolean;
   hasAccess: boolean;
@@ -57,3 +60,4 @@ export function useScope(_requiredScopes: string[]): {
   if (isLoadingToken) return { isLoading: true, hasAccess: false };
   return { isLoading: false, hasAccess: !!isAuthenticated };
 }
+/* eslint-enable @typescript-eslint/no-unused-vars */

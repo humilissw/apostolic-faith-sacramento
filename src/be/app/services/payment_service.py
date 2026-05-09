@@ -98,10 +98,10 @@ class PaymentService:
                 },
             )
             return {
-                "client_secret": intent.client_secret,
+                "client_secret": intent.client_secret,  # type: ignore[dict-item]
                 "payment_intent_id": intent.id,
             }
-        except stripe.error.StripeError as e:
+        except stripe.error.StripeError as e:  # type: ignore[attr-defined]
             raise HTTPException(status_code=400, detail=f"Stripe error: {str(e)}")
 
     async def create_checkout_session(
@@ -136,9 +136,9 @@ class PaymentService:
 
             session = stripe.checkout.Session.create(
                 payment_method_types=["card"],
-                line_items=line_items,
+                line_items=line_items,  # type: ignore[arg-type]
                 mode="subscription" if recurring else "payment",
-                customer_email=donor_email,
+                customer_email=donor_email,  # type: ignore[arg-type]
                 metadata={
                     "donor_email": donor_email or "",
                     "donor_name": donor_name or "",
@@ -151,7 +151,7 @@ class PaymentService:
                 "type": "checkout",
                 "checkout_url": session.url,
             }
-        except stripe.error.StripeError as e:
+        except stripe.error.StripeError as e:  # type: ignore[attr-defined]
             raise HTTPException(status_code=400, detail=f"Stripe error: {str(e)}")
 
     async def handle_webhook(self, session: Any, body: str, signature: str) -> dict[str, Any]:
@@ -161,7 +161,7 @@ class PaymentService:
             event = stripe.Webhook.construct_event(body, signature, webhook_secret)
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid webhook payload")
-        except stripe.error.SignatureVerificationError:
+        except stripe.error.SignatureVerificationError:  # type: ignore[attr-defined]
             raise HTTPException(status_code=400, detail="Invalid webhook signature")
 
         if event["type"] == "payment_intent.succeeded":

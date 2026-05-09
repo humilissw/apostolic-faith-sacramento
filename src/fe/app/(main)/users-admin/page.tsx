@@ -8,6 +8,7 @@ import {
   ChevronDown,
   ChevronUp,
   ArrowUpDown,
+  UserPlus,
 } from "lucide-react";
 import {
   fetchUsersWithScopes,
@@ -25,6 +26,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import UserScopeDialog from "@/components/user-scope-dialog";
+import CreateUserDialog from "@/components/create-user-dialog";
 
 const PAGE_SIZE = 50;
 const SCROLL_THRESHOLD = 100;
@@ -34,6 +36,7 @@ export default function UsersAdminPage() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<{
     id: string;
     email: string;
@@ -72,18 +75,18 @@ export default function UsersAdminPage() {
 
   const scrollBodyRef = useRef<HTMLDivElement>(null);
 
-  const colWidths: React.CSSProperties[] = [
-    { width: "3rem", minWidth: "3rem" }, // checkbox
-    { width: "25rem", minWidth: "0" }, // email
-    { width: "8rem", minWidth: "8rem" }, // status
-    { width: "6rem", minWidth: "6rem" }, // superuser
-    { width: "16rem", minWidth: "16rem" }, // scopes
-    { width: "6rem", minWidth: "6rem" }, // actions
-  ];
+  const colWidths = useMemo(() => [
+    { width: "3rem", minWidth: "3rem" },
+    { width: "25rem", minWidth: "0" },
+    { width: "8rem", minWidth: "8rem" },
+    { width: "6rem", minWidth: "6rem" },
+    { width: "16rem", minWidth: "16rem" },
+    { width: "6rem", minWidth: "6rem" },
+  ], []);
 
   const getBodyCellStyle = useCallback(
     (colIndex: number): React.CSSProperties => colWidths[colIndex] ?? {},
-    [],
+    [colWidths],
   );
 
   const loadPage = useCallback(async (skip: number) => {
@@ -219,6 +222,10 @@ export default function UsersAdminPage() {
             User Management
           </h1>
         </div>
+        <Button onClick={() => setCreateDialogOpen(true)}>
+          <UserPlus className="w-4 h-4 mr-2" />
+          Create User
+        </Button>
         {selectedUsers.size > 0 && (
           <Button variant="destructive" onClick={handleBulkDelete}>
             <Trash2 className="w-4 h-4 mr-2" />
@@ -404,6 +411,20 @@ export default function UsersAdminPage() {
             setUsers(data.data);
           } catch {
             setError("Failed to refresh users");
+          }
+        }}
+      />
+
+      <CreateUserDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onSuccess={async () => {
+          try {
+            const data = await fetchUsersWithScopes(0, PAGE_SIZE);
+            setTotal(data.count);
+            setUsers(data.data);
+          } catch {
+            setError("Failed to refresh users after creation");
           }
         }}
       />

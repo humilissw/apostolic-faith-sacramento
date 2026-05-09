@@ -2,8 +2,7 @@
 
 import AFCLogo from "@/components/afc-logo";
 import Link from "next/link";
-import { BsTelephone } from "react-icons/bs";
-import { FaFacebookSquare, FaInstagramSquare, FaRegCopyright } from "react-icons/fa";
+import { FaFacebookSquare, FaRegCopyright } from "react-icons/fa";
 import { IoLocationOutline, IoLogoYoutube, IoMailOutline } from "react-icons/io5";
 import { RiInstagramFill } from "react-icons/ri";
 

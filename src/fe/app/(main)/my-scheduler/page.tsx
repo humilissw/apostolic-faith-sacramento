@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Music, Users, Calendar as CalendarIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Music, Users, Calendar as CalendarIcon, RefreshCw } from "lucide-react";
 import {
   fetchMyAssignments,
   type Assignment,
 } from "@/lib/api";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -21,20 +22,24 @@ export default function MySchedulerPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      try {
-        const data = await fetchMyAssignments();
-        if (!cancelled) setAssignments(data.data);
-      } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Failed to load");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+  const load = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchMyAssignments();
+      setAssignments(data.data);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to load";
+      console.error("my-scheduler load failed:", msg);
+      setError(msg);
+    } finally {
+      setLoading(false);
     }
-    load();
-    return () => { cancelled = true; };
+  };
+
+  const loadRef = useRef(load);
+  useEffect(() => {
+    loadRef.current();
   }, []);
 
   const formatDate = (dateStr: string) => {
@@ -60,7 +65,13 @@ export default function MySchedulerPage() {
     return (
       <div className="container mx-auto py-12">
         <div className="flex justify-center items-center min-h-dvh">
-          <p className="text-red-600">{error}</p>
+          <div className="text-center">
+            <p className="text-red-600 mb-4">{error}</p>
+            <Button onClick={load}>
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Retry
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -68,11 +79,17 @@ export default function MySchedulerPage() {
 
   return (
     <div className="container mx-auto py-12 max-w-6xl">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-foreground">My Scheduler</h1>
-        <p className="text-muted-foreground mt-1">
-          Your assigned music and service roles
-        </p>
+      <div className="mb-8 flex justify-between items-start">
+        <div>
+          <h1 className="text-4xl font-bold text-foreground">My Scheduler</h1>
+          <p className="text-muted-foreground mt-1">
+            Your assigned music and service roles
+          </p>
+        </div>
+        <Button onClick={load} variant="outline">
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Refresh
+        </Button>
       </div>
 
       <Card>

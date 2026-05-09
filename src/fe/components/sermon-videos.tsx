@@ -37,8 +37,6 @@ export default function SermonVideos() {
   const rawUri = searchParams.get("uri")?.toString();
   const videoUri = rawUri ? validateVideoUri(rawUri) : null;
   const sermonTitle = searchParams.get("sermonTitle")?.toString();
-  const speaker = searchParams.get("speaker");
-  const date = searchParams.get("date");
 
   // Don't render iframe if URI is invalid or missing
   if (!videoUri) {

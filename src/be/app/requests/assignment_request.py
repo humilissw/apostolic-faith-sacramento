@@ -19,3 +19,8 @@ class AssignmentUpdate(BaseModel):
     role: str | None = Field(default=None, max_length=200)
     instrument: str | None = None
     notes: str | None = None
+
+
+class TimeOffRequestCreate(BaseModel):
+    date: datetime.datetime
+    notes: str | None = Field(default=None, max_length=4000)

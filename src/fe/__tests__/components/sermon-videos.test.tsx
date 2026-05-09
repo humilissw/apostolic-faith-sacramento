@@ -1,7 +1,7 @@
 /** @jest-environment jsdom */
 
 import '@testing-library/jest-dom'
-import { render, screen } from '@testing-library/react'
+import { render } from '@testing-library/react'
 import SermonVideos from '@/components/sermon-videos'
 
 Object.defineProperty(window, 'matchMedia', {

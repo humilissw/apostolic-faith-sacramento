@@ -13,9 +13,11 @@ jest.mock('@/context/auth-context', () => ({
     logout: jest.fn(),
   })),
 }))
+jest.unmock('@/components/upload-form')
 
 function renderForm() {
-  const UploadForm = require('@/components/upload-form').default
+
+  const UploadForm = jest.requireActual('@/components/upload-form').default
   return render(<UploadForm onSuccess={mockOnSuccess} />)
 }
 

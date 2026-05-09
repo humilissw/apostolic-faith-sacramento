@@ -485,8 +485,94 @@ class AssignmentUpdate(BaseModel):
     notes: str | None = None
 
 
+class TimeOffRequestStatus(str, Enum):
+    pending = "pending"
+    approved = "approved"
+    declined = "declined"
+
+
+class TimeOffRequest(DefaultBase, table=True):  # type: ignore[call-arg]
+    """Time-off request submitted by a user."""
+
+    __tablename__ = "time_off_requests"
+    user_id: str = Field(max_length=36, nullable=False)
+    date: datetime.datetime = Field(nullable=False)
+    status: TimeOffRequestStatus = Field(default=TimeOffRequestStatus.pending, max_length=20)
+    notes: str | None = Field(default=None, max_length=4000)
+
+
+class TimeOffRequestPublic(BaseModel):
+    """Time-off request response schema."""
+
+    model_config = {"from_attributes": True}
+    id: str
+    user_id: str
+    date: datetime.datetime
+    status: str
+    notes: str | None
+    created_on: datetime.datetime
+    updated_on: datetime.datetime | None
+
+
+class TimeOffRequestCreate(BaseModel):
+    """Time-off request creation schema."""
+
+    date: datetime.datetime
+    notes: str | None = Field(default=None, max_length=4000)
+
+
 class AssignmentsPublic(BaseModel):
     """Paginated assignments response schema."""
 
     data: list[AssignmentPublic]
+    count: int
+
+
+# Feature flag models
+
+
+class FeatureFlagBase(SQLModel):
+    """Base properties for feature flags."""
+
+    name: str = Field(max_length=100, unique=True)
+    description: str = Field(max_length=500)
+    is_enabled: bool = Field(default=True)
+
+
+class FeatureFlagCreate(FeatureFlagBase):
+    """Properties to receive via API on creation."""
+
+    pass
+
+
+class FeatureFlagUpdate(SQLModel):
+    """Properties to receive via API on update (all optional)."""
+
+    is_enabled: bool | None = None
+    description: str | None = None
+
+
+class FeatureFlag(FeatureFlagBase, table=True):  # type: ignore[call-arg]
+    """Feature flag for controlling feature visibility."""
+
+    __tablename__ = "feature_flags"
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True, max_length=36)
+    created_on: datetime.datetime = Field(
+        default=datetime.datetime.now(datetime.timezone.utc), nullable=False
+    )
+    updated_on: datetime.datetime | None = Field(default=None, nullable=True)
+
+
+class FeatureFlagPublic(FeatureFlagBase):
+    """Properties to return via API (id, timestamps)."""
+
+    id: str
+    created_on: datetime.datetime
+    updated_on: datetime.datetime | None
+
+
+class FeatureFlagsPublic(SQLModel):
+    """Paginated list of feature flags."""
+
+    data: list[FeatureFlagPublic]
     count: int

@@ -3,24 +3,15 @@
 import '@testing-library/jest-dom'
 import { render, screen } from '@testing-library/react'
 
+const mockUseAuth = jest.fn()
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
     push: jest.fn(),
   }),
 }))
-
 jest.mock('@/context/auth-context', () => ({
-  useAuth: jest.fn(() => ({
-    isAuthenticated: true,
-    token: 'fake-token',
-    login: jest.fn(),
-    logout: jest.fn(),
-  })),
+  useAuth: (...args: unknown[]) => mockUseAuth(...args),
 }))
-
-function TestChild({ children }: { children: React.ReactNode }) {
-  return <>{children}</>
-}
 
 describe('AuthGuard', () => {
   beforeEach(() => {
@@ -28,15 +19,15 @@ describe('AuthGuard', () => {
   })
 
   it('renders children when authenticated', () => {
-    const { useAuth } = require('@/context/auth-context')
-    useAuth.mockReturnValue({
+    mockUseAuth.mockReturnValue({
       isAuthenticated: true,
       token: 'token',
       login: jest.fn(),
       logout: jest.fn(),
     })
 
-    const AuthGuard = require('@/components/auth-guard').default
+
+    const AuthGuard = jest.requireMock('@/components/auth-guard').default
     render(
       <AuthGuard>
         <span data-testid="content">Protected content</span>
@@ -46,15 +37,15 @@ describe('AuthGuard', () => {
   })
 
   it('shows loading placeholder when not authenticated', () => {
-    const { useAuth } = require('@/context/auth-context')
-    useAuth.mockReturnValue({
+    mockUseAuth.mockReturnValue({
       isAuthenticated: false,
       token: null,
       login: jest.fn(),
       logout: jest.fn(),
     })
 
-    const AuthGuard = require('@/components/auth-guard').default
+
+    const AuthGuard = jest.requireMock('@/components/auth-guard').default
     render(
       <AuthGuard>
         <span>Secret</span>
@@ -65,8 +56,7 @@ describe('AuthGuard', () => {
   })
 
   it('redirects to /login when not authenticated', () => {
-    const { useAuth } = require('@/context/auth-context')
-    useAuth.mockReturnValue({
+    mockUseAuth.mockReturnValue({
       isAuthenticated: false,
       token: null,
       login: jest.fn(),
@@ -74,9 +64,11 @@ describe('AuthGuard', () => {
     })
 
     const push = jest.fn()
-    jest.spyOn(require('next/navigation'), 'useRouter').mockReturnValue({ push })
 
-    const AuthGuard = require('@/components/auth-guard').default
+    jest.spyOn(jest.requireMock('next/navigation'), 'useRouter').mockReturnValue({ push })
+
+
+    const AuthGuard = jest.requireMock('@/components/auth-guard').default
     render(<AuthGuard><span>Secret</span></AuthGuard>)
     expect(push).toHaveBeenCalledWith('/login')
   })

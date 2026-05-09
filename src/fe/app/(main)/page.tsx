@@ -1,3 +1,6 @@
+"use client";
+
+import { useFeatureFlag } from "@/context/feature-flag-context";
 import {
   Button
 } from "@/components/ui/button";
@@ -6,6 +9,16 @@ import Link from "next/link";
 import HomepageParagraph from "@/components/homepage-paragraph"
 
 export default function Home() {
+  const homeEnabled = useFeatureFlag("enable_home");
+
+  if (!homeEnabled) {
+    return (
+      <div className="flex justify-center items-center min-h-dvh">
+        <p>Access denied</p>
+      </div>
+    );
+  }
+
   return (
     <div>
     <div className="w-full flex items-start justify-center xl:justify-start relative min-h-[100dvh] pb-20 sm:pb-32 md:pb-40 before:content-[''] before:absolute before:inset-0 before:bg-[url('../public/option2-copy.jpg')] before:bg-cover before:bg-center before:bg-fixed before:opacity-90 before:z-[-2] after:content-[''] after:absolute after:inset-0 after:bg-black/48 after:z-[-1]">

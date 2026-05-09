@@ -19,14 +19,19 @@ const mockVideos = [
 ]
 
 jest.mock('@/components/ui/sheet', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Sheet: ({ children, open, onOpenChange }: any) => (
     <div data-sheet-open={String(open)} data-on-open-change={String(onOpenChange)}>
       {children}
     </div>
   ),
-  SheetTrigger: ({ asChild, children }: any) => <div data-sheet-trigger>{children}</div>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  SheetTrigger: ({ children }: any) => <div data-sheet-trigger>{children}</div>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   SheetContent: ({ children }: any) => <div data-sheet-content>{children}</div>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   SheetHeader: ({ children }: any) => <div data-sheet-header>{children}</div>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   SheetTitle: ({ children }: any) => <div data-testid="sheet-title">{children}</div>,
 }))
 
@@ -43,8 +48,11 @@ jest.mock('@/components/upload-form', () => {
   }
 })
 
+jest.unmock('@/app/(main)/video-uploads/page')
+
 function renderPage() {
-  const VideoUploadsPage = require('@/app/(main)/video-uploads/page').default
+
+  const VideoUploadsPage = jest.requireActual('@/app/(main)/video-uploads/page').default
   return render(<VideoUploadsPage />)
 }
 

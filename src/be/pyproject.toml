@@ -179,3 +179,8 @@ skips = [
     "B311",  # random - fine for test code
     "B110",  # try_except_pass - intentional pass for graceful fallback
 ]
+
+[dependency-groups]
+dev = [
+    "mypy (>=2.0.0,<3.0.0)"
+]

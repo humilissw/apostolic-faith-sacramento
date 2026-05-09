@@ -24,7 +24,6 @@ import {
   fetchIntegration,
   testIntegrationConnection,
   updateIntegration,
-  type IntegrationWithCreds,
   type TestConnectionResult,
 } from "@/lib/api";
 
@@ -65,6 +64,7 @@ export default function IntegrationDialog({
   const currentType = KNOWN_TYPES.find((t) => t.value === type);
 
   // Load or reset form data when dialog opens
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!open) return;
     setError(null);
@@ -85,8 +85,9 @@ export default function IntegrationDialog({
       setEnabled(false);
       setCredentials({});
     }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
+
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [open, integrationId]);
 
   async function handleSave(e: React.FormEvent) {
@@ -103,11 +104,10 @@ export default function IntegrationDialog({
         credentials,
         config_json: null,
       };
-      let result: IntegrationWithCreds;
       if (integrationId) {
-        result = await updateIntegration(integrationId, payload);
+        await updateIntegration(integrationId, payload);
       } else {
-        result = await createIntegration(payload);
+        await createIntegration(payload);
       }
       onSuccess();
       onOpenChange(false);

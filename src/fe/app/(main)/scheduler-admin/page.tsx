@@ -1,15 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2, Music, Users } from "lucide-react";
+import { Plus, Pencil, Trash2, Music, Users, Clock } from "lucide-react";
 import { toast } from "sonner";
 import {
   fetchAssignments,
   deleteAssignment,
   fetchUsersWithScopes,
+  fetchMyTimeOffRequests,
+  approveTimeOffRequest,
+  declineTimeOffRequest,
   type Assignment,
 } from "@/lib/api";
-import type { UserWithScopes } from "@/lib/api";
+import type { UserWithScopes, TimeOffRequest } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,11 +33,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AssignmentDialog from "@/components/assignment-dialog";
 
 export default function SchedulerAdminPage() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [users, setUsers] = useState<UserWithScopes[]>([]);
+  const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
@@ -47,13 +52,15 @@ export default function SchedulerAdminPage() {
     let cancelled = false;
     async function load() {
       try {
-        const [assignmentsRes, usersRes] = await Promise.all([
+        const [assignmentsRes, usersRes, timeOffRes] = await Promise.all([
           fetchAssignments(),
           fetchUsersWithScopes(),
+          fetchMyTimeOffRequests(),
         ]);
         if (!cancelled) {
           setAssignments(assignmentsRes.data);
           setUsers(usersRes.data);
+          setTimeOffRequests(timeOffRes.data);
         }
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : "Failed to load");
@@ -64,6 +71,8 @@ export default function SchedulerAdminPage() {
     load();
     return () => { cancelled = true; };
   }, []);
+
+  const pendingTimeOff = timeOffRequests.filter((t) => t.status === "pending");
 
   const handleDeleteClick = (id: string) => {
     setPendingDeleteId(id);
@@ -104,6 +113,26 @@ export default function SchedulerAdminPage() {
     return users.find((u) => u.new_id === userId)?.email ?? userId;
   };
 
+  const handleApprove = async (id: string) => {
+    try {
+      await approveTimeOffRequest(id);
+      setTimeOffRequests((prev) => prev.map((t) => (t.id === id ? { ...t, status: "approved" } : t)));
+      toast.success("Time-off request approved");
+    } catch {
+      toast.error("Failed to approve");
+    }
+  };
+
+  const handleDecline = async (id: string) => {
+    try {
+      await declineTimeOffRequest(id);
+      setTimeOffRequests((prev) => prev.map((t) => (t.id === id ? { ...t, status: "declined" } : t)));
+      toast.success("Time-off request declined");
+    } catch {
+      toast.error("Failed to decline");
+    }
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto py-12">
@@ -139,68 +168,153 @@ export default function SchedulerAdminPage() {
         </Button>
       </div>
 
-      <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>User</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Instrument</TableHead>
-              <TableHead className="w-24">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {assignments.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-16">
-                  <Users className="w-8 h-8 mx-auto mb-3 text-muted-foreground" />
-                  <p className="text-muted-foreground">No assignments yet</p>
-                </TableCell>
-              </TableRow>
-            ) : (
-              assignments.map((assignment) => (
-                <TableRow key={assignment.id}>
-                  <TableCell className="font-medium">{getUserEmail(assignment.user_id)}</TableCell>
-                  <TableCell>{formatDate(assignment.event_date)}</TableCell>
-                  <TableCell>
-                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
-                      assignment.type === "music"
-                        ? "bg-blue-100 text-blue-800"
-                        : "bg-green-100 text-green-800"
-                    }`}>
-                      {assignment.type === "music" ? <Music className="w-3 h-3" /> : null}
-                      {assignment.type}
-                    </span>
-                  </TableCell>
-                  <TableCell className="max-w-xs truncate">{assignment.role || "—"}</TableCell>
-                  <TableCell>{assignment.instrument || "—"}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleOpenDialog(assignment)}
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        disabled={deletingId === assignment.id}
-                        onClick={() => handleDeleteClick(assignment.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
+      <Tabs defaultValue="assignments">
+        <TabsList>
+          <TabsTrigger value="assignments">Assignments ({assignments.length})</TabsTrigger>
+          <TabsTrigger value="timeoff">
+            Time-off Requests ({pendingTimeOff.length})
+            {pendingTimeOff.length > 0 && (
+              <span className="ml-1 inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-500 text-white text-[10px]">
+                {pendingTimeOff.length}
+              </span>
             )}
-          </TableBody>
-        </Table>
-      </Card>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="assignments">
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Instrument</TableHead>
+                  <TableHead className="w-24">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {assignments.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-16">
+                      <Users className="w-8 h-8 mx-auto mb-3 text-muted-foreground" />
+                      <p className="text-muted-foreground">No assignments yet</p>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  assignments.map((assignment) => (
+                    <TableRow key={assignment.id}>
+                      <TableCell className="font-medium">{getUserEmail(assignment.user_id)}</TableCell>
+                      <TableCell>{formatDate(assignment.event_date)}</TableCell>
+                      <TableCell>
+                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
+                          assignment.type === "music"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-green-100 text-green-800"
+                        }`}>
+                          {assignment.type === "music" ? <Music className="w-3 h-3" /> : null}
+                          {assignment.type}
+                        </span>
+                      </TableCell>
+                      <TableCell className="max-w-xs truncate">{assignment.role || "—"}</TableCell>
+                      <TableCell>{assignment.instrument || "—"}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleOpenDialog(assignment)}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={deletingId === assignment.id}
+                            onClick={() => handleDeleteClick(assignment.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="timeoff">
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Notes</TableHead>
+                  <TableHead className="w-40">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {timeOffRequests.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-16">
+                      <Clock className="w-8 h-8 mx-auto mb-3 text-muted-foreground" />
+                      <p className="text-muted-foreground">No time-off requests</p>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  [...timeOffRequests].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((req) => (
+                    <TableRow key={req.id}>
+                      <TableCell className="font-medium">{getUserEmail(req.user_id)}</TableCell>
+                      <TableCell>{formatDate(req.date)}</TableCell>
+                      <TableCell>
+                        <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                          req.status === "approved"
+                            ? "bg-green-100 text-green-800"
+                            : req.status === "declined"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}>
+                          {req.status}
+                        </span>
+                      </TableCell>
+                      <TableCell className="max-w-xs truncate">{req.notes || "—"}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          {req.status === "pending" && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-green-600 hover:text-green-700"
+                                onClick={() => handleApprove(req.id)}
+                              >
+                                Approve
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-600 hover:text-red-700"
+                                onClick={() => handleDecline(req.id)}
+                              >
+                                Decline
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {dialogOpen && (
         <AssignmentDialog

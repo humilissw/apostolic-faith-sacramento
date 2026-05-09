@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { Barlow_Condensed, EB_Garamond, Libre_Baskerville, Lora, Merriweather, Noto_Serif, Playfair_Display, PT_Serif, Roboto, Noto_Sans, Work_Sans, Epilogue } from 'next/font/google';
 import "../globals.css";
 import Footer from "@/components/footer";
-import Navbar from "@/components/navbar";
+import NavbarClient from "@/components/navbar-client";
 import { AuthProvider } from "@/context/auth-context";
+import { FeatureFlagProvider } from "@/context/feature-flag-context";
 
 const roboto = Roboto({
   weight: ['100', '300', '400', '500', '700', '900'],
@@ -21,7 +22,7 @@ const work_sans = Work_Sans({
 });
 
 const epilogue = Epilogue({
-  weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
+  weight: ['100', '200', '300', '400', '500', '700', '800', '900'],
   variable: '--font-epilogue'
 });
 
@@ -73,11 +74,38 @@ export default function RootLayout({
 }>) {
   return (
     <AuthProvider>
+      <FeatureFlagProvider>
       <div className={`${playfair.variable} ${lora.variable} ${libre.variable} ${merriweather.variable} ${noto.variable} ${pt.variable} ${eb.variable} ${barlow_condensed.variable} ${roboto.variable} ${noto_sans.variable} ${work_sans.variable} ${epilogue.variable}`}>
-          <Navbar />
+          <div className="navbar-skeleton" aria-hidden="true">
+            <nav className="bg-white border-b">
+              <div className="max-w-7xl mx-auto px-4 py-3">
+                <div className="flex flex-col gap-3">
+                  <div className="flex justify-center">
+                    <span className="text-xl font-bold tracking-tight">AFC</span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap gap-1">
+                      <span className="text-muted-foreground text-sm">Navigation</span>
+                    </div>
+
+                    <div className="flex items-center gap-2 ml-4">
+                      <span className="text-muted-foreground text-sm">Login</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 pt-1 pb-2">
+                    <span className="text-xs text-muted-foreground">Guest</span>
+                  </div>
+                </div>
+              </div>
+            </nav>
+          </div>
+          <NavbarClient />
           <main className="flex-1">{children}</main>
           <Footer />
       </div>
+      </FeatureFlagProvider>
     </AuthProvider>
   )
 }

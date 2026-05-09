@@ -1,22 +1,43 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { setUserScopes, fetchUsersWithScopes } from "@/lib/api";
 
 const ALL_SCOPES = [
-  { category: "Users", scopes: [
-    { value: "users:read", label: "Read Users" },
-    { value: "users:write", label: "Write Users" },
-    { value: "users:admin", label: "Admin Users" },
+  { category: "Core", scopes: [
+    { value: "api:all", label: "Full API access" },
+    { value: "spa:all", label: "Full SPA access" },
+    { value: "mobile:all", label: "Full mobile access" },
+    { value: "public:read", label: "Public read access" },
   ]},
-  { category: "Videos", scopes: [
-    { value: "video_uploads:read", label: "Read Video Uploads" },
-    { value: "video_uploads:write", label: "Write Video Uploads" },
-    { value: "video_uploads:delete", label: "Delete Video Uploads" },
-    { value: "video_uploads:manage", label: "Manage Video Uploads" },
+  { category: "Payments", scopes: [
+    { value: "payments:read", label: "Read payments" },
+    { value: "payments:write", label: "Write payments" },
+    { value: "payments:admin", label: "Admin payments" },
+  ]},
+  { category: "Integrations", scopes: [
+    { value: "integrations:admin", label: "Admin integrations" },
+  ]},
+  { category: "Video Uploads", scopes: [
+    { value: "video_uploads:read", label: "Read video uploads" },
+    { value: "video_uploads:write", label: "Write video uploads" },
+    { value: "video_uploads:delete", label: "Delete video uploads" },
+    { value: "video_uploads:manage", label: "Manage video uploads" },
+  ]},
+  { category: "Users", scopes: [
+    { value: "users:read", label: "Read users" },
+    { value: "users:write", label: "Write users" },
+    { value: "users:admin", label: "Admin users" },
+  ]},
+  { category: "Scheduler", scopes: [
+    { value: "scheduler:admin", label: "Admin scheduler" },
+    { value: "member:limited", label: "Limited member access" },
+  ]},
+  { category: "Superuser", scopes: [
+    { value: "superuser", label: "Full superuser privileges" },
   ]},
 ];
 
@@ -35,12 +56,23 @@ export default function UserScopeDialog({
   userEmail,
   onSuccess,
 }: UserScopeDialogProps) {
-  const [scopes, setScopes] = useState<string[]>([]);
+  const [scopes, setScopes] = useState<string[]>(() => {
+    if (!open || !userId) return [];
+    return [];
+  });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [isSuperuser, setIsSuperuser] = useState(false);
+  const [isSuperuser, setIsSuperuser] = useState(() => {
+    if (!open || !userId) return false;
+    return false;
+  });
 
+  const openRef = useRef(open);
+  const userIdRef = useRef(userId);
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
+    openRef.current = open;
+    userIdRef.current = userId;
     if (!open || !userId) {
       setScopes([]);
       setIsSuperuser(false);
@@ -57,6 +89,7 @@ export default function UserScopeDialog({
       })
       .catch(() => setScopes([]))
       .finally(() => setLoading(false));
+  /* eslint-enable react-hooks/set-state-in-effect */
   }, [open, userId]);
 
   const toggleScope = (scope: string) => {

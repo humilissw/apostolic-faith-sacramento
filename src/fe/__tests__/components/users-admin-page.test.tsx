@@ -61,7 +61,7 @@ jest.mock('@/components/user-scope-dialog', () => {
 
 
 // Access mocks after module is loaded
-const { fetchUsersWithScopes, deleteUser, deleteUsers } = require('@/lib/api')
+const { fetchUsersWithScopes, deleteUsers } = jest.requireMock('@/lib/api')
 
 describe('UsersAdminPage', () => {
   beforeEach(() => {

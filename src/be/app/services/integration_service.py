@@ -187,7 +187,7 @@ async def _test_stripe(credentials: dict[str, str], config: dict | None) -> dict
     try:
         stripe.BalanceTransaction.list(limit=1)
         return {"success": True, "status": "connected", "message": "Stripe API reachable"}
-    except stripe.error.StripeError as e:
+    except stripe.error.StripeError as e:  # type: ignore[attr-defined]
         return {
             "success": False,
             "status": "error",
@@ -198,7 +198,7 @@ async def _test_stripe(credentials: dict[str, str], config: dict | None) -> dict
 @register_connection_handler("twilio")
 async def _test_twilio(credentials: dict[str, str], config: dict | None) -> dict[str, Any]:
     try:
-        from twilio.rest import Client
+        from twilio.rest import Client  # type: ignore[import-not-found]
     except ImportError:
         return {"success": False, "status": "error", "message": "twilio package not installed"}
     account_sid = credentials.get("account_sid", "")

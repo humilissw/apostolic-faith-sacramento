@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import { Plus, Pencil, Trash2, Youtube, Calendar, Film } from "lucide-react";
 import { toast } from "sonner";
 import {
-  fetchAllVideoUploads,
   deleteVideoUpload,
+  fetchAllVideoUploads,
   type VideoUploadAdmin,
 } from "@/lib/api";
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,7 +45,9 @@ export default function VideoUploadsAdminPage() {
     let cancelled = false;
     async function load() {
       try {
-        const data = await fetchAllVideoUploads();
+        const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error("Request timed out. Is the API running?")), 15000));
+        const res = await Promise.race([fetchAllVideoUploads(), timeout]);
+        const data = res as Awaited<ReturnType<typeof fetchAllVideoUploads>>;
         if (!cancelled) setUploads(data.data);
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : "Failed to load");

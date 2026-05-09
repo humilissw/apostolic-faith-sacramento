@@ -163,7 +163,7 @@ export async function fetchWithAuth(
     const currentRefreshToken = localStorage.getItem("refresh_token");
     if (currentRefreshToken) {
       try {
-        const refreshed = await refreshToken(currentRefreshToken);
+        await refreshToken(currentRefreshToken);
         // Cookies are updated by the backend refresh endpoint automatically
         // Retry with fresh cookies
         response = await fetch(url, { ...newOptions, credentials: "include" });
@@ -495,6 +495,30 @@ export async function deleteUsers(userIds: string[]): Promise<void> {
   }
 }
 
+export interface CreateUserRequest {
+  email: string;
+  password: string;
+  full_name?: string;
+  is_active?: boolean;
+  is_superuser?: boolean;
+}
+
+export async function createUser(data: CreateUserRequest): Promise<UserWithScopes> {
+  const res = await fetchWithAuth(
+    `${API_BASE}${API_V1}/users/`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    },
+  );
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(body || "Failed to create user");
+  }
+  return res.json();
+}
+
 // --- Video upload admin API ---
 
 export interface VideoUploadAdmin {
@@ -574,6 +598,13 @@ export interface Assignment {
   updated_on: string | null;
 }
 
+export interface AssignmentConflict {
+  id: string;
+  type: string;
+  role: string;
+  event_date: string;
+}
+
 export interface AssignmentCreateInput {
   user_id: string;
   event_date: string;
@@ -589,6 +620,7 @@ export interface AssignmentUpdateInput {
   role?: string;
   instrument?: string | null;
   notes?: string | null;
+  user_id?: string;
 }
 
 export interface AssignmentsResponse {
@@ -620,6 +652,10 @@ export async function createAssignment(data: AssignmentCreateInput): Promise<Ass
   });
   if (!res.ok) {
     const body = await res.text();
+    if (res.status === 409) {
+      const detail = JSON.parse(body);
+      throw new Error(detail.detail?.message || detail.detail || "Conflict: user already has an assignment on this date.");
+    }
     throw new Error(body || "Failed to create assignment");
   }
   return res.json();
@@ -662,6 +698,137 @@ export async function fetchCalendarAssignments(startDate: string, endDate: strin
   );
   if (!res.ok) {
     throw new Error("Failed to fetch calendar assignments");
+  }
+  return res.json();
+}
+
+export async function fetchMyCalendar(startDate: string, endDate: string): Promise<AssignmentsResponse> {
+  const res = await fetchWithAuth(
+    `${API_BASE}${API_V1}/scheduler/my-calendar?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`
+  );
+  if (!res.ok) {
+    throw new Error("Failed to fetch my calendar");
+  }
+  return res.json();
+}
+
+// --- Time-off request API ---
+
+export interface TimeOffRequest {
+  id: string;
+  user_id: string;
+  date: string;
+  status: "pending" | "approved" | "declined";
+  notes: string | null;
+  created_on: string;
+  updated_on: string | null;
+}
+
+export interface TimeOffRequestsResponse {
+  data: TimeOffRequest[];
+  count: number;
+}
+
+export async function createTimeOffRequest(data: { date: string; notes?: string | null }): Promise<TimeOffRequest> {
+  const res = await fetchWithAuth(`${API_BASE}${API_V1}/scheduler/time-off-request`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(body || "Failed to create time-off request");
+  }
+  return res.json();
+}
+
+export async function fetchMyTimeOffRequests(): Promise<TimeOffRequestsResponse> {
+  const res = await fetchWithAuth(`${API_BASE}${API_V1}/scheduler/time-off-requests`);
+  if (!res.ok) {
+    throw new Error("Failed to fetch time-off requests");
+  }
+  return res.json();
+}
+
+export async function approveTimeOffRequest(timeOffId: string): Promise<void> {
+  const res = await fetchWithAuth(
+    `${API_BASE}${API_V1}/scheduler/time-off-requests/${timeOffId}/approve`,
+    { method: "PATCH" }
+  );
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(body || "Failed to approve time-off request");
+  }
+}
+
+export async function declineTimeOffRequest(timeOffId: string): Promise<void> {
+  const res = await fetchWithAuth(
+    `${API_BASE}${API_V1}/scheduler/time-off-requests/${timeOffId}/decline`,
+    { method: "PATCH" }
+  );
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(body || "Failed to decline time-off request");
+  }
+}
+
+export async function fetchTimeOffByDateRange(start: string, end: string): Promise<TimeOffRequestsResponse> {
+  const res = await fetchWithAuth(
+    `${API_BASE}${API_V1}/scheduler/time-off-requests?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`
+  );
+  if (!res.ok) {
+    throw new Error("Failed to fetch time-off requests");
+  }
+  return res.json();
+}
+
+// --- Feature flag API functions ---
+
+export interface FeatureFlagEntry {
+  id: string;
+  name: string;
+  description: string;
+  is_enabled: boolean;
+  created_on: string;
+  updated_on: string | null;
+}
+
+export interface FeatureFlagsResponse {
+  data: FeatureFlagEntry[];
+  count: number;
+}
+
+export async function fetchFeatureFlags(): Promise<FeatureFlagsResponse> {
+  const res = await fetch(`${API_BASE}${API_V1}/feature-flags/`);
+  if (!res.ok) {
+    throw new Error("Failed to fetch feature flags");
+  }
+  return res.json();
+}
+
+export async function updateFeatureFlag(name: string, enabled: boolean): Promise<FeatureFlagEntry> {
+  const res = await fetchWithAuth(
+    `${API_BASE}${API_V1}/feature-flags/${name}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_enabled: enabled }),
+    },
+  );
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(body || "Failed to update feature flag");
+  }
+  return res.json();
+}
+
+export async function preSeedFeatureFlags(): Promise<FeatureFlagsResponse> {
+  const res = await fetchWithAuth(`${API_BASE}${API_V1}/feature-flags/pre-seed`, {
+    method: "POST",
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(body || "Failed to pre-seed feature flags");
   }
   return res.json();
 }
