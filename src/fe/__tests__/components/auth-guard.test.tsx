@@ -4,13 +4,15 @@ import '@testing-library/jest-dom'
 import { render, screen } from '@testing-library/react'
 
 const mockUseAuth = jest.fn()
+const mockRouter = { push: jest.fn() }
 jest.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: jest.fn(),
-  }),
+  useRouter: () => mockRouter,
 }))
 jest.mock('@/context/auth-context', () => ({
   useAuth: (...args: unknown[]) => mockUseAuth(...args),
+}))
+jest.mock('@/context/feature-flag-context', () => ({
+  useFeatureFlag: jest.fn(() => true),
 }))
 
 describe('AuthGuard', () => {
@@ -26,8 +28,7 @@ describe('AuthGuard', () => {
       logout: jest.fn(),
     })
 
-
-    const AuthGuard = jest.requireMock('@/components/auth-guard').default
+    const AuthGuard = jest.requireActual('@/components/auth-guard').default
     render(
       <AuthGuard>
         <span data-testid="content">Protected content</span>
@@ -44,8 +45,7 @@ describe('AuthGuard', () => {
       logout: jest.fn(),
     })
 
-
-    const AuthGuard = jest.requireMock('@/components/auth-guard').default
+    const AuthGuard = jest.requireActual('@/components/auth-guard').default
     render(
       <AuthGuard>
         <span>Secret</span>
@@ -63,13 +63,10 @@ describe('AuthGuard', () => {
       logout: jest.fn(),
     })
 
-    const push = jest.fn()
+    mockRouter.push.mockClear()
 
-    jest.spyOn(jest.requireMock('next/navigation'), 'useRouter').mockReturnValue({ push })
-
-
-    const AuthGuard = jest.requireMock('@/components/auth-guard').default
+    const AuthGuard = jest.requireActual('@/components/auth-guard').default
     render(<AuthGuard><span>Secret</span></AuthGuard>)
-    expect(push).toHaveBeenCalledWith('/login')
+    expect(mockRouter.push).toHaveBeenCalledWith('/login')
   })
 })

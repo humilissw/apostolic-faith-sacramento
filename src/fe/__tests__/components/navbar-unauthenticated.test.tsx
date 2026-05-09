@@ -19,10 +19,14 @@ jest.mock('@/context/auth-context', () => ({
   })),
 }))
 
+jest.mock('@/context/feature-flag-context', () => ({
+  useFeatureFlag: jest.fn(() => true),
+}))
+
 describe('Navbar (unauthenticated)', () => {
   it('renders the AFC brand', () => {
     render(<Navbar />)
-    expect(screen.getByText('AFC')).toBeInTheDocument()
+    expect(screen.getByAltText('Apostolic Faith Church Logo')).toBeInTheDocument()
   })
 
   it('renders a Login button', () => {

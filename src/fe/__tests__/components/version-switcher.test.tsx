@@ -30,7 +30,7 @@ describe('VersionSwitcher', () => {
 
   it('renders all version options in the dropdown', () => {
     render(<VersionSwitcher versions={['1.0', '2.0']} defaultVersion="1.0" />)
-    expect(screen.getByText('v1.0')).toBeInTheDocument()
+    expect(screen.getAllByText('v1.0')).toHaveLength(2)
     expect(screen.getByText('v2.0')).toBeInTheDocument()
   })
 
