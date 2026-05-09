@@ -2,10 +2,12 @@
 
 ## Project Overview
 
-A multi-platform application for the Apostolic Faith Sacramento church, including:
-- **Backend**: FastAPI (Python) - REST API
-- **Frontend**: Web application
-- **Mobile**: Mobile application
+A multi-platform application for the Apostolic Faith Sacramento church:
+- **Backend** (`src/be/`): FastAPI (Python) - REST API with JWT auth, MySQL, SQLModel ORM
+- **Frontend** (`src/fe/`): Next.js 16 static export (TypeScript) - Web app
+- **Mobile** (`src/mobile/`): Expo SDK 54 + React Native (TypeScript) - iOS/Android app
+
+All platforms share the same FastAPI backend.
 
 ## Quick Navigation
 
@@ -22,6 +24,7 @@ A multi-platform application for the Apostolic Faith Sacramento church, includin
 ### Mobile
 - **Path**: `/src/mobile/`
 - **CLAUDE.md**: See [mobile/CLAUDE.md](./src/mobile/CLAUDE.md)
+- **AGENTS.md**: See [mobile/AGENTS.md](./src/mobile/AGENTS.md)
 
 ## Project Structure
 
@@ -113,6 +116,17 @@ pnpm dev          # run dev server
 pnpm build        # static export
 pnpm test         # run tests
 pnpm lint         # lint code
+```
+
+### Mobile
+```bash
+cd src/mobile
+pnpm install
+pnpm start              # Expo dev server
+pnpm ios                # iOS simulator
+pnpm android            # Android emulator
+pnpm test               # Jest tests
+pnpm check-all          # lint + type-check + test
 ```
 
 ### Testing
