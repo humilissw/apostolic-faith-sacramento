@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { AnimatedSheet } from "@/components/animated-sheet";
 import UploadForm from "@/components/upload-form";
+import { fetchWithAuth } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://localhost:8000/";
 const API_V1 = "api/v1";
@@ -39,11 +40,15 @@ export default function VideoUploadsPage() {
 
     async function fetchVideos() {
       try {
-        const res = await fetch(`${API_BASE}${API_V1}/video-uploads/`);
-        if (!res.ok) throw new Error(`Failed to load: ${res.status}`);
-        const json: VideoUploadsResponse = await res.json();
+        const fetchPromise = fetchWithAuth(`${API_BASE}${API_V1}/video-uploads/`);
+        const timeoutPromise = new Promise<never>((rej) =>
+          setTimeout(() => rej(new Error("Request timed out. Is the API running?")), 15000),
+        );
+        const res = await Promise.race([fetchPromise, timeoutPromise]);
+        const json: VideoUploadsResponse = await (res as Response).json();
         if (!cancelled) setVideos(json.data);
       } catch (err) {
+        console.error("Failed to fetch video uploads:", err);
         if (!cancelled) {
           setError(err instanceof Error ? err.message : "Unknown error");
         }
@@ -58,12 +63,15 @@ export default function VideoUploadsPage() {
     };
   }, []);
 
-  function handleUploadSuccess() {
+  async function handleUploadSuccess() {
     setOpen(false);
-    fetch(`${API_BASE}${API_V1}/video-uploads/`)
-      .then((res) => res.json())
-      .then((json: VideoUploadsResponse) => setVideos(json.data))
-      .catch(() => setError("Failed to refresh after upload"));
+    try {
+      const res = await fetchWithAuth(`${API_BASE}${API_V1}/video-uploads/`);
+      const json: VideoUploadsResponse = await res.json();
+      setVideos(json.data);
+    } catch {
+      setError("Failed to refresh after upload");
+    }
   }
 
   if (loading)

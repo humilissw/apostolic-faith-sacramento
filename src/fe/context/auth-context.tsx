@@ -45,26 +45,33 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 let pendingRefresh: Promise<void> | null = null;
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [isLoadingToken] = useState(true);
-  const [tokenExpiry, setTokenExpiry] = useState<number | null>(null);
-  const [hasLoggedIn, setHasLoggedIn] = useState(false);
-  const retryCount = useRef(0);
-
-  // Check if cookies exist (client-side only)
   const hasCookie = (() => {
     try {
-      return !!getLocalStorageItem("access_token");
+      return !!document.cookie.includes("access_token");
+    } catch {
+      return false;
+    }
+  })();
+  const hasStoredToken = (() => {
+    try {
+      return !!localStorage.getItem("access_token");
     } catch {
       return false;
     }
   })();
 
+  const [isLoadingToken] = useState(false);
+  const [tokenExpiry, setTokenExpiry] = useState(() =>
+    hasCookie || hasStoredToken ? Date.now() + 600 * 1000 : null,
+  );
+  const [hasLoggedIn, setHasLoggedIn] = useState(() => hasCookie || hasStoredToken);
+  const retryCount = useRef(0);
+
   // Authenticated if user has successfully logged in AND token hasn't expired.
   // eslint-disable-next-line react-hooks/purity
   const tokenCheckTime = useMemo(() => Date.now(), []);
   const hasTokenExpired = tokenExpiry !== null && tokenExpiry < tokenCheckTime;
-  const isAuthenticatedState =
-    (hasLoggedIn || hasCookie) && (tokenExpiry === null || !hasTokenExpired);
+  const isAuthenticatedState = (hasLoggedIn || hasCookie) && (tokenExpiry === null || !hasTokenExpired);
 
   const login = useCallback(() => {
     // Cookies are set by the backend login endpoint.

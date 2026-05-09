@@ -27,6 +27,7 @@ from app.models import (
     RevokeTokenRequest,
     Token,
     TokenRefresh,
+    TokenScopes,
     UpdateTokenResponse,
     User,
     UserPublic,
@@ -729,6 +730,40 @@ async def me(current_user: CurrentUser, session: SessionDep) -> UserPublic:
         new_id=current_user.new_id,
         full_name=current_user.full_name,
         assigned_scopes=scopes,
+    )
+
+
+@router.post("/login/token-scopes")
+async def token_scopes(
+    session: SessionDep,
+    token: str = Body(..., embed=True),
+) -> TokenScopes:
+    """Decode a JWT access token and return its embedded scopes and claims."""
+    try:
+        payload = security.verify_access_token(
+            token, audience=settings.JWT_AUDIENCE, issuer=settings.JWT_ISSUER
+        )
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+        )
+    scopes = payload.get("scopes") or []
+    # Resolve email from DB to confirm user still exists
+    user_email: str = payload.get("sub", "")  # type: ignore[assignment]
+    if user_email:
+        stmt = select(User).where(User.email == user_email)  # type: ignore[arg-type]
+        result = await session.execute(stmt)
+        user = result.scalar_one_or_none()
+        if user is None:
+            raise HTTPException(status_code=404, detail="User not found")
+    return TokenScopes(
+        email=user_email,
+        scopes=scopes,
+        sub=payload.get("sub"),
+        iss=payload.get("iss"),
+        aud=payload.get("aud"),
+        jti=payload.get("jti"),
     )
 
 

@@ -164,6 +164,17 @@ class TokenPayload(SQLModel):
     scopes: list[str] | None = None
 
 
+class TokenScopes(SQLModel):
+    """Decoded token scopes and associated user info."""
+
+    email: str
+    scopes: list[str]
+    sub: str | None = None
+    iss: str | None = None
+    aud: str | None = None
+    jti: str | None = None
+
+
 class NewPassword(SQLModel):
     token: str = Field(max_length=4000)
     new_password: str = Field(min_length=8, max_length=128)

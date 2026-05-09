@@ -8,7 +8,6 @@ Create Date: 2026-05-08
 
 from typing import Sequence, Union
 
-import uuid as uuid_mod
 
 from alembic import op
 
@@ -35,18 +34,18 @@ KNOWN_FLAGS = [
 ]
 
 
-def _flag_uuid(name: str) -> str:
-    """Deterministic UUID from flag name for idempotent migrations."""
-    return str(uuid_mod.UUID(int=hash(name)))
+# def _flag_uuid(name: str) -> str:
+#     """Deterministic UUID from flag name for idempotent migrations."""
+#     return str(uuid_mod.UUID(int=hash(name)))
 
 
 def upgrade() -> None:
     for name, desc in KNOWN_FLAGS:
-        fid = _flag_uuid(name)
+        # fid = _flag_uuid(name)
         op.execute(
             f"""
             INSERT INTO feature_flags (id, name, description, is_enabled, created_on, updated_on)
-            VALUES ('{fid}', '{name}', '{desc}', 1, NOW(), NULL)
+            VALUES ('UUID()', '{name}', '{desc}', 1, NOW(), NULL)
             ON DUPLICATE KEY UPDATE is_enabled = 1, updated_on = NOW()
             """
         )

@@ -79,12 +79,16 @@ def get_user(db, username: str):
         return User(**user_dict)
 
 
-def verify_access_token(token: str):
+def verify_access_token(token: str, audience: str | None = None, issuer: str | None = None) -> dict:
     """Verifies a JWT token using the public key.
 
     Returns the decoded payload dict, or raises InvalidTokenError on failure.
+    Only verifies aud/iss when the corresponding param is passed.
     """
-    return jwt.decode(token, PUBLIC_KEY, algorithms=[ALGORITHM])
+    decode_kwargs: dict = {"audience": audience, "issuer": issuer}
+    # Only pass params that were explicitly provided
+    filtered = {k: v for k, v in decode_kwargs.items() if v is not None}
+    return dict(jwt.decode(token, PUBLIC_KEY, algorithms=[ALGORITHM], **filtered))
 
 
 def create_refresh_token() -> str:
