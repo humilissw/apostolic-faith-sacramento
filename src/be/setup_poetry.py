@@ -23,6 +23,7 @@ script to alternatives, consider maintaining a local copy as part of your infras
 
 For full documentation, visit https://python-poetry.org/docs/#installation.
 """
+
 import sys
 
 
@@ -296,9 +297,7 @@ class PoetryInstallationError(RuntimeError):
 class VirtualEnvironment:
     def __init__(self, path: Path) -> None:
         self._path = path
-        self._bin_path = self._path.joinpath(
-            "Scripts" if WINDOWS and not MINGW else "bin"
-        )
+        self._bin_path = self._path.joinpath("Scripts" if WINDOWS and not MINGW else "bin")
         # str is for compatibility with subprocess.run on CPython <= 3.7 on Windows
         self._python = str(
             self._path.joinpath(self._bin_path, "python.exe" if WINDOWS else "python")
@@ -348,13 +347,9 @@ class VirtualEnvironment:
 
             with tempfile.TemporaryDirectory(prefix="poetry-installer") as temp_dir:
                 virtualenv_pyz = Path(temp_dir) / "virtualenv.pyz"
-                request = Request(
-                    virtualenv_bootstrap_url, headers={"User-Agent": "Python Poetry"}
-                )
+                request = Request(virtualenv_bootstrap_url, headers={"User-Agent": "Python Poetry"})
                 virtualenv_pyz.write_bytes(urlopen(request).read())
-                cls.run(
-                    sys.executable, virtualenv_pyz, "--clear", "--always-copy", target
-                )
+                cls.run(sys.executable, virtualenv_pyz, "--clear", "--always-copy", target)
 
         # We add a special file so that Poetry can detect
         # its own virtual environment
@@ -573,9 +568,7 @@ class Installer:
         try:
             self.install(version)
         except subprocess.CalledProcessError as e:
-            raise PoetryInstallationError(
-                return_code=e.returncode, log=e.output.decode()
-            ) from e
+            raise PoetryInstallationError(return_code=e.returncode, log=e.output.decode()) from e
 
         self._write("")
         self.display_post_message(version)
@@ -587,9 +580,7 @@ class Installer:
         Installs Poetry in $POETRY_HOME.
         """
         self._write(
-            "Installing {} ({})".format(
-                colorize("info", "Poetry"), colorize("info", version)
-            )
+            "Installing {} ({})".format(colorize("info", "Poetry"), colorize("info", version))
         )
 
         with self.make_env(version) as env:
@@ -602,9 +593,7 @@ class Installer:
 
     def uninstall(self) -> int:
         if not self.data_dir.exists():
-            self._write(
-                "{} is not currently installed.".format(colorize("info", "Poetry"))
-            )
+            self._write("{} is not currently installed.".format(colorize("info", "Poetry")))
 
             return 1
 
@@ -614,9 +603,7 @@ class Installer:
 
         if version:
             self._write(
-                "Removing {} ({})".format(
-                    colorize("info", "Poetry"), colorize("b", version)
-                )
+                "Removing {} ({})".format(colorize("info", "Poetry"), colorize("b", version))
             )
         else:
             self._write("Removing {}".format(colorize("info", "Poetry")))
@@ -653,15 +640,11 @@ class Installer:
             yield VirtualEnvironment.make(env_path)
         except Exception as e:
             if env_path.exists():
-                self._install_comment(
-                    version, "An error occurred. Removing partial environment."
-                )
+                self._install_comment(version, "An error occurred. Removing partial environment.")
                 shutil.rmtree(env_path)
 
             if env_path_saved.exists():
-                self._install_comment(
-                    version, "Restoring previously saved environment."
-                )
+                self._install_comment(version, "Restoring previously saved environment.")
                 shutil.move(env_path_saved, env_path)
 
             raise e
@@ -737,17 +720,17 @@ class Installer:
     def get_windows_path_var(self) -> Optional[str]:
         import winreg
 
-        with winreg.ConnectRegistry(
-            None, winreg.HKEY_CURRENT_USER
-        ) as root, winreg.OpenKey(root, "Environment", 0, winreg.KEY_ALL_ACCESS) as key:
+        with winreg.ConnectRegistry(None, winreg.HKEY_CURRENT_USER) as root, winreg.OpenKey(
+            root, "Environment", 0, winreg.KEY_ALL_ACCESS
+        ) as key:
             path, _ = winreg.QueryValueEx(key, "PATH")
 
             return path
 
     def display_post_message_fish(self, version: str) -> None:
-        fish_user_paths = subprocess.check_output(
-            ["fish", "-c", "echo $fish_user_paths"]
-        ).decode("utf-8")
+        fish_user_paths = subprocess.check_output(["fish", "-c", "echo $fish_user_paths"]).decode(
+            "utf-8"
+        )
 
         message = POST_MESSAGE_NOT_IN_PATH
         if fish_user_paths and str(self.bin_dir) in fish_user_paths:
@@ -814,9 +797,7 @@ class Installer:
             return 0
 
         self._write("")
-        releases = sorted(
-            metadata["releases"].keys(), key=cmp_to_key(_compare_versions)
-        )
+        releases = sorted(metadata["releases"].keys(), key=cmp_to_key(_compare_versions))
 
         if self._version and self._version not in releases:
             msg = f"Version {self._version} does not exist."
@@ -836,9 +817,7 @@ class Installer:
                 break
 
         if current_version == version and not self._force:
-            self._write(
-                f'The latest version ({colorize("b", version)}) is already installed.'
-            )
+            self._write(f'The latest version ({colorize("b", version)}) is already installed.')
 
             return None, current_version
 
@@ -863,9 +842,7 @@ class Installer:
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Installs the latest (or given) version of poetry"
-    )
+    parser = argparse.ArgumentParser(description="Installs the latest (or given) version of poetry")
     parser.add_argument(
         "-p",
         "--preview",

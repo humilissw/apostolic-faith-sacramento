@@ -40,9 +40,7 @@ async def login():
 async def callback():
     """Handle Auth0 callback after login"""
     try:
-        result = await auth0.complete_interactive_login(
-            str(request.url), g.store_options
-        )
+        await auth0.complete_interactive_login(str(request.url), g.store_options)
         return redirect(url_for("index"))
     except Exception as e:
         return f"Authentication error: {str(e)}", 400

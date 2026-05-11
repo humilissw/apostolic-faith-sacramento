@@ -5,11 +5,10 @@ name: Python application
 
 on:
   push:
-    branches: [ $default-branch ]
+    branches: [ main, feature/* ]
   pull_request:
-    branches: [ $default-branch ]
+    branches: [ main, feature/* ]
   workflow_call:
-
 
 permissions:
   contents: read
@@ -21,89 +20,190 @@ jobs:
     strategy:
       matrix:
         #poetry requires at least 3.13
-        python-version: ["3.13", "3.13.5"]
-        # python-version: ["pypy3.10", "3.9", "3.10", "3.11", "3.12", "3.13", "3.13.5"]
+        python-version: [ "3.13.5", "3.14" ]
+        poetry-version: [ "2.2.1" ]
 
     steps:
-    - uses: actions/checkout@v5
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-  # - name: Restore cached package install
-    #   id: cache-restore
-    #   uses: actions/cache/restore@v4
-    #   with:
-    #     path: |
-    #       ~/.bun/install/cache
-    #     key: ${{ runner.os }}-nextjs-${{ hashFiles('**/bun.lockb') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
-    # - name: Setup cache configuration
-    #   uses: actions/cache@v4
-    #   id: cache
-    #   with:
-    #     path: |
-    #       ~/.bun/install/cache
-    #     key: ${{ runner.os }}-nextjs-${{ hashFiles('**/bun.lockb') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
-    #     restore-keys: |
-    #       ${{ runner.os }}-nextjs-${{ hashFiles('**/bun.lockb') }}-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install flake8 pytest
+      - uses: actions/checkout@v5
 
-    - name: Setup Poetry
-      working-directory: src/be/afcapp_root
-      run: |
-        python -m pip install --user pipx
-        python -m pipx ensurepath
-        pipx install poetry
-        poetry env activate
-        poetry install
-        # Add the pipx binary directory to the PATH for the current shell session
-        export PATH="$PATH:$HOME/.local/bin"
+      - name: Install Poetry
+        run: pipx install poetry
 
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Test with pytest
-      # working-directory: src/be/afcapp_root
-      run: |
-        cd src/be/afcapp_root
-        poetry run pytest
+      - name: Configure Poetry
+        run: poetry config virtualenvs.in-project true
 
-    - name: Run build
-      # working-directory: src/be/afcapp_root
-      run: |
-        cd src/be/afcapp_root
-        poetry build
-    # - name: Save packages
-    #   id: cache-package-save
-    #   uses: actions/cache/save@v4
-    #   with:
-    #     path: |
-    #       ~/.bun/install/cache
-    #     key: ${{ steps.cache-restore.outputs.cache-primary-key }}
-    - name: save files to build dir
-      # working-directory: src/be/afcapp_root
-      run: |
-        cd src/be/afcapp_root
-        mkdir ${{ github.workspace }}/build
-        mkdir ${{ github.workspace }}/build/py
-        cp -a dist/. ${{ github.workspace }}/build/py
-    - name: Upload pytest test results
-      uses: actions/upload-artifact@v4
-      with:
-        name: pytest-results-${{ matrix.python-version }}
-        path: ${{ github.workspace }}/build/py/junit/test-results-${{ matrix.python-version }}.xml
-      # Use always() to always run this step to publish test results when there are test failures
-      if: ${{ always() }}
-    - name: Upload dist dir
-      uses: actions/upload-artifact@v4
-      with:
-        name: python-dist-${{ matrix.python-version }}
-        path: ${{ github.workspace }}/build/py
-      # Use always() to always run this step to publish test results when there are test failures
-      if: ${{ always() }}
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "poetry" # Automatically caches global pip cache
+
+      - name: Install required pip dependencies
+        if: steps.cache-pip.outputs.cache-hit != 'true'
+        working-directory: src/be
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 pytest
+
+      - name: Setup Required Prerequisite dependencies
+        working-directory: src/be/app
+        run: |
+          sudo apt-get install -y libmariadb-dev
+
+      - name: Install Poetry dependencies
+        if: steps.cache-venv.outputs.cache-hit != 'true'
+        working-directory: src/be
+        run: |
+          poetry install
+
+      - name: Lint with flake8
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude .venv
+          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --exclude .venv
+
+      - name: Cache pip
+        id: cache-pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Cache Poetry dependencies
+        uses: actions/cache@v4
+        id: cache-venv
+        with:
+          path: .venv
+          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
+
+  test:
+    needs: [ build ]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        #poetry requires at least 3.13
+        python-version: [ "3.13.5" ]
+        # python-version: [ "3.13.5", "3.14" ]
+
+    services:
+      mysql:
+        image: mariadb:12.1-ubi
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping" --health-interval=10s
+          --health-timeout=5s --health-retries=3
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ylemkimon/cache-restore@v2
+        with:
+          path: .venv
+          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |+
+            ${{ runner.os }}-poetry-
+
+      - uses: ylemkimon/cache-restore@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Install Poetry
+        run: pipx install poetry
+
+      - name: Configure Poetry
+        run: poetry config virtualenvs.in-project true
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "poetry"
+
+      - name: Wait for MySQL
+        run: |
+          for i in {1..30}; do
+            if mysql -h 127.0.0.1 -u root -proot -e "SELECT 1" 2>/dev/null; then
+              echo "MySQL is ready"
+              exit 0
+            fi
+            echo "Waiting for MySQL... ($i)"
+            sleep 1
+          done
+          echo "MySQL failed to start"
+          exit 1
+
+      - name: Copy CI env file
+        working-directory: src/be
+        run: cp .env.ci .env
+
+      - name: Copy Alembic cfg file
+        working-directory: src/be
+        run: cp alembic.test.ini alembic.ini
+
+      - name: Run data migrations
+        working-directory: src/be
+        run: |
+          poetry run alembic upgrade head
+
+      - name: Test with pytest
+        working-directory: src/be
+        run: |
+          poetry run pytest --tb=short -v
+
+      # Build-Artifacts:
+      #   needs: [ build, test ]
+      #   runs-on: ubuntu-latest
+      #   strategy:
+      #     matrix:
+      #       #poetry requires at least 3.13
+      #       python-version: [ "3.13.5" ]
+
+      # steps:
+      #   - uses: actions/checkout@v5
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "poetry"
+
+      - name: Run build
+        working-directory: src/be
+        run: |
+          poetry build
+
+      - name: Generate output build dirs
+        working-directory: src/be/app
+        run: |
+          mkdir ${{ github.workspace }}/build
+          mkdir ${{ github.workspace }}/build/py
+
+      - name: save files to build dir
+        working-directory: src/be
+        run: |
+          ls -l
+          cp -a dist/. ${{ github.workspace }}/build/py
+
+      - name: Upload pytest test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-results-${{ matrix.python-version }}
+          path: ${{ github.workspace }}/build/py/junit/test-results-${{
+            matrix.python-version }}.xml
+        # Use always() to always run this step to publish test results when there are test failures
+        if: ${{ always() }}
+      - name: Upload dist dir
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-dist-${{ matrix.python-version }}
+          path: ${{ github.workspace }}/build/py
+        # Use always() to always run this step to publish test results when there are test failures
+        if: ${{ always() }}

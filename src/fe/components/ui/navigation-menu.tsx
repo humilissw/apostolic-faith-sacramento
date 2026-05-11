@@ -5,16 +5,6 @@ import { ChevronDownIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
-function Chevron( isDropDown: boolean) {
-  if (isDropDown) {
-   return <ChevronDownIcon
-        className="relative top-px ml-1 size-3 transition duration-300 group-data-[state=open]:rotate-180"
-        aria-hidden="true"
-      />
-  }
-  return null;
-}
-
 function NavigationMenu({
   className,
   children,
@@ -89,7 +79,7 @@ function NavigationMenuTrigger({
         aria-hidden="true"
       />
       {}
-      
+
     </NavigationMenuPrimitive.Trigger>
   )
 }
@@ -161,7 +151,7 @@ function NavigationMenuIndicator({
         className
       )}
       {...props}
-      
+
     >
       <div className="bg-border relative top-[60%] h-2 w-2 rotate-45 rounded-tl-sm shadow-md" />
     </NavigationMenuPrimitive.Indicator>

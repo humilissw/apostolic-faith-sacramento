@@ -1,8 +1,96 @@
 # Python
 __pycache__
-app.egg-info
+*.py[codz]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv
+venv
+ENV
+env
+env.bak
+venv.bak
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.nyc_output
+.tox/
+.hypothesis/
+test-results/
+*.lcov
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+*.sublime-*
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+docs/
+*.md
+!README.md
+!CLAUDE.md
+!CONTRIBUTING.md
+!AGENTS.md
+
+# Environment files
+.env
+.env.local
+.env.*.local
+.env.prod
+.env.*.prod
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary files
+*.tmp
+*.temp
+.cache
+tmp/
+temp/
+
+# Scripts (unless needed in container)
+scripts/test.sh
+scripts/prestart.sh
+
+# Alembic (unless needed)
 *.pyc
 .mypy_cache
-.coverage
-htmlcov
-.venv
+.pytest_cache
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Other
+node_modules/
+web_modules/
+bower_components/
+jspm_packages/
+.svelte-kit/
+.vuepress/dist

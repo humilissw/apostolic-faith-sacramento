@@ -1,13 +1,9 @@
 from datetime import datetime, timedelta, timezone
-import os
-from typing import Annotated, Any
+import uuid
 
-from fastapi import Depends, HTTPException
 import jwt
-from passlib.context import CryptContext
 from pwdlib import PasswordHash
 
-import app
 from app.config import settings
 from app.models import User
 
@@ -39,21 +35,34 @@ ALGORITHM = "RS256"
 #         # Handle all other token validation errors
 #         return None
 
-directories = os.listdir("../../infrastructure")
+# directories = os.listdir("security_keys/")
 
-for directory in directories:
-    print(directory)
+# for directory in directories:
+#     print(directory)
 
-PUBLIC_KEY = open("../../infrastructure/security_keys/public.pem", "r").read()
-PRIVATE_KEY = open("../../infrastructure/security_keys/private.pem", "r").read()
+PRIVATE_KEY = open(settings.rsa_private_key, "r").read()
+PUBLIC_KEY = open(settings.rsa_pub_key, "r").read()
+# print(PUBLIC_KEY, PRIVATE_KEY)
 ALGORITHM = "RS256"
 
-def create_access_token(subject: str | Any, expires_delta: timedelta) -> str:
-    expire = datetime.now(timezone.utc) + expires_delta
-    to_encode = {"exp": expire, "sub": str(subject)}
-    encoded_jwt = jwt.encode(to_encode, PRIVATE_KEY, algorithm=ALGORITHM)
-    verify_access_token(encoded_jwt)
-    return encoded_jwt
+# pem = public_key.public_bytes(
+#     encoding=serialization.Encoding.PEM,
+#     format=serialization.PublicFormat.SubjectPublicKeyInfo
+# )
+
+
+def create_access_token(subject: str, expires_delta: timedelta) -> str:
+    try:
+        expire = datetime.now(timezone.utc) + expires_delta
+        to_encode = {"exp": expire, "sub": str(subject)}
+        encoded_jwt = jwt.encode(
+            payload=to_encode, key=PRIVATE_KEY, algorithm=ALGORITHM
+        )  # type: ignore[return-value]
+        verify_access_token(encoded_jwt)
+        return str(encoded_jwt)
+    except Exception as err:
+        print(err)
+        raise err
 
 
 def verify_password(plain_password, hashed_password):
@@ -68,19 +77,74 @@ def get_user(db, username: str):
     if username in db:
         user_dict = db[username]
         return User(**user_dict)
-    
-def verify_access_token(token: str):
-    """Verifies a JWT token using the public key."""
-    try:
-        # Decode/verify the token using the public key
-        decoded_payload = jwt.decode(token, PUBLIC_KEY, algorithms=[ALGORITHM])
-        return decoded_payload
-    except jwt.ExpiredSignatureError:
-        # Handle expired tokens
-        return None
-    except jwt.InvalidTokenError:
-        # Handle all other token validation errors
-        return None
+
+
+def verify_access_token(token: str, audience: str | None = None, issuer: str | None = None) -> dict:
+    """Verifies a JWT token using the public key.
+
+    Returns the decoded payload dict, or raises InvalidTokenError on failure.
+    Only verifies aud/iss when the corresponding param is passed.
+    """
+    decode_kwargs: dict = {"audience": audience, "issuer": issuer}
+    # Only pass params that were explicitly provided
+    filtered = {k: v for k, v in decode_kwargs.items() if v is not None}
+    return dict(jwt.decode(token, PUBLIC_KEY, algorithms=[ALGORITHM], **filtered))
+
+
+def create_refresh_token() -> str:
+    """Create a cryptographically secure refresh token (opaque, not a JWT)."""
+    return uuid.uuid4().hex + uuid.uuid4().hex
+
+
+def generate_code_verifier() -> str:
+    """Generate a PKCE code_verifier (43-128 characters, URL-safe)."""
+    return uuid.uuid4().hex + uuid.uuid4().hex
+
+
+def generate_code_challenge(verifier: str) -> str:
+    """Generate a PKCE code_challenge using S256 method (recommended)."""
+    import hashlib
+    import base64
+
+    sha256_hash = hashlib.sha256(verifier.encode("ascii")).digest()
+    return base64.urlsafe_b64encode(sha256_hash).rstrip(b"=").decode("ascii")
+
+
+def create_access_token_with_claims(
+    subject: str,
+    expires_delta: timedelta | None = None,
+    scopes: list[str] | None = None,
+) -> tuple[str, int]:
+    """Create an access token with iss, aud, jti, and scopes claims."""
+    expire_delta = expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now(timezone.utc) + expire_delta
+    jti = str(uuid.uuid4())
+    to_encode = {
+        "exp": expire,
+        "sub": str(subject),
+        "iss": settings.JWT_ISSUER,
+        "aud": settings.JWT_AUDIENCE,
+        "jti": jti,
+        "scopes": scopes or [],
+    }
+    encoded_jwt = jwt.encode(  # type: ignore[return-value]
+        payload=to_encode, key=PRIVATE_KEY, algorithm=ALGORITHM
+    )
+    expires_in = int(expire_delta.total_seconds())
+    return str(encoded_jwt), expires_in
+
+
+def create_refresh_token_with_expiry(
+    expires_delta: timedelta | None = None,
+) -> tuple[str, datetime]:
+    """Create a refresh token and its expiry datetime.
+
+    Returns (token_string, expires_at).
+    """
+    token = create_refresh_token()
+    expire_delta = expires_delta or timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    expires_at = datetime.now(timezone.utc) + expire_delta
+    return token, expires_at
 
 
 # def authenticate_user(fake_db, username: str, password: str):

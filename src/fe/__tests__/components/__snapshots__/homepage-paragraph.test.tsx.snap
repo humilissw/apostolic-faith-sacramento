@@ -1,0 +1,15 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`HomepageParagraph matches snapshot 1`] = `
+<div>
+  <div
+    class="flex flex-col gap-3 justify-center text-center font-noto-sans xs:py-8 xs:px-5 text-white "
+  >
+    <p
+      class="sm:text-xl md:text-2xl font-light"
+    >
+      The Apostolic Faith Church - Sacramento is part of a worldwide Christian organization, with headquarters in Portland, Oregon.
+    </p>
+  </div>
+</div>
+`;
