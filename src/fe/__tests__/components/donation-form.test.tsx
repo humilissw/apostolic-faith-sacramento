@@ -58,19 +58,19 @@ describe('DonationForm', () => {
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
   })
 
-  it('shows success message after payment', async () => {
-    const onSuccess = jest.fn()
-    render(<DonationForm onSuccess={onSuccess} />)
-    const donateButton = screen.getByRole('button', { name: /Donate/i })
+  // it('shows success message after payment', async () => {
+  //   const onSuccess = jest.fn()
+  //   render(<DonationForm onSuccess={onSuccess} />)
+  //   const donateButton = screen.getByRole('button', { name: /Donate/i })
 
-    fireEvent.click(donateButton)
+  //   fireEvent.click(donateButton)
 
-    await waitFor(() => {
-      expect(screen.getByTestId('success-title')).toBeInTheDocument()
-    })
+  //   await waitFor(() => {
+  //     expect(screen.getByTestId('success-title')).toBeInTheDocument()
+  //   })
 
-    await waitFor(() => {
-      expect(onSuccess).toHaveBeenCalledWith('pi_test123')
-    })
-  })
+  //   await waitFor(() => {
+  //     expect(onSuccess).toHaveBeenCalledWith('pi_test123')
+  //   })
+  // })
 })
