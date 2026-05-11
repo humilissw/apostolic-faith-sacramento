@@ -109,14 +109,14 @@ export default function Navbar() {
               </Link>
             </NavigationMenuItem>
 
-            <NavigationMenuItem className="hidden md:block">
+            {/* <NavigationMenuItem className="hidden md:block">
               <Link
                 href="/donate/"
                 className='group inline-flex h-9 w-max items-center justify-center rounded-md cursor-pointer px-7 py-2 text-base tracking-[0.04em] font-medium bg-green-600 text-white hover:bg-green-700 focus:bg-green-700 focus:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 data-[state=open]:hover:bg-green-700 data-[state=open]:text-accent-foreground data-[state=open]:focus:bg-green-700 data-[state=open]:bg-green-700/50 focus-visible:ring-ring/50 outline-none transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1"'
               >
                 Donate
               </Link>
-            </NavigationMenuItem>
+            </NavigationMenuItem> */}
 
             {auth.isAuthenticated && (
               <NavigationMenuItem className="hidden md:block">
