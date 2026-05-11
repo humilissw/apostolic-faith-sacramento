@@ -109,7 +109,7 @@ export default function IntegrationsPage() {
   }
 
   return (
-    <div className="container mx-auto py-12 max-w-6xl">
+    <div className="min-h-dvh flex flex-col container mx-auto py-12 max-w-6xl">
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-4xl font-bold text-foreground">Integrations</h1>

@@ -1,8 +1,10 @@
 import datetime
+from enum import Enum
 from typing import Annotated, Optional
 import uuid
 
 from pydantic import BaseModel, EmailStr
+from sqlalchemy import Index as saIndex
 from sqlmodel import Field, SQLModel
 
 # notes for future self:
@@ -83,6 +85,7 @@ class UserScope(SQLModel, table=True):  # type: ignore[call-arg]
 class UserPublic(SQLModel):
     email: EmailStr
     is_active: bool
+    id: str = Field(max_length=36)
     new_id: str
     full_name: Annotated[str | None, Field(exclude=True)]
     assigned_scopes: list[str] = Field(default_factory=list)
@@ -160,6 +163,17 @@ class TokenPayload(SQLModel):
     aud: str | None = None
     jti: str | None = None
     scopes: list[str] | None = None
+
+
+class TokenScopes(SQLModel):
+    """Decoded token scopes and associated user info."""
+
+    email: str
+    scopes: list[str]
+    sub: str | None = None
+    iss: str | None = None
+    aud: str | None = None
+    jti: str | None = None
 
 
 class NewPassword(SQLModel):
@@ -421,3 +435,156 @@ class IntegrationConfig(DefaultBase, table=True):  # type: ignore[call-arg]
         default_factory=lambda: datetime.datetime.now(datetime.timezone.utc),
         nullable=True,
     )
+
+
+# Scheduler models
+
+
+class AssignmentType(str, Enum):
+    music = "music"
+    service = "service"
+
+
+class Assignment(DefaultBase, table=True):  # type: ignore[call-arg]
+    """Assignment of a user to a church service or music event."""
+
+    __tablename__ = "assignments"
+    user_id: str = Field(max_length=36, nullable=False)
+    event_date: datetime.datetime = Field(nullable=False)
+    type: AssignmentType = Field(max_length=10, nullable=False)
+    role: str = Field(default="", max_length=200, nullable=False)
+    instrument: str | None = Field(default=None, max_length=200)
+    notes: str | None = Field(default=None, max_length=4000)
+    __table_args__ = (
+        saIndex("ix_assignments_user_id", "user_id"),
+        saIndex("ix_assignments_event_date", "event_date"),
+    )
+
+
+class AssignmentPublic(BaseModel):
+    """Assignment response schema."""
+
+    model_config = {"from_attributes": True}
+    id: str
+    user_id: str
+    event_date: datetime.datetime
+    type: str
+    role: str
+    instrument: str | None
+    notes: str | None
+    created_on: datetime.datetime
+    updated_on: datetime.datetime | None
+
+
+class AssignmentCreate(BaseModel):
+    """Assignment creation request schema."""
+
+    user_id: str = Field(max_length=36)
+    event_date: datetime.datetime
+    type: AssignmentType
+    role: str = Field(default="", max_length=200)
+    instrument: str | None = Field(default=None, max_length=200)
+    notes: str | None = Field(default=None, max_length=4000)
+
+
+class AssignmentUpdate(BaseModel):
+    """Assignment update request schema (all fields optional)."""
+
+    event_date: datetime.datetime | None = None
+    type: AssignmentType | None = None
+    role: str | None = Field(default=None, max_length=200)
+    instrument: str | None = None
+    notes: str | None = None
+
+
+class TimeOffRequestStatus(str, Enum):
+    pending = "pending"
+    approved = "approved"
+    declined = "declined"
+
+
+class TimeOffRequest(DefaultBase, table=True):  # type: ignore[call-arg]
+    """Time-off request submitted by a user."""
+
+    __tablename__ = "time_off_requests"
+    user_id: str = Field(max_length=36, nullable=False)
+    date: datetime.datetime = Field(nullable=False)
+    status: TimeOffRequestStatus = Field(default=TimeOffRequestStatus.pending, max_length=20)
+    notes: str | None = Field(default=None, max_length=4000)
+
+
+class TimeOffRequestPublic(BaseModel):
+    """Time-off request response schema."""
+
+    model_config = {"from_attributes": True}
+    id: str
+    user_id: str
+    date: datetime.datetime
+    status: str
+    notes: str | None
+    created_on: datetime.datetime
+    updated_on: datetime.datetime | None
+
+
+class TimeOffRequestCreate(BaseModel):
+    """Time-off request creation schema."""
+
+    date: datetime.datetime
+    notes: str | None = Field(default=None, max_length=4000)
+
+
+class AssignmentsPublic(BaseModel):
+    """Paginated assignments response schema."""
+
+    data: list[AssignmentPublic]
+    count: int
+
+
+# Feature flag models
+
+
+class FeatureFlagBase(SQLModel):
+    """Base properties for feature flags."""
+
+    name: str = Field(max_length=100, unique=True)
+    description: str = Field(max_length=500)
+    is_enabled: bool = Field(default=True)
+
+
+class FeatureFlagCreate(FeatureFlagBase):
+    """Properties to receive via API on creation."""
+
+    pass
+
+
+class FeatureFlagUpdate(SQLModel):
+    """Properties to receive via API on update (all optional)."""
+
+    is_enabled: bool | None = None
+    description: str | None = None
+
+
+class FeatureFlag(FeatureFlagBase, table=True):  # type: ignore[call-arg]
+    """Feature flag for controlling feature visibility."""
+
+    __tablename__ = "feature_flags"
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True, max_length=36)
+    created_on: datetime.datetime = Field(
+        default=datetime.datetime.now(datetime.timezone.utc), nullable=False
+    )
+    updated_on: datetime.datetime | None = Field(default=None, nullable=True)
+
+
+class FeatureFlagPublic(FeatureFlagBase):
+    """Properties to return via API (id, timestamps)."""
+
+    id: str
+    created_on: datetime.datetime
+    updated_on: datetime.datetime | None
+
+
+class FeatureFlagsPublic(SQLModel):
+    """Paginated list of feature flags."""
+
+    data: list[FeatureFlagPublic]
+    count: int

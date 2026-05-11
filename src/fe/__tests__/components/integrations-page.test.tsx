@@ -43,7 +43,7 @@ jest.mock('@/components/integration-dialog', () => {
   }
 })
 
-const { fetchIntegrations, deleteIntegration, preSeedIntegrations } = jest.requireMock('@/lib/api')
+const { fetchIntegrations } = jest.requireMock('@/lib/api')
 
 describe('IntegrationsPage', () => {
   beforeEach(() => {

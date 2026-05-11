@@ -4,31 +4,9 @@ import '@testing-library/jest-dom'
 import { render, screen } from '@testing-library/react'
 import Navbar from '@/components/navbar'
 
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: jest.fn(() => ({
-    matches: false,
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-  })),
-})
-
-jest.mock('@/components/ui/sidebar', () => ({
-  SidebarProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  SidebarInset: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  useSidebar: jest.fn(() => ({
-    state: 'expanded',
-    open: true,
-    setOpen: jest.fn(),
-    openMobile: true,
-    setOpenMobile: jest.fn(),
-    isMobile: false,
-    toggleSidebar: jest.fn(),
-  })),
-}))
-
-jest.mock('@/hooks/use-mobile', () => ({
-  useIsMobile: jest.fn(() => false),
+jest.mock('next/navigation', () => ({
+  ...jest.requireActual('next/navigation'),
+  usePathname: () => '/',
 }))
 
 jest.mock('@/context/auth-context', () => ({
@@ -37,25 +15,18 @@ jest.mock('@/context/auth-context', () => ({
     token: null,
     login: jest.fn(),
     logout: jest.fn(),
+    hasScope: jest.fn(() => false),
   })),
 }))
 
-jest.mock('@/components/nav-sidebar', () => ({
-  NavSidebar: () => <div data-testid="nav-sidebar">Nav Sidebar</div>,
+jest.mock('@/context/feature-flag-context', () => ({
+  useFeatureFlag: jest.fn(() => true),
 }))
 
-jest.mock('@/components/custom-sidebar-trigger', () => {
-  return function MockTrigger() {
-    return <button aria-label="Open Menu">open</button>
-  }
-})
-
 describe('Navbar (unauthenticated)', () => {
-  it('renders the AFC logo as a link', () => {
+  it('renders the AFC brand', () => {
     render(<Navbar />)
-    const logo = screen.getByAltText(/apostolic faith church/i)
-    expect(logo).toBeInTheDocument()
-    expect(logo.closest('a')).toHaveAttribute('href', '/')
+    expect(screen.getByAltText('Apostolic Faith Church Logo')).toBeInTheDocument()
   })
 
   it('renders a Login button', () => {
@@ -64,43 +35,32 @@ describe('Navbar (unauthenticated)', () => {
     expect(loginBtn).toBeInTheDocument()
   })
 
-  it('links the Login button to /login/', () => {
-    const { container } = render(<Navbar />)
-    const links = container.querySelectorAll('a')
-    const loginLink = [...links].find((l) => l.textContent?.trim() === 'Login')
-    expect(loginLink).toHaveAttribute('href', '/login')
+  it('does not render a Logout button', () => {
+    render(<Navbar />)
+    expect(screen.queryByRole('button', { name: /logout/i })).not.toBeInTheDocument()
   })
 
-  it('renders Media link', () => {
-    const { container } = render(<Navbar />)
-    const links = container.querySelectorAll('a')
-    const mediaLink = [...links].find((l) => l.textContent?.trim() === 'Media')
-    expect(mediaLink).toHaveAttribute('href', '/media')
+  it('renders public nav links', () => {
+    render(<Navbar />)
+    expect(screen.getByText('Home')).toBeInTheDocument()
+    expect(screen.getByText('Our Beliefs')).toBeInTheDocument()
+    expect(screen.getByText('Sermons')).toBeInTheDocument()
+    expect(screen.getByText('Media')).toBeInTheDocument()
+    expect(screen.getByText('Donate')).toBeInTheDocument()
+    expect(screen.getByText('Contact Us')).toBeInTheDocument()
   })
 
-  it('renders Contact Us link', () => {
-    const { container } = render(<Navbar />)
-    const links = container.querySelectorAll('a')
-    const contactLink = [...links].find((l) => l.textContent?.trim() === 'Contact Us')
-    expect(contactLink).toHaveAttribute('href', '/contact')
-  })
-
-  it('renders Our Beliefs in About dropdown', () => {
-    const { container } = render(<Navbar />)
-    const triggers = container.querySelectorAll('[data-slot="navigation-menu-trigger"]')
-    const aboutTrigger = [...triggers].find((t) => t.textContent?.includes('About'))
-    expect(aboutTrigger).toBeInTheDocument()
-  })
-
-  it('renders Resources dropdown', () => {
-    const { container } = render(<Navbar />)
-    const triggers = container.querySelectorAll('[data-slot="navigation-menu-trigger"]')
-    const resourcesTrigger = [...triggers].find((t) => t.textContent?.includes('Resources'))
-    expect(resourcesTrigger).toBeInTheDocument()
-  })
-
-  it('does not render Video Uploads when not logged in', () => {
+  it('does not render authenticated links', () => {
     render(<Navbar />)
     expect(screen.queryByText('Video Uploads')).not.toBeInTheDocument()
+    expect(screen.queryByText('Scheduler Admin')).not.toBeInTheDocument()
+    expect(screen.queryByText('User Management')).not.toBeInTheDocument()
+  })
+
+  it('does not render user profile section', () => {
+    render(<Navbar />)
+    // No user profile section for unauthenticated
+    const signInText = screen.queryByText(/signed in/i)
+    expect(signInText).not.toBeInTheDocument()
   })
 })

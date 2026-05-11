@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Barlow_Condensed, EB_Garamond, Libre_Baskerville, Lora, Merriweather, Noto_Serif, Playfair_Display, PT_Serif, Roboto, Noto_Sans, Work_Sans, Epilogue } from 'next/font/google';
 import "./globals.css";
 import { Toaster } from "sonner";
 

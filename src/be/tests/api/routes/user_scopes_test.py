@@ -17,6 +17,14 @@ async def scope_test_user(client, db_session) -> str:
         session=db_session,
         user_create=UserCreate(email=email, password="testpass123"),
     )
+    # Remove the default member:limited scope so tests can verify empty scopes
+    from app.models import UserScope
+
+    stmt = select(UserScope).where(UserScope.user_id == user.id)
+    result = await db_session.execute(stmt)
+    for row in result.scalars().all():
+        await db_session.delete(row)
+    await db_session.commit()
     return user.id
 
 

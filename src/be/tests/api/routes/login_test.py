@@ -341,3 +341,31 @@ async def test_reset_password_invalid_token(login_client, login_superuser_token_
     assert "detail" in response
     assert r.status_code == 400
     assert response["detail"] == "Invalid token"
+
+
+@pytest.mark.asyncio
+async def test_token_scopes(login_client, login_tokens) -> None:
+    """Test that /login/token-scopes returns the scopes embedded in a JWT token."""
+    access_token = login_tokens["access_token"]
+    r = await login_client.post(
+        f"{settings.API_V1_STR}/login/token-scopes",
+        json={"token": access_token},
+    )
+    assert r.status_code == 200
+    data = r.json()
+    assert "email" in data
+    assert "scopes" in data
+    assert isinstance(data["scopes"], list)
+    assert len(data["scopes"]) > 0
+    # Superuser should have all scopes
+    assert "superuser" in data["scopes"]
+
+
+@pytest.mark.asyncio
+async def test_token_scopes_invalid_token(login_client) -> None:
+    """Test that /login/token-scopes rejects invalid tokens."""
+    r = await login_client.post(
+        f"{settings.API_V1_STR}/login/token-scopes",
+        json={"token": "invalid.token.here"},
+    )
+    assert r.status_code == 401

@@ -46,6 +46,9 @@ jobs:
     - run: bun install
       # if: steps.cache.outputs.cache-hit != 'true'
       working-directory: src/fe
+    - name: Run ESLint
+      run: npx eslint . --max-warnings=0
+      working-directory: src/fe
     - run: bun run test:ci
       working-directory: src/fe
     - name: Install Playwright browsers

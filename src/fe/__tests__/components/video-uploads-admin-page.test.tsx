@@ -32,7 +32,7 @@ jest.mock('sonner', () => ({
   toast: { success: jest.fn(), error: jest.fn() },
 }))
 
-const { fetchAllVideoUploads, deleteVideoUpload } = jest.requireMock('@/lib/api')
+const { fetchAllVideoUploads } = jest.requireMock('@/lib/api')
 
 describe('VideoUploadsAdminPage', () => {
   beforeEach(() => {

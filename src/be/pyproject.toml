@@ -168,6 +168,9 @@ prepend_sys_path = [
 
 # Bandit security linter configuration
 [tool.bandit]
+exclude_dirs = [
+    'src/be/app/alembic/'
+]
 skips = [
     "B101",  # assert_used - fine in tests and safety checks
     "B106",  # hardcoded_password_funcarg - dummy OAuth credentials in demo code
@@ -178,4 +181,9 @@ skips = [
     "B607",  # process_beginning_with_partial_path - needed for setup_poetry.py
     "B311",  # random - fine for test code
     "B110",  # try_except_pass - intentional pass for graceful fallback
+]
+
+[dependency-groups]
+dev = [
+    "mypy (>=2.0.0,<3.0.0)"
 ]

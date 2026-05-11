@@ -1,6 +1,6 @@
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,6 +23,7 @@ from app.models import (
     UsersPublic,
     UserUpdate,
     UserUpdateMe,
+    UserScope,
 )
 from app import crud
 from app.repositories.user_repo import UserRepository
@@ -39,7 +40,7 @@ async def _populate_scopes(session: AsyncSession, user: User) -> UserPublic:
     return UserPublic(
         email=user.email,
         is_active=user.is_active,
-        is_superuser=user.is_superuser,
+        id=user.id,
         new_id=user.new_id,
         full_name=user.full_name,
         assigned_scopes=scopes,
@@ -161,6 +162,9 @@ async def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
         raise HTTPException(
             status_code=403, detail="Super users are not allowed to delete themselves"
         )
+    user_id = str(current_user.id)
+    scopes_stmt = delete(UserScope).where(UserScope.user_id == user_id)  # type: ignore[arg-type]
+    await session.execute(scopes_stmt)
     await session.delete(current_user)
     await session.commit()
     return Message(message="User deleted successfully")
@@ -180,6 +184,67 @@ async def register_user(session: SessionDep, user_in: UserRegister) -> Any:
     user_create = UserCreate.model_validate(user_in)
     user = await crud.create_user(session=session, user_create=user_create)
     return user
+
+
+@router.get(
+    "/admin/{user_id}/scopes",
+    dependencies=[Depends(get_current_active_superuser)],
+)
+async def get_user_scopes(user_id: str, session: SessionDep) -> list[str]:
+    """
+    Get scopes assigned to a user.
+    """
+    repo = UserScopeRepository(session)
+    return await repo.get_scopes(user_id)
+
+
+@router.put(
+    "/admin/{user_id}/scopes",
+    dependencies=[Depends(get_current_active_superuser)],
+)
+async def set_user_scopes(user_id: str, scopes: list[str], session: SessionDep) -> list[str]:
+    """
+    Set scopes for a user, replacing existing ones.
+    """
+    repo = UserScopeRepository(session)
+    await repo.set_scopes(user_id, scopes)
+    return await repo.get_scopes(user_id)
+
+
+@router.delete(
+    "/admin/{user_id}",
+    dependencies=[Depends(get_current_active_superuser)],
+)
+async def remove_user_scopes(user_id: str, session: SessionDep, response: Response) -> None:
+    """
+    Remove all scopes from a user (does not delete the user).
+    """
+    repo = UserScopeRepository(session)
+    await repo.set_scopes(user_id, [])
+    response.status_code = 204
+
+
+@router.post(
+    "/admin/bulk-delete",
+    dependencies=[Depends(get_current_active_superuser)],
+)
+async def bulk_delete_users(session: SessionDep, user_ids: list[str]) -> Message:
+    """Delete multiple users and their associated data."""
+    deleted = 0
+    for uid in user_ids:
+        user = await UserRepository(session).get_by_id(uid)
+        if user:
+            user_id_str = str(user.id)
+            items_stmt = delete(Item).where(Item.owner_id == user.id)  # type: ignore[arg-type]
+            await session.execute(items_stmt)
+            scopes_stmt = delete(UserScope).where(
+                UserScope.user_id == user_id_str  # type: ignore[arg-type]
+            )
+            await session.execute(scopes_stmt)
+            await session.delete(user)
+            deleted += 1
+    await session.commit()
+    return Message(message=f"Deleted {deleted} users")
 
 
 @router.get(
@@ -248,8 +313,13 @@ async def delete_user(session: SessionDep, current_user: CurrentUser, user_id: s
         raise HTTPException(
             status_code=403, detail="Super users are not allowed to delete themselves"
         )
-    statement = delete(Item).where(Item.owner_id == user_id)  # type: ignore[arg-type]
-    await session.execute(statement)  # type: ignore
+    user_id_str = str(user.id)
+    items_stmt = delete(Item).where(Item.owner_id == user_id)  # type: ignore[arg-type]
+    await session.execute(items_stmt)  # type: ignore
+    scopes_stmt = delete(UserScope).where(
+        UserScope.user_id == user_id_str  # type: ignore[arg-type]
+    )
+    await session.execute(scopes_stmt)
     await session.delete(user)
     await session.commit()
     return Message(message="User deleted successfully")

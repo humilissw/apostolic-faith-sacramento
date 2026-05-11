@@ -1,6 +1,4 @@
 import Link from "next/link";
-import { BsTelephone } from "react-icons/bs";
-import { IoLocationOutline, IoMailOutline } from "react-icons/io5";
 
 export default function Contact() {
   return (

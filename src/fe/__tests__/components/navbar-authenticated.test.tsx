@@ -4,37 +4,10 @@ import '@testing-library/jest-dom'
 import { render, screen } from '@testing-library/react'
 import Navbar from '@/components/navbar'
 
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: jest.fn(() => ({
-    matches: false,
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-  })),
-})
-
-jest.mock('@/components/ui/sidebar', () => ({
-  SidebarProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  SidebarInset: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  useSidebar: jest.fn(() => ({
-    state: 'expanded',
-    open: true,
-    setOpen: jest.fn(),
-    openMobile: true,
-    setOpenMobile: jest.fn(),
-    isMobile: false,
-    toggleSidebar: jest.fn(),
-  })),
+jest.mock('next/navigation', () => ({
+  ...jest.requireActual('next/navigation'),
+  usePathname: () => '/',
 }))
-
-jest.mock('@/hooks/use-mobile', () => ({
-  useIsMobile: jest.fn(() => false),
-}))
-
-global.fetch = jest.fn().mockResolvedValue({
-  ok: true,
-  json: () => Promise.resolve({ is_superuser: false }),
-})
 
 jest.mock('@/context/auth-context', () => ({
   useAuth: jest.fn(() => ({
@@ -42,26 +15,18 @@ jest.mock('@/context/auth-context', () => ({
     token: 'fake-token',
     login: jest.fn(),
     logout: jest.fn(),
-    hasScope: jest.fn(() => false),
+    hasScope: jest.fn((scope: string) => scope === 'scheduler:admin'),
   })),
 }))
 
-jest.mock('@/components/nav-sidebar', () => ({
-  NavSidebar: () => <div data-testid="nav-sidebar">Nav Sidebar</div>,
+jest.mock('@/context/feature-flag-context', () => ({
+  useFeatureFlag: jest.fn(() => true),
 }))
 
-jest.mock('@/components/custom-sidebar-trigger', () => {
-  return function MockTrigger() {
-    return <button aria-label="Open Menu">open</button>
-  }
-})
-
 describe('Navbar (authenticated)', () => {
-  it('renders Video Uploads link when logged in', () => {
-    const { container } = render(<Navbar />)
-    const links = container.querySelectorAll('a')
-    const videoLink = [...links].find((l) => l.textContent?.trim() === 'Video Uploads' && l.getAttribute('href')?.includes('video-uploads'))
-    expect(videoLink).toBeInTheDocument()
+  it('renders the AFC brand', () => {
+    render(<Navbar />)
+    expect(screen.getByAltText('Apostolic Faith Church Logo')).toBeInTheDocument()
   })
 
   it('renders a Logout button when logged in', () => {
@@ -74,34 +39,29 @@ describe('Navbar (authenticated)', () => {
     expect(screen.queryByRole('button', { name: /login/i })).not.toBeInTheDocument()
   })
 
-  it('renders the AFC logo as a link', () => {
+  it('renders public nav links', () => {
     render(<Navbar />)
-    const logo = screen.getByAltText(/apostolic faith church/i)
-    expect(logo).toBeInTheDocument()
-    expect(logo.closest('a')).toHaveAttribute('href', '/')
-  })
-
-  it('renders Media link', () => {
-    render(<Navbar />)
+    expect(screen.getByText('Home')).toBeInTheDocument()
+    expect(screen.getByText('Our Beliefs')).toBeInTheDocument()
     expect(screen.getByText('Media')).toBeInTheDocument()
-  })
-
-  it('renders Contact Us link', () => {
-    render(<Navbar />)
+    expect(screen.getByText('Donate')).toBeInTheDocument()
     expect(screen.getByText('Contact Us')).toBeInTheDocument()
   })
 
-  it('renders Our Beliefs in About dropdown', () => {
-    const { container } = render(<Navbar />)
-    const triggers = container.querySelectorAll('[data-slot="navigation-menu-trigger"]')
-    const aboutTrigger = [...triggers].find((t) => t.textContent?.includes('About'))
-    expect(aboutTrigger).toBeInTheDocument()
+  it('renders authenticated links', () => {
+    render(<Navbar />)
+    expect(screen.getByText('Video Uploads')).toBeInTheDocument()
   })
 
-  it('renders Resources dropdown', () => {
-    const { container } = render(<Navbar />)
-    const triggers = container.querySelectorAll('[data-slot="navigation-menu-trigger"]')
-    const resourcesTrigger = [...triggers].find((t) => t.textContent?.includes('Resources'))
-    expect(resourcesTrigger).toBeInTheDocument()
+  it('renders scheduler links when user has scheduler:admin scope', () => {
+    render(<Navbar />)
+    expect(screen.getByText('Scheduler Admin')).toBeInTheDocument()
+    expect(screen.getByText('Scheduler Calendar')).toBeInTheDocument()
+    expect(screen.getByText('My Scheduler')).toBeInTheDocument()
+  })
+
+  it('renders user profile section when authenticated', () => {
+    render(<Navbar />)
+    expect(screen.getByText(/signed in/i)).toBeInTheDocument()
   })
 })

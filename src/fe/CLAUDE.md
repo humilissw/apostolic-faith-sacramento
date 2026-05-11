@@ -9,10 +9,10 @@ A Next.js 16 (App Router) web application for the Apostolic Faith Sacramento chu
 ```bash
 # Setup
 cd src/fe
-pnpm install
+bun install
 
 # Run locally
-pnpm dev
+bun dev
 
 # Build (static export)
 pnpm build

@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { AnimatedSheet } from "@/components/animated-sheet";
 import UploadForm from "@/components/upload-form";
+import { fetchWithAuth } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://localhost:8000/";
 const API_V1 = "api/v1";
@@ -40,11 +40,15 @@ export default function VideoUploadsPage() {
 
     async function fetchVideos() {
       try {
-        const res = await fetch(`${API_BASE}${API_V1}/video-uploads/`);
-        if (!res.ok) throw new Error(`Failed to load: ${res.status}`);
-        const json: VideoUploadsResponse = await res.json();
+        const fetchPromise = fetchWithAuth(`${API_BASE}${API_V1}/video-uploads/`);
+        const timeoutPromise = new Promise<never>((rej) =>
+          setTimeout(() => rej(new Error("Request timed out. Is the API running?")), 15000),
+        );
+        const res = await Promise.race([fetchPromise, timeoutPromise]);
+        const json: VideoUploadsResponse = await (res as Response).json();
         if (!cancelled) setVideos(json.data);
       } catch (err) {
+        console.error("Failed to fetch video uploads:", err);
         if (!cancelled) {
           setError(err instanceof Error ? err.message : "Unknown error");
         }
@@ -59,12 +63,15 @@ export default function VideoUploadsPage() {
     };
   }, []);
 
-  function handleUploadSuccess() {
+  async function handleUploadSuccess() {
     setOpen(false);
-    fetch(`${API_BASE}${API_V1}/video-uploads/`)
-      .then((res) => res.json())
-      .then((json: VideoUploadsResponse) => setVideos(json.data))
-      .catch(() => setError("Failed to refresh after upload"));
+    try {
+      const res = await fetchWithAuth(`${API_BASE}${API_V1}/video-uploads/`);
+      const json: VideoUploadsResponse = await res.json();
+      setVideos(json.data);
+    } catch {
+      setError("Failed to refresh after upload");
+    }
   }
 
   if (loading)
@@ -89,22 +96,22 @@ export default function VideoUploadsPage() {
           </h1>
         </div>
 
-        <div className="flex justify-center px-6 py-8">
-          <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild>
+        <div className="flex justify-center px-6 py-8 gap-8">
+          <AnimatedSheet
+            open={open}
+            onOpenChange={setOpen}
+            title="Upload a Video"
+            className="max-w-lg"
+            triggerContent={
               <Button className="font-noto-sans bg-black text-white hover:bg-gray-700 text-lg px-8 py-6">
                 Upload a Video
               </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className={cn("w-full max-w-lg overflow-y-auto", open ? "sheet-animate-open" : "sheet-animate-close")}>
-              <SheetHeader>
-                <SheetTitle>Upload a Video</SheetTitle>
-              </SheetHeader>
-              <div className="mt-4 pb-6 px-2">
-                <UploadForm onSuccess={handleUploadSuccess} />
-              </div>
-            </SheetContent>
-          </Sheet>
+            }
+          >
+            <div className="mt-4 pb-6 px-2">
+              <UploadForm onSuccess={handleUploadSuccess} />
+            </div>
+          </AnimatedSheet>
         </div>
 
         {videos.length === 0 ? (
