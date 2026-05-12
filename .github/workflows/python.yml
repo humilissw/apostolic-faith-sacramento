@@ -29,6 +29,9 @@ jobs:
       - name: Install poetry
         run: pipx install poetry
 
+      - name: Configure poetry
+        run: poetry config virtualenvs.create true
+
       - name: Install dependencies
         run: poetry install
 
