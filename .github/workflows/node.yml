@@ -69,11 +69,6 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
       - name: Install bun
         uses: oven-sh/setup-bun@v2
 
@@ -81,7 +76,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Install Playwright chromium browser with system deps
-        run: npx playwright install --with-deps chromium
+        run: bunx playwright install --with-deps chromium
 
       - name: Run Playwright e2e tests with bun
         run: bun --bun playwright test --reporter=list
