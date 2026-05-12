@@ -168,7 +168,7 @@ export default function DayDetailDialog({
             {assignments.length === 0 && (
               <p className="text-sm text-muted-foreground py-4 text-center">No assignments for this day</p>
             )}
-            {assignments.map((a, idx) => {
+            {assignments.map((a) => {
               const mine = isMyAssignment(a);
               const userOption = users.find((u) => u.id === a.user_id);
               return (

@@ -76,6 +76,7 @@ export default function AssignmentDialog({
   // Sync form when a new assignment is selected
   useEffect(() => {
     if (!assignment) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFormUserId(assignment.user_id);
     setFormEventDate(new Date(assignment.event_date).toISOString().split("T")[0]);
     setFormType(assignment.type);
@@ -125,8 +126,6 @@ export default function AssignmentDialog({
       setSaving(false);
     }
   };
-
-  const selectedUser = users.find((u) => u.id === formUserId);
 
   return (
     <Dialog open={open} onOpenChange={(val) => {
