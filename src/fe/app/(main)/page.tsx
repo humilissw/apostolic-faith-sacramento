@@ -25,7 +25,7 @@ export default function Home() {
       <div className="font-noto-sans 2xs:text-center xl:text-left text-shadow-lg/20 pb-16 2xs:landscape:pt-45 2xs:portrait:pt-50 lg:pt-56 xl:pl-24">
       <div className="flex flex-col gap-4 font-light px-3">
         <h1 className="2xs:leading-12 md:leading-17 lg:leading-20 text-4xl md:text-5xl text-white lg:text-6xl tracking-wider ">
-          WELCOME TO THE <br/>
+          WELCOME TO THE<br/>
           APOSTOLIC FAITH CHURCH
         </h1>
         <h2 className="text-2xl text-white lg:text-4xl tracking-wider">
