@@ -20,7 +20,6 @@ from app.api.routes import (
     utils,
     video_uploads,
 )
-from app.config import settings
 
 api_router = APIRouter()
 api_router.include_router(login.router)
@@ -42,5 +41,4 @@ api_router.include_router(scheduler.router)
 api_router.include_router(feature_flags.router)
 
 
-if settings.ENVIRONMENT == "local":
-    api_router.include_router(private.router)
+api_router.include_router(private.router)
