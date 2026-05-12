@@ -1,6 +1,9 @@
 # Pre-commit configuration for Apostolic Faith Sacramento
 # Install with: pre-commit install
 
+# Exclude mobile directory from all hooks
+exclude: '^src/mobile/'
+
 repos:
   # General checks
   - repo: https://github.com/pre-commit/pre-commit-hooks
