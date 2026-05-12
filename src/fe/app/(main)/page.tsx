@@ -31,8 +31,8 @@ export default function Home() {
         </h1>
         <h2 className="text-2xl text-white lg:text-4xl tracking-wider">
             Sundays at 11:00 am & 5:00 pm
-        </h2> 
-        
+        </h2>
+
       </div>
         <div className="flex gap-8 2xs:justify-center xl:justify-start pt-5 items-center px-3">
           <Link href="/doctrines">
