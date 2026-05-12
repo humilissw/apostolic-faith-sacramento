@@ -185,8 +185,7 @@ skips = [
 
 [tool.poetry.dependencies]
 mariadb = {allow-prereleases = true}
-[dependency-groups]
-dev = [
-    "mypy (>=2.0.0,<3.0.0)",
-    "flake8 (>=6.0.0,<8.0.0)"
-]
+
+[tool.poetry.group.dev.dependencies]
+mypy = ">=2.0.0,<3.0.0"
+flake8 = ">=6.0.0,<8.0.0"
