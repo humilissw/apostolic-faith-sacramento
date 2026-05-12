@@ -25,5 +25,5 @@ logs/
 node_modules
 out
 .DS_Store
-poetry.lock
+
 *.egg
