@@ -1,6 +1,6 @@
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Body, Depends, HTTPException, Response
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -227,11 +227,11 @@ async def remove_user_scopes(user_id: str, session: SessionDep, response: Respon
     response.status_code = 204
 
 
-@router.get(
+@router.post(
     "/admin/bulk-delete",
     dependencies=[Depends(get_current_active_superuser)],
 )
-async def bulk_delete_users(session: SessionDep, user_ids: list[str]) -> Message:
+async def bulk_delete_users(session: SessionDep, user_ids: list[str] = Body(...)) -> Message:
     """Delete multiple users and their associated data."""
     deleted = 0
     for uid in user_ids:
