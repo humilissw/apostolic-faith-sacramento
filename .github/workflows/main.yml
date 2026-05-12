@@ -3,12 +3,18 @@ run-name: Running CI on ${{ github.ref_name }}
 on: [push, pull_request]
 jobs:
   pre-commit:
-    uses: ${{ github.repository }}/.github/workflows/pre-commit.yml@${{ github.head_ref || github.ref_name }}
+    uses: humilissw/apostolic-faith-sacramento/.github/workflows/pre-commit.yml@main
+    with:
+      ref: ${{ github.head_ref || github.ref_name }}
 
   Run-CI-Python:
     needs: [ pre-commit ]
-    uses: ${{ github.repository }}/.github/workflows/python.yml@${{ github.head_ref || github.ref_name }}
+    uses: humilissw/apostolic-faith-sacramento/.github/workflows/python.yml@main
+    with:
+      ref: ${{ github.head_ref || github.ref_name }}
 
   Run-CI-Node:
     needs: [ pre-commit ]
-    uses: ${{ github.repository }}/.github/workflows/node.yml@${{ github.head_ref || github.ref_name }}
+    uses: humilissw/apostolic-faith-sacramento/.github/workflows/node.yml@main
+    with:
+      ref: ${{ github.head_ref || github.ref_name }}
