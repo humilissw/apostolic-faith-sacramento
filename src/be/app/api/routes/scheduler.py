@@ -16,7 +16,12 @@ from app.models import (
     TimeOffRequestStatus,
     User,
 )
-from app.requests.assignment_request import AssignmentCreate, AssignmentUpdate, TimeOffRequestCreate
+from app.requests.assignment_request import (
+    AssignmentCreate,
+    AssignmentUpdate,
+    BulkAssignRequest,
+    TimeOffRequestCreate,
+)
 from app.repositories.assignment_repo import AssignmentRepository
 from app.services.scheduler_service import SchedulerService
 from sqlmodel import select
@@ -26,6 +31,16 @@ router = APIRouter(prefix="/scheduler", tags=["scheduler"])
 
 class TimeOffRequestsPublic(BaseModel):
     data: list[TimeOffRequestPublic]
+    count: int
+
+
+class EnrichedAssignment(AssignmentPublic):
+    user_email: str
+    user_full_name: str | None
+
+
+class EnrichedAssignmentsResponse(BaseModel):
+    data: list[EnrichedAssignment]
     count: int
 
 
@@ -129,6 +144,26 @@ async def decline_time_off_request(
     return TimeOffRequestPublic.model_validate(row)
 
 
+@router.delete(
+    "/time-off-requests/{time_off_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[require_scope("member:limited")],
+)
+async def delete_time_off_request(
+    time_off_id: str,
+    session: SessionDep,
+    current_user: CurrentUser,
+) -> None:
+    """Delete a time-off request (owner only)."""
+    row = await session.get(TimeOffRequest, time_off_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Time-off request not found")
+    if row.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Can only delete your own time-off requests")
+    await session.delete(row)
+    await session.commit()
+
+
 # ── Assignment routes ──────────────────────────────────────
 
 
@@ -174,7 +209,7 @@ async def get_calendar_assignments(
 
 @router.get(
     "/calendar-with-names",
-    response_model=AssignmentsPublic,
+    response_model=EnrichedAssignmentsResponse,
     dependencies=[require_scope("member:limited")],
 )
 async def get_calendar_with_names(
@@ -188,28 +223,21 @@ async def get_calendar_with_names(
     end = datetime.fromisoformat(end_date)
     repo = AssignmentRepository(session=session)
     assignments = await repo.get_by_date_range(start, end)
-    # Enrich each assignment with the user email
-    enriched: list[Any] = []
+    enriched: list[EnrichedAssignment] = []
     for a in assignments:
         user = await session.get(User, a.user_id)
         enriched.append(
-            {
-                "id": a.id,
-                "user_id": a.user_id,
-                "user_email": user.email if user else "unknown",
-                "event_date": a.event_date,
-                "type": a.type.value if hasattr(a.type, "value") else str(a.type),
-                "role": a.role,
-                "instrument": a.instrument,
-                "notes": a.notes,
-                "created_on": a.created_on,
-                "updated_on": a.updated_on,
-            }
+            EnrichedAssignment(
+                **AssignmentPublic.model_validate(a).model_dump(),
+                user_email=user.email if user else "unknown",
+                user_full_name=(
+                    user.full_name
+                    if user and user.full_name
+                    else (user.email if user else "unknown")
+                ),
+            )
         )
-    return AssignmentsPublic(
-        data=enriched,  # type: ignore[arg-type]
-        count=len(enriched),
-    )
+    return EnrichedAssignmentsResponse(data=enriched, count=len(enriched))
 
 
 @router.get(
@@ -234,7 +262,11 @@ async def get_my_calendar(
     )
 
 
-@router.get("/", response_model=AssignmentsPublic, dependencies=[require_scope("scheduler:admin")])
+@router.get(
+    "/",
+    response_model=AssignmentsPublic,
+    dependencies=[require_scope("scheduler:admin")],
+)
 async def list_assignments(
     session: SessionDep,
     current_user: CurrentUser,
@@ -356,3 +388,79 @@ async def delete_assignment(
     if not assignment:
         raise HTTPException(status_code=404, detail="Assignment not found")
     await repo.delete(db_assignment=assignment)
+
+
+class BulkAssignResponse(BaseModel):
+    created: list[AssignmentPublic]
+    conflicts: list[dict[str, Any]]
+
+
+@router.post(
+    "/bulk",
+    response_model=BulkAssignResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[require_scope("scheduler:admin")],
+)
+async def bulk_assign(
+    session: SessionDep,
+    current_user: CurrentUser,
+    bulk_in: BulkAssignRequest,
+) -> Any:
+    """Bulk create assignments for multiple users on the same date
+    (scheduler:admin scope required)."""
+    repo = AssignmentRepository(session=session)
+    scheduler_svc = SchedulerService(session)
+
+    created: list[AssignmentPublic] = []
+    conflicts: list[dict[str, Any]] = []
+
+    for entry in bulk_in.entries:
+        assignment_in = AssignmentCreate(
+            user_id=entry.user_id,
+            event_date=bulk_in.event_date,
+            type=bulk_in.type,
+            role=entry.role,
+            instrument=entry.instrument,
+            notes=entry.notes,
+            group_leader=entry.group_leader,
+        )
+
+        # Check for double-booking conflicts
+        conflicts_check = await repo.check_conflicts(
+            user_id=entry.user_id,
+            event_date=bulk_in.event_date,
+        )
+        if conflicts_check:
+            conflicts.append(
+                {
+                    "user_id": entry.user_id,
+                    "message": "User already has an assignment on "
+                    + f"{bulk_in.event_date.strftime('%Y-%m-%d')}",
+                    "conflicts": [c.model_dump() for c in conflicts_check],
+                }
+            )
+            continue
+
+        assignment = await repo.create(assignment_in=assignment_in)
+        if assignment is None:
+            conflicts.append(
+                {
+                    "user_id": entry.user_id,
+                    "message": "Failed to create assignment",
+                }
+            )
+            continue
+
+        # Send email notification
+        await scheduler_svc.send_assignment_notification(
+            user_id=assignment.user_id,
+            assignment_type=bulk_in.type.value,
+            role=entry.role,
+            event_date=assignment.event_date.strftime("%B %d, %Y"),
+            instrument=entry.instrument,
+            notes=entry.notes,
+        )
+
+        created.append(AssignmentPublic.model_validate(assignment))
+
+    return BulkAssignResponse(created=created, conflicts=conflicts)

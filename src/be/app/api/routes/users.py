@@ -76,6 +76,9 @@ async def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
         )
 
     user = await repository.create(user_create=user_in)
+    if user_in.scopes:
+        scope_repo = UserScopeRepository(session)
+        await scope_repo.set_scopes(user.id, user_in.scopes)
     if settings.emails_enabled and user_in.email:
         email_data = generate_new_account_email(
             email_to=user_in.email, username=user_in.email, password=user_in.password
@@ -224,7 +227,7 @@ async def remove_user_scopes(user_id: str, session: SessionDep, response: Respon
     response.status_code = 204
 
 
-@router.post(
+@router.get(
     "/admin/bulk-delete",
     dependencies=[Depends(get_current_active_superuser)],
 )
@@ -245,6 +248,19 @@ async def bulk_delete_users(session: SessionDep, user_ids: list[str]) -> Message
             deleted += 1
     await session.commit()
     return Message(message=f"Deleted {deleted} users")
+
+
+@router.get(
+    "/admin/all",
+    dependencies=[require_scope("scheduler:admin")],
+    response_model=UsersPublic,
+)
+async def get_all_users(session: SessionDep) -> Any:
+    """Get all users without pagination (scheduler:admin scope required)."""
+    repository = UserRepository(session=session)
+    users, _ = await repository.get_all(skip=0, limit=10000)
+    populated = [await _populate_scopes(session, u) for u in users]
+    return UsersPublic(data=populated, count=len(populated))
 
 
 @router.get(

@@ -56,16 +56,10 @@ export default function UserScopeDialog({
   userEmail,
   onSuccess,
 }: UserScopeDialogProps) {
-  const [scopes, setScopes] = useState<string[]>(() => {
-    if (!open || !userId) return [];
-    return [];
-  });
+  const [scopes, setScopes] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [isSuperuser, setIsSuperuser] = useState(() => {
-    if (!open || !userId) return false;
-    return false;
-  });
+  const isSuperuser = scopes.includes("superuser");
 
   const openRef = useRef(open);
   const userIdRef = useRef(userId);
@@ -75,7 +69,6 @@ export default function UserScopeDialog({
     userIdRef.current = userId;
     if (!open || !userId) {
       setScopes([]);
-      setIsSuperuser(false);
       return;
     }
     setLoading(true);
@@ -84,7 +77,8 @@ export default function UserScopeDialog({
         const user = data.data.find((u) => u.new_id === userId);
         if (user) {
           setScopes(user.assigned_scopes);
-          setIsSuperuser(user.assigned_scopes.includes("superuser"));
+        } else {
+          setScopes([]);
         }
       })
       .catch(() => setScopes([]))
@@ -145,7 +139,10 @@ export default function UserScopeDialog({
                 </h4>
                 <div className="space-y-1">
                   {category.scopes.map((scope) => {
-                    const checked = scopes.includes(scope.value);
+                    const checked =
+                      scope.value === "superuser"
+                        ? isSuperuser
+                        : scopes.includes(scope.value);
                     return (
                       <label
                         key={scope.value}

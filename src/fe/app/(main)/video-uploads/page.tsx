@@ -41,7 +41,7 @@ export default function VideoUploadsPage() {
     async function fetchVideos() {
       try {
         const fetchPromise = fetchWithAuth(`${API_BASE}${API_V1}/video-uploads/`);
-        const timeoutPromise = new Promise<never>((rej) =>
+        const timeoutPromise = new Promise<never>((rej: (e: any) => void) =>
           setTimeout(() => rej(new Error("Request timed out. Is the API running?")), 15000),
         );
         const res = await Promise.race([fetchPromise, timeoutPromise]);

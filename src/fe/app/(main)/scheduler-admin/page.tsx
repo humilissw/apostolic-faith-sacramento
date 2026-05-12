@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import {
   fetchAssignments,
   deleteAssignment,
-  fetchUsersWithScopes,
+  fetchAllUsers,
   fetchMyTimeOffRequests,
   approveTimeOffRequest,
   declineTimeOffRequest,
@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AssignmentDialog from "@/components/assignment-dialog";
+import BulkAssignDialog from "@/components/bulk-assign-dialog";
 
 export default function SchedulerAdminPage() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -42,6 +43,7 @@ export default function SchedulerAdminPage() {
   const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -54,7 +56,7 @@ export default function SchedulerAdminPage() {
       try {
         const [assignmentsRes, usersRes, timeOffRes] = await Promise.all([
           fetchAssignments(),
-          fetchUsersWithScopes(),
+          fetchAllUsers(),
           fetchMyTimeOffRequests(),
         ]);
         if (!cancelled) {
@@ -162,10 +164,16 @@ export default function SchedulerAdminPage() {
             Assign users to music or service roles
           </p>
         </div>
-        <Button onClick={handleCreate}>
-          <Plus className="w-4 h-4 mr-2" />
-          New
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleCreate}>
+            <Plus className="w-4 h-4 mr-2" />
+            New
+          </Button>
+          <Button variant="outline" onClick={() => setBulkDialogOpen(true)}>
+            <Users className="w-4 h-4 mr-2" />
+            Bulk Assign
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="assignments">
@@ -328,6 +336,15 @@ export default function SchedulerAdminPage() {
           }}
         />
       )}
+
+      <BulkAssignDialog
+        open={bulkDialogOpen}
+        onOpenChange={setBulkDialogOpen}
+        users={users.map((u) => ({ id: u.id, email: u.email }))}
+        onSuccess={() => {
+          fetchAssignments().then((data) => setAssignments(data.data));
+        }}
+      />
 
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <AlertDialogContent>
