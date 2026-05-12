@@ -5,12 +5,8 @@ on:
     branches: [ main, feature/* ]
   pull_request:
     branches: [ main, feature/* ]
+  workflow_dispatch:
   workflow_call:
-    inputs:
-      ref:
-        type: string
-        required: false
-        default: "main"
 
 permissions:
   contents: read
@@ -20,8 +16,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-        with:
-          ref: ${{ inputs.ref || 'main' }}
 
       - name: Set up Python
         uses: actions/setup-python@v6
