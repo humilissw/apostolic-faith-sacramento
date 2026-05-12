@@ -15,7 +15,7 @@ interface AssignmentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   assignment: Assignment | null;
-  users?: Array<{ id: string; email: string }>;
+  users?: Array<{ id: string; email: string; full_name?: string }>;
   onSuccess: () => void;
 }
 
