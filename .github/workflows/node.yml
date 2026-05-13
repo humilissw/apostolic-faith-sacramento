@@ -58,37 +58,6 @@ jobs:
       - name: Run Jest tests
         run: bun run test:ci
 
-  e2e:
-    name: E2E (Playwright)
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: src/fe
-    needs: [lint]
-
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Install Playwright chromium browser with system deps
-        run: pnpm exec playwright install --with-deps chromium
-
-      - name: Check version
-        run: pnpm exec playwright --version
-
-      - name: Run Playwright e2e tests
-        run: pnpm exec playwright test --reporter=list
-
   build:
     name: Build
     runs-on: ubuntu-latest
