@@ -1,0 +1,44 @@
+services:
+  backend:
+    build:
+      context: src/be
+      dockerfile: Dockerfile
+    env_file:
+      - src/be/.env
+    ports:
+      - "8000:8000"
+    networks:
+      - app
+    depends_on:
+      - database
+    environment:
+      - DB_SERVER=mariadb
+      - DB_PORT=3306
+      - ENVIRONMENT=local
+
+  frontend:
+    build:
+      context: src/fe
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    networks:
+      - app
+
+  database:
+    image: mariadb:12.1-ubi
+    env_file:
+      - infrastructure/db/db.env
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - app
+
+networks:
+  app:
+    driver: bridge
+
+volumes:
+  db_data:

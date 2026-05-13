@@ -1,26 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, Music, Users, Clock } from "lucide-react";
+import { ChevronLeft, ChevronRight, Music, Users, Clock, Crown } from "lucide-react";
 import {
-  fetchCalendarAssignments,
+  fetchCalendarWithNames,
   fetchMyTimeOffRequests,
-  createTimeOffRequest,
   fetchMyCalendar,
+  fetchUsersWithScopes,
   type Assignment,
   type TimeOffRequest,
+  type UserWithScopes,
 } from "@/lib/api";
 import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import DayDetailDialog from "@/components/day-detail-dialog";
 
 export default function SchedulerCalendarPage() {
   const [currentMonth, setCurrentMonth] = useState(() => {
@@ -30,11 +22,24 @@ export default function SchedulerCalendarPage() {
   const [calendarAssignments, setCalendarAssignments] = useState<Assignment[]>([]);
   const [myAssignments, setMyAssignments] = useState<Assignment[]>([]);
   const [myTimeOff, setMyTimeOff] = useState<TimeOffRequest[]>([]);
+  const [users, setUsers] = useState<UserWithScopes[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showTimeOffDialog, setShowTimeOffDialog] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [timeOffNote, setTimeOffNote] = useState("");
-  const [timeOffSubmitting, setTimeOffSubmitting] = useState(false);
+  const [selectedDateForDialog, setSelectedDateForDialog] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [usersRes] = await Promise.all([
+          fetchUsersWithScopes(),
+        ]);
+        setUsers(usersRes.data);
+      } catch {
+        toast.error("Failed to load users");
+      }
+    };
+    loadData();
+  }, []);
 
   useEffect(() => {
     const startDate = `${currentMonth.year}-${String(currentMonth.month + 1).padStart(2, "0")}-01`;
@@ -42,9 +47,10 @@ export default function SchedulerCalendarPage() {
     const endDate = `${currentMonth.year}-${String(currentMonth.month + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
 
     const loadData = async () => {
+      setLoading(true);
       try {
         const [calRes, myCalRes, timeOffRes] = await Promise.all([
-          fetchCalendarAssignments(startDate, endDate),
+          fetchCalendarWithNames(startDate, endDate),
           fetchMyCalendar(startDate, endDate),
           fetchMyTimeOffRequests(),
         ]);
@@ -59,6 +65,23 @@ export default function SchedulerCalendarPage() {
     };
     loadData();
   }, [currentMonth]);
+
+  const handleRefresh = () => {
+    const startDate = `${currentMonth.year}-${String(currentMonth.month + 1).padStart(2, "0")}-01`;
+    const lastDay = new Date(currentMonth.year, currentMonth.month + 1, 0).getDate();
+    const endDate = `${currentMonth.year}-${String(currentMonth.month + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+    Promise.all([
+      fetchCalendarWithNames(startDate, endDate),
+      fetchMyCalendar(startDate, endDate),
+      fetchMyTimeOffRequests(),
+    ]).then(([calRes, myCalRes, timeOffRes]) => {
+      setCalendarAssignments(calRes.data);
+      setMyAssignments(myCalRes.data);
+      setMyTimeOff(timeOffRes.data);
+    }).catch(() => {
+      toast.error("Failed to refresh calendar data");
+    });
+  };
 
   const monthName = new Date(currentMonth.year, currentMonth.month).toLocaleString("default", { month: "long" });
 
@@ -108,20 +131,14 @@ export default function SchedulerCalendarPage() {
     return "bg-background border-border";
   };
 
-  const handleRequestTimeOff = async () => {
-    if (!selectedDate) return;
-    setTimeOffSubmitting(true);
-    try {
-      await createTimeOffRequest({ date: selectedDate + "T00:00:00", notes: timeOffNote || null });
-      const res = await fetchMyTimeOffRequests();
-      setMyTimeOff(res.data);
-      setShowTimeOffDialog(false);
-      setTimeOffNote("");
-      toast.success("Time-off request submitted");
-    } catch {
-      toast.error("Failed to submit time-off request");
-    } finally {
-      setTimeOffSubmitting(false);
+  const handleDayClick = (day: number) => {
+    const dk = dateKey(day);
+    const calDays = calendarAssignmentsForDay(day);
+    const myDays = myAssignmentsForDay(day);
+    // Only make days clickable if they have assignments or time-off
+    if (calDays.length > 0 || myDays.length > 0 || timeOffForDay(day)) {
+      setSelectedDateForDialog(dk);
+      setDialogOpen(true);
     }
   };
 
@@ -181,18 +198,14 @@ export default function SchedulerCalendarPage() {
               day === new Date().getDate() &&
               currentMonth.month === new Date().getMonth() &&
               currentMonth.year === new Date().getFullYear();
-            const isUnassigned = myDays.length === 0 && calDays.length > 0 && !dayTimeOff;
 
             return (
               <div
                 key={day}
                 className={`min-h-[100px] border p-1 ${dayClass(day)} ${
-                  isUnassigned ? "cursor-pointer hover:opacity-80" : ""
+                  (calDays.length > 0 || myDays.length > 0 || dayTimeOff) ? "cursor-pointer hover:opacity-80" : ""
                 }`}
-                onClick={isUnassigned ? () => {
-                  setSelectedDate(dateKey(day));
-                  setShowTimeOffDialog(true);
-                } : undefined}
+                onClick={() => handleDayClick(day)}
               >
                 <div className="flex justify-between items-start">
                   <span className={`text-sm font-medium ${isToday ? "text-blue-600" : "text-foreground"}`}>
@@ -219,17 +232,19 @@ export default function SchedulerCalendarPage() {
                           ? "bg-blue-100 text-blue-800"
                           : "bg-green-100 text-green-800"
                       } ${myDays.some((m) => m.id === a.id) ? "ring-1 ring-green-400" : ""}`}
-                      title={`${a.type}: ${a.role} - ${a.user_id}`}
+                      title={`${a.type}: ${a.role}${a.group_leader ? " (Group Leader)" : ""}`}
                     >
-                      {a.type === "music" ? (
-                        <span className="inline-flex items-center gap-0.5">
-                          <Music className="w-2 h-2" /> {a.role || "music"}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-0.5">
-                          <Users className="w-2 h-2" /> {a.role || "service"}
-                        </span>
-                      )}
+                      <span className="inline-flex items-center gap-0.5">
+                        {a.type === "music" ? (
+                          <Music className="w-2 h-2" />
+                        ) : (
+                          <Users className="w-2 h-2" />
+                        )}
+                        {a.user_full_name || a.user_email}
+                        {a.group_leader ? (
+                          <Crown className="w-2 h-2 text-amber-500" />
+                        ) : null}
+                      </span>
                     </div>
                   ))}
                   {calDays.length > 3 && (
@@ -254,35 +269,19 @@ export default function SchedulerCalendarPage() {
         </span>
       </div>
 
-      <AlertDialog open={showTimeOffDialog} onOpenChange={setShowTimeOffDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Request Time Off</AlertDialogTitle>
-            <AlertDialogDescription>
-              You have no assignment on {selectedDate}.
-              <div className="mt-3 space-y-2">
-                <label htmlFor="timeoff-note" className="text-sm font-medium">Notes (optional)</label>
-                <input
-                  id="timeoff-note"
-                  className="w-full border rounded-md px-3 py-2 text-sm"
-                  placeholder="Reason for time off..."
-                  value={timeOffNote}
-                  onChange={(e) => setTimeOffNote(e.target.value)}
-                />
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleRequestTimeOff}
-              disabled={timeOffSubmitting}
-            >
-              {timeOffSubmitting ? "Submitting..." : "Submit"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {selectedDateForDialog && (
+        <DayDetailDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          date={selectedDateForDialog}
+          assignments={calendarAssignmentsForDay(Number(selectedDateForDialog.split("-")[2]))}
+          myAssignments={myAssignmentsForDay(Number(selectedDateForDialog.split("-")[2]))}
+          timeOff={timeOffForDay(Number(selectedDateForDialog.split("-")[2]))}
+          users={users.map((u) => ({ id: u.id, email: u.email }))}
+          isAdmin={true}
+          onRefresh={handleRefresh}
+        />
+      )}
     </div>
   );
 }

@@ -18,6 +18,7 @@ import {
   Calendar,
   Users,
   Settings,
+  ToggleRight,
   User,
 } from "lucide-react";
 
@@ -76,6 +77,7 @@ export default function Navbar() {
   const enableUsersAdmin = useFeatureFlag("enable_users_admin");
   const enableVideoUploadsAdmin = useFeatureFlag("enable_video_uploads_admin");
   const enableIntegrations = useFeatureFlag("enable_integrations");
+  const enableFlagsAdmin = useFeatureFlag("enable_flags_admin");
 
   const isAuthenticated = auth.isAuthenticated;
 
@@ -130,6 +132,9 @@ export default function Navbar() {
     }
     if (enableIntegrations) {
       adminItems.push({ title: "Integrations", url: "/integrations/", icon: Settings });
+    }
+    if (enableFlagsAdmin) {
+      adminItems.push({ title: "Feature Flags", url: "/flags-admin/", icon: ToggleRight });
     }
     if (adminItems.length > 0) {
       navItems.push(adminItems);

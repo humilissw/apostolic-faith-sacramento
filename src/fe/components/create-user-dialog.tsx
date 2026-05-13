@@ -57,8 +57,8 @@ export default function CreateUserDialog({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [isSuperuser, setIsSuperuser] = useState(false);
   const [scopes, setScopes] = useState<string[]>([]);
+  const isSuperuser = scopes.includes("superuser");
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -73,13 +73,13 @@ export default function CreateUserDialog({
         password,
         full_name: fullName.trim() || undefined,
         is_superuser: isSuperuser,
+        scopes,
       });
       onSuccess();
       onOpenChange(false);
       setEmail("");
       setPassword("");
       setFullName("");
-      setIsSuperuser(false);
       setScopes([]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create user");
@@ -140,7 +140,10 @@ export default function CreateUserDialog({
             <Switch
               id="superuser"
               checked={isSuperuser}
-              onCheckedChange={setIsSuperuser}
+              onCheckedChange={(val) => {
+                if (val) setScopes(["superuser"]);
+                else setScopes((prev) => prev.filter((s) => s !== "superuser"));
+              }}
             />
           </div>
 
@@ -167,6 +170,15 @@ export default function CreateUserDialog({
                           type="checkbox"
                           checked={checked}
                           disabled={isSuperuser}
+                          onChange={() => {
+                            if (!isSuperuser) {
+                              setScopes((prev) =>
+                                prev.includes(scope.value)
+                                  ? prev.filter((s) => s !== scope.value)
+                                  : [...prev, scope.value],
+                              );
+                            }
+                          }}
                           className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
                         <span className="text-xs font-mono">{scope.value}</span>

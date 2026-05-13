@@ -87,4 +87,12 @@ async def pre_seed_feature_flags(
 @router.get("/known", response_model=dict)
 async def get_known_feature_flags() -> dict:
     """Get metadata for all known feature flags (public)."""
-    return KNOWN_FEATURE_FLAGS
+    return {
+        name: {
+            "display_name": meta["display_name"],
+            "description": meta["description"],
+            "icon": meta["icon"],
+            "required_scopes": meta.get("required_scopes", []),
+        }
+        for name, meta in KNOWN_FEATURE_FLAGS.items()
+    }

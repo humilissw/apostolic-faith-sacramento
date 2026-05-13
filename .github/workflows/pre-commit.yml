@@ -5,6 +5,7 @@ on:
     branches: [ main, feature/* ]
   pull_request:
     branches: [ main, feature/* ]
+  workflow_dispatch:
   workflow_call:
 
 permissions:
