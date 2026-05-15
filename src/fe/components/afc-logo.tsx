@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 export default function AFCLogo(props: { width: number; height: number; }) {
     return (
-        <Link href="/">
+        <Link href="/" className="shrink-0">
             <Image
             src='/logo.png'
             alt="Apostolic Faith Church Logo"

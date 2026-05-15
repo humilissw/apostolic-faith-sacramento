@@ -20,9 +20,13 @@ import {
   Settings,
   ToggleRight,
   User,
+  CircleUserRound,
+  Circle
 } from "lucide-react";
 
 import AFCLogo from "@/components/afc-logo";
+import { AnimatedSheet } from "./animated-sheet";
+import { useState } from "react";
 
 const publicNav = [
   { title: "Home", url: "/", icon: Home },
@@ -41,7 +45,7 @@ interface NavItem {
 }
 
 function NavItemLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
-  const className = `flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
+  const className = `flex justify-center items-center rounded-md h-auto w-30 text-sm transition-colors ${
     isActive
       ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
       : "text-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
@@ -49,12 +53,12 @@ function NavItemLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
 
   return item.external ? (
     <a href={item.url} target="_blank" rel="noopener noreferrer" className={className}>
-      <item.icon className="h-4 w-4" />
+      {/*<item.icon className="h-4 w-4" />*/}
       {item.title}
     </a>
   ) : (
     <Link href={item.url} className={className}>
-      <item.icon className="h-4 w-4" />
+      {/*<item.icon className="h-4 w-4" />*/}
       {item.title}
     </Link>
   );
@@ -63,6 +67,7 @@ function NavItemLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
 export default function Navbar() {
   const auth = useAuth();
   const pathname = usePathname();
+  const [open, setOpen] = useState(false);
 
   // Call all hooks at top level (unconditional)
   const enableHome = useFeatureFlag("enable_home");
@@ -102,9 +107,9 @@ export default function Navbar() {
   }
 
   if (isAuthenticated && enableVideoUploads) {
-    navItems.push([
-      { title: "Video Uploads", url: "/video-uploads/", icon: Video },
-    ]);
+    //navItems.push([
+    //  { title: "Video Uploads", url: "/video-uploads/", icon: Video },
+    //]);
   }
 
   if (isAuthenticated && enableSchedulerCalendar && (auth.hasScope("scheduler:admin") || auth.hasScope("member:limited"))) {
@@ -118,7 +123,7 @@ export default function Navbar() {
       schedulerItems.push({ title: "My Scheduler", url: "/my-scheduler/", icon: Calendar });
     }
     if (schedulerItems.length > 0) {
-      navItems.push(schedulerItems);
+      //navItems.push(schedulerItems);
     }
   }
 
@@ -137,20 +142,22 @@ export default function Navbar() {
       adminItems.push({ title: "Feature Flags", url: "/flags-admin/", icon: ToggleRight });
     }
     if (adminItems.length > 0) {
-      navItems.push(adminItems);
+      //navItems.push(adminItems);
     }
   }
 
   return (
     <nav className="bg-white border-b">
-      <div className="max-w-7xl mx-auto px-4 py-3">
-        <div className="flex flex-col gap-3">
-          <div className="flex justify-center">
+      <div className="mx-auto px-4 py-3">
+        <div className="flex justify-between items-center px-5">
+          <div className="flex">
             <AFCLogo width={120} height={145} />
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex flex-wrap gap-1">
+
+          <div className="flex items-center">
+
+            <div className="flex gap-6">
               {navItems.map((group) =>
                 group.map((item) => (
                   <NavItemLink
@@ -168,14 +175,42 @@ export default function Navbar() {
               )}
             </div>
 
+            
+            
+
+      
+
+{/*
+            <div className="flex justify-center px-6 py-8 gap-8">
+                <AnimatedSheet
+                  open={open}
+                  onOpenChange={setOpen}
+                  title="Upload a Video"
+                  className="max-w-lg"
+                  triggerContent={
+                    <Button className="font-noto-sans bg-white text-black text-lg px-8 py-6">
+                      Hamburger
+                    </Button>
+                  }
+                >
+                  <div className="mt-4 pb-6 px-2">
+                    putting this here
+                  </div>
+                </AnimatedSheet>
+              </div>
+              */}
+
+
+
+
             <div className="flex items-center gap-2 ml-4">
               {isAuthenticated ? (
                 <Button
-                  className="font-noto-sans bg-black text-white hover:bg-gray-700"
+                  className="font-noto-sans bg-white text-black hover:bg-gray-700"
                   size="sm"
                   onClick={() => auth.logout()}
                 >
-                  Logout
+                  <CircleUserRound className="h-10 w-10 mr-1" />
                 </Button>
               ) : (
                 <Link href="/login/">
@@ -192,7 +227,6 @@ export default function Navbar() {
 
           {isAuthenticated && (
             <>
-              <Separator className="my-1" />
               <div className="flex items-center gap-3 pt-1 pb-2">
                 <User className="h-4 w-4 text-muted-foreground" />
                 <span className="text-xs text-muted-foreground">
