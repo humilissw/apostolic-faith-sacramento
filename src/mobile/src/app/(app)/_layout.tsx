@@ -1,4 +1,4 @@
-import { Link, Redirect, SplashScreen, Tabs } from 'expo-router';
+import { Link, SplashScreen, Tabs } from 'expo-router';
 import * as React from 'react';
 import { useCallback, useEffect } from 'react';
 
@@ -29,9 +29,6 @@ export default function TabLayout() {
 
   if (isFirstTime) {
     return <Redirect href="/onboarding" />;
-  }
-  if (status === 'signOut') {
-    return <Redirect href="/login" />;
   }
   return (
     <Tabs>
