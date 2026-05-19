@@ -1,4 +1,4 @@
-import { Link, Redirect, SplashScreen, Tabs } from 'expo-router';
+import { Link, SplashScreen, Tabs } from 'expo-router';
 import * as React from 'react';
 import { useCallback, useEffect } from 'react';
 
@@ -7,6 +7,7 @@ import {
   Feed as FeedIcon,
   Settings as SettingsIcon,
   Style as StyleIcon,
+  User as UserIcon,
 } from '@/components/ui/icons';
 import { useAuthStore as useAuth } from '@/features/auth/use-auth-store';
 import { useIsFirstTime } from '@/lib/hooks/use-is-first-time';
@@ -29,9 +30,6 @@ export default function TabLayout() {
   if (isFirstTime) {
     return <Redirect href="/onboarding" />;
   }
-  if (status === 'signOut') {
-    return <Redirect href="/login" />;
-  }
   return (
     <Tabs>
       <Tabs.Screen
@@ -40,6 +38,15 @@ export default function TabLayout() {
           title: 'Home',
           tabBarIcon: ({ color }) => <FeedIcon color={color} />,
           tabBarButtonTestID: 'home-tab',
+        }}
+      />
+
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color }) => <UserIcon color={color} />,
+          tabBarButtonTestID: 'profile-tab',
         }}
       />
 
@@ -69,6 +76,42 @@ export default function TabLayout() {
           headerShown: false,
           tabBarIcon: ({ color }) => <SettingsIcon color={color} />,
           tabBarButtonTestID: 'settings-tab',
+        }}
+      />
+
+      <Tabs.Screen
+        name="announcements/index"
+        options={{
+          title: 'Announcements',
+          tabBarButtonTestID: 'announcements-tab',
+        }}
+      />
+      <Tabs.Screen
+        name="messages/index"
+        options={{
+          title: 'Messages',
+          tabBarButtonTestID: 'messages-tab',
+        }}
+      />
+      <Tabs.Screen
+        name="schedule/index"
+        options={{
+          title: 'Schedule',
+          tabBarButtonTestID: 'schedule-tab',
+        }}
+      />
+      <Tabs.Screen
+        name="payments/index"
+        options={{
+          title: 'Payments',
+          tabBarButtonTestID: 'payments-tab',
+        }}
+      />
+      <Tabs.Screen
+        name="integrations/index"
+        options={{
+          title: 'Integrations',
+          tabBarButtonTestID: 'integrations-tab',
         }}
       />
     </Tabs>

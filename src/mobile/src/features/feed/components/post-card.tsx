@@ -24,7 +24,7 @@ export function PostCard({ title, body, id }: Props) {
             className="h-56 w-full overflow-hidden rounded-t-xl"
             contentFit="cover"
             source={{
-              // eslint-disable-next-line react-hooks/purity
+
               uri: images[Math.floor(Math.random() * images.length)],
             }}
           />
