@@ -10,7 +10,7 @@ const envSchema = z.object({
   EXPO_PUBLIC_BUNDLE_ID: z.string(),
   EXPO_PUBLIC_PACKAGE: z.string(),
   EXPO_PUBLIC_VERSION: z.string(),
-  EXPO_PUBLIC_API_URL: z.string().url(),
+  EXPO_PUBLIC_API_URL: z.union([z.string().url(), z.literal('')]),
   EXPO_PUBLIC_ASSOCIATED_DOMAIN: z.string().url().optional(),
   EXPO_PUBLIC_VAR_NUMBER: z.number(),
   EXPO_PUBLIC_VAR_BOOL: z.boolean(),
