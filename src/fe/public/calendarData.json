@@ -25,7 +25,19 @@
   },
   {
     "id": 5,
-    "date": "2026-04-19 11:00:00",
+    "date": "2026-05-24 11:00:00",
+    "title": "Morning Worship Service", 
+    "description": "This is a description of the event"
+  },
+  {
+    "id": 6,
+    "date": "2026-05-24 12:00:00",
+    "title": "Morning Worship Service", 
+    "description": "This is a description of the event"
+  },
+  {
+    "id": 7,
+    "date": "2026-05-24 13:00:00",
     "title": "Morning Worship Service", 
     "description": "This is a description of the event"
   }

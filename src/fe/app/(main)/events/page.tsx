@@ -7,6 +7,7 @@ import { IoLocationOutline, IoMailOutline } from "react-icons/io5";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from 'react';
 import Calendar from "@/components/calendar";
+import TestCalendar from "@/components/test-calendar";
 
 interface EventsData {
   image: string;
@@ -17,7 +18,7 @@ interface EventsData {
   endTime: string;
 }
 
-const options = {
+const options: Intl.DateTimeFormatOptions = {
   weekday: "long",
   year: "numeric",
   month: "long",
@@ -39,7 +40,7 @@ export default function Events() {
     }
 
     function handleEventButton () {
-        setEventsButton(true);
+        setEventsButton(true); 
         setCalendarButton(false);
         setEventButtonStyle("rounded-none border-y border-l border-black shadow-lg bg-zinc-900 hover:text-white")
         setCalendarButtonStyle("rounded-none border border-black bg-white/70 shadow-lg hover:bg-zinc-200 text-zinc-900")
@@ -77,7 +78,7 @@ export default function Events() {
     
 
         <div className="flex flex-col justify-center py-15 sm:gap-15 sm:justify-center sm:py-20">
-            <div className="flex justify-start px-65">
+            <div className="flex min-w-[700px] sm:min-w-0 max-w-6xl mx-auto">
                 <Button onClick={handleEventButton} className={eventButtonStyle} size="default" variant="default">Upcoming Events</Button>
                 <Button onClick={handleCalendarButton} className={calendarButtonStyle} size="default" variant="default">Calendar</Button>
             </div>
@@ -109,7 +110,7 @@ export default function Events() {
 
             {calendarButton &&
                 <div>
-                    <Calendar />
+                    <TestCalendar />
                 </div>
             }
         </div>
