@@ -1,6 +1,7 @@
 import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
+import { Platform, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from 'expo-router';
 
 import { AnimatedIcon } from '@/components/animated-icon';
 import { HintRow } from '@/components/hint-row';
@@ -8,6 +9,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { WebBadge } from '@/components/web-badge';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import AppTabs from '@/components/app-tabs';
 
 function getDevMenuHint() {
   if (Platform.OS === 'web') {
@@ -29,14 +31,35 @@ function getDevMenuHint() {
 }
 
 export default function HomeScreen() {
+  const navigation = useNavigation();
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
+        <ThemedView style={styles.header}>
+          <ThemedText type="title" style={styles.headerTitle}>
+            AFC Sacramento
+          </ThemedText>
+          <TouchableOpacity
+            style={styles.hamburgerButton}
+            onPress={() => (navigation as any).openDrawer()}
+            hitSlop={Spacing.two}
+          >
+            <ThemedText type="default" style={styles.hamburgerText}>
+              {'☰'}
+            </ThemedText>
+          </TouchableOpacity>
+        </ThemedView>
+
         <ThemedView style={styles.heroSection}>
           <AnimatedIcon />
           <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
+            Welcome
           </ThemedText>
+        </ThemedView>
+
+        <ThemedView style={styles.tabSection}>
+          <AppTabs />
         </ThemedView>
 
         <ThemedText type="code" style={styles.code}>
@@ -75,6 +98,21 @@ const styles = StyleSheet.create({
     paddingBottom: BottomTabInset + Spacing.three,
     maxWidth: MaxContentWidth,
   },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    paddingHorizontal: Spacing.two,
+  },
+  headerTitle: {
+    flex: 1,
+    textAlign: 'center',
+  },
+  hamburgerButton: {
+    padding: Spacing.one,
+  },
+  hamburgerText: { fontSize: 24, lineHeight: 24 },
   heroSection: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -84,6 +122,10 @@ const styles = StyleSheet.create({
   },
   title: {
     textAlign: 'center',
+  },
+  tabSection: {
+    width: '100%',
+    alignItems: 'center',
   },
   code: {
     textTransform: 'uppercase',
