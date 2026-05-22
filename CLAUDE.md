@@ -20,8 +20,8 @@ A multi-platform application for the Apostolic Faith Sacramento church, includin
 - **AGENTS.md**: See [fe/AGENTS.md](./src/fe/AGENTS.md)
 
 ### Mobile
-- **Path**: `/src/mobile/`
-- **CLAUDE.md**: See [mobile/CLAUDE.md](./src/mobile/CLAUDE.md)
+- **Path**: `/src/afc-mobile/`
+- **CLAUDE.md**: See [afc-mobile/CLAUDE.md](./src/afc-mobile/CLAUDE.md)
 
 ## Project Structure
 
@@ -39,7 +39,7 @@ apostolic-faith-sacramento/
 ├── src/
 │   ├── be/                        # Backend
 │   ├── fe/                        # Frontend
-│   └── mobile/                    # Mobile
+│   └── afc-mobile/                # Mobile
 └── README.md                      # Root documentation
 ```
 
@@ -113,6 +113,16 @@ pnpm dev          # run dev server
 pnpm build        # static export
 pnpm test         # run tests
 pnpm lint         # lint code
+```
+
+### Mobile
+```bash
+cd src/afc-mobile
+pnpm start           # start dev server
+pnpm ios             # iOS simulator
+pnpm android         # Android emulator
+pnpm web             # Web in browser
+pnpm lint            # ESLint
 ```
 
 ### Testing
