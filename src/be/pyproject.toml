@@ -2,10 +2,8 @@
 name = "app"
 version = "0.1.0"
 description = "Application for managing backend for AFC Sacramento"
-authors = [
-    {name = "humulissw",email = "you@example.com"}
-]
-license = {text = "MIT"}
+authors = [{ name = "humulissw", email = "you@example.com" }]
+license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -40,7 +38,7 @@ dependencies = [
     "pytest-asyncio (>=1.3.0,<2.0.0)",
     "stripe (>=13.0.0,<14.0.0)",
     "cryptography (>=42.0.0,<44.0.0)",
-    "mariadb[binary,pool] (>=2.0.0rc2,<3.0.0)"
+    "mariadb[binary,pool] (>=2.0.0rc2,<3.0.0)",
 ]
 
 
@@ -77,6 +75,9 @@ exclude_lines = [
 ]
 
 
+[tool.vercel]
+entrypoint = "app.main:app"
+
 [tool.alembic]
 
 # path to migration scripts.
@@ -94,9 +95,7 @@ script_location = "%(here)s/alembic"
 # file_template = "%%(year)d/%%(month).2d/%%(day).2d_%%(hour).2d%%(minute).2d_%%(second).2d_%%(rev)s_%%(slug)s"
 
 # additional paths to be prepended to sys.path. defaults to the current working directory.
-prepend_sys_path = [
-    "."
-]
+prepend_sys_path = ["."]
 
 # timezone to use when rendering the date within the migration file
 # as well as the filename.
@@ -168,23 +167,21 @@ prepend_sys_path = [
 
 # Bandit security linter configuration
 [tool.bandit]
-exclude_dirs = [
-    'src/be/app/alembic/'
-]
+exclude_dirs = ['src/be/app/alembic/']
 skips = [
-    "B101",  # assert_used - fine in tests and safety checks
-    "B106",  # hardcoded_password_funcarg - dummy OAuth credentials in demo code
-    "B201",  # flask_debug_true - sample auth0 app
-    "B404",  # subprocess import - needed for setup_poetry.py
-    "B310",  # urllib_open - needed for setup_poetry.py
-    "B603",  # subprocess_without_shell - needed for setup_poetry.py
-    "B607",  # process_beginning_with_partial_path - needed for setup_poetry.py
-    "B311",  # random - fine for test code
-    "B110",  # try_except_pass - intentional pass for graceful fallback
+    "B101", # assert_used - fine in tests and safety checks
+    "B106", # hardcoded_password_funcarg - dummy OAuth credentials in demo code
+    "B201", # flask_debug_true - sample auth0 app
+    "B404", # subprocess import - needed for setup_poetry.py
+    "B310", # urllib_open - needed for setup_poetry.py
+    "B603", # subprocess_without_shell - needed for setup_poetry.py
+    "B607", # process_beginning_with_partial_path - needed for setup_poetry.py
+    "B311", # random - fine for test code
+    "B110", # try_except_pass - intentional pass for graceful fallback
 ]
 
 [tool.poetry.dependencies]
-mariadb = {allow-prereleases = true}
+mariadb = { allow-prereleases = true }
 
 [tool.poetry.group.dev.dependencies]
 mypy = ">=2.0.0,<3.0.0"
