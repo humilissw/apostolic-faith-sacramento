@@ -121,3 +121,5 @@ app.security_schemes = {
     "OAuth2PasswordBearer": oauth2_scheme,
 }
 app.security = [{"OAuth2PasswordBearer": [s.value for s in Scope]}]
+
+handler = app
