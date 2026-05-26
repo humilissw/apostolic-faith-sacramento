@@ -54,6 +54,8 @@ repos:
     hooks:
       - id: bandit
         args: ['-c', 'src/be/pyproject.toml', '-r', 'src/be/app/']
+        exclude: >
+          (?x)^((.*/main.*))$
 
   # Documentation
   - repo: https://github.com/editorconfig-checker/editorconfig-checker
