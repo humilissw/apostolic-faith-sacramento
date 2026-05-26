@@ -1,4 +1,4 @@
-from typing import AsyncGenerator
+from typing import Any
 
 from sqlalchemy.orm import Session
 
@@ -33,7 +33,7 @@ AsyncSessionLocal = async_sessionmaker(
 
 
 # Dependency to inject the async database session
-async def get_db_session() -> AsyncGenerator[AsyncSession]:
+async def get_db_session() -> Any:
     """Create a new async database session for each request."""
     # Create a new async engine for each request to avoid event loop issues
     async_engine = create_async_engine(

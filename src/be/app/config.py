@@ -76,6 +76,7 @@ class Settings(BaseSettings):
     STRIPE_CURRENCY: str = "usd"
     # Third-party integration encryption
     INTEGRATION_ENCRYPTION_KEY: str = ""
+    DEPLOY_QA_HOST: str = ""
 
     @computed_field  # type: ignore[prop-decorator]
     @property
