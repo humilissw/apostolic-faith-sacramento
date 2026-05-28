@@ -1,6 +1,6 @@
 from sqlalchemy import select
 
-from flask import HTTPException
+from werkzeug.exceptions import HTTPException
 from app.models import VideoUpload
 from app.requests.video_request import VideoRequest
 from app.responses.add_video_response import AddVideoResponse

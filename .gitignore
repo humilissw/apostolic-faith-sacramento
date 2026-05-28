@@ -207,3 +207,4 @@ infrastructure/db/public_app/
 # Documentation builds
 docs/_build/
 src/be/3.11.14/
+.venv/

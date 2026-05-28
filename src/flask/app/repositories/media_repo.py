@@ -1,5 +1,5 @@
 from sqlalchemy import select, func
-from flask import HTTPException
+from werkzeug.exceptions import HTTPException
 from app.models import Media
 from app.requests.media_request import MediaCreate, MediaUpdate
 from datetime import datetime, timezone

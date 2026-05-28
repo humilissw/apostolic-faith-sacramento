@@ -2,7 +2,7 @@ import json
 from typing import Any
 
 import stripe
-from flask import HTTPException
+from werkzeug.exceptions import HTTPException
 
 from app.config import settings
 

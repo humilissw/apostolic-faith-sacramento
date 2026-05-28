@@ -1,4 +1,4 @@
-from flask import HTTPException
+from werkzeug.exceptions import HTTPException
 from sqlalchemy import select
 
 from app.models import Payment

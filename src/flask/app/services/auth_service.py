@@ -1,4 +1,4 @@
-from flask import HTTPException
+from werkzeug.exceptions import HTTPException
 
 from app.repositories.user_repo import UserRepository
 from app.utils import (
