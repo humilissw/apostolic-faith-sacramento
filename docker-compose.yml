@@ -1,7 +1,7 @@
 services:
   backend:
     build:
-      context: src/be
+      context: src/flask
       dockerfile: Dockerfile
     env_file:
       - src/be/.env

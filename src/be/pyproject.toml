@@ -179,6 +179,8 @@ skips = [
     "B310",  # urllib_open - needed for setup_poetry.py
     "B603",  # subprocess_without_shell - needed for setup_poetry.py
     "B607",  # process_beginning_with_partial_path - needed for setup_poetry.py
+    "B608",  # hardcoded_sql_expressions - alembic migrations use controlled SQL
+    "B104",  # hardcoded_bind_all_interfaces - intentional for containerized apps
     "B311",  # random - fine for test code
     "B110",  # try_except_pass - intentional pass for graceful fallback
 ]
