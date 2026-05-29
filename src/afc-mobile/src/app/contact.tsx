@@ -1,4 +1,4 @@
-import { Linking, StyleSheet, TouchableOpacity } from 'react-native';
+import { Linking, StyleSheet, TouchableOpacity, Text } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -26,6 +26,7 @@ export default function ContactScreen() {
           value="info@afcsac.com"
           onTap={() => Linking.openURL('mailto:info@afcsac.com')}
         />
+        <Text className="text-blue-500 text-5xl">Hello There</Text>
       </ThemedView>
     </ThemedView>
   );

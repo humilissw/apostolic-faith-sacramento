@@ -4,6 +4,8 @@ import { useColorScheme } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 
+import "../../global.css"
+
 const DrawerNavigator = (
   require('expo-router/build/react-navigation/drawer').createDrawerNavigator()
 ).Navigator;
