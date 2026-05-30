@@ -34,7 +34,7 @@ repos:
     rev: v0.7.1
     hooks:
       - id: ruff
-        args: ['--fix', '--exit-non-zero-on-fix']
+        args: ['--fix', '--exit-non-zero-on-fix', '--']
       # - id: ruff-format
 
   # Type checking
@@ -60,7 +60,7 @@ repos:
     rev: v3.6.1
     hooks:
       - id: editorconfig-checker
-        args: ['-exclude', '\.git|\.venv|[/\\.]idea[/\\]|[/\\.]vscode[/\\]|bun\.lock|wiki|_SUMMARY\.md|email-templates|auth0sample|setup_poetry\.py|AGENTS\.md|CONTRIBUTING\.md|alembic/README\.md|tests/repositories/README\.md|alembic/versions/']
+        args: ['-exclude', 'passenger_wsgi.py|\.git|\.venv|[/\\.]idea[/\\]|[/\\.]vscode[/\\]|bun\.lock|wiki|_SUMMARY\.md|email-templates|auth0sample|setup_poetry\.py|AGENTS\.md|CONTRIBUTING\.md|alembic/README\.md|tests/repositories/README\.md|alembic/versions/']
 
   # Git hooks
   - repo: local
