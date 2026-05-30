@@ -31,23 +31,23 @@ class TestRefreshTokenModel:
 
 
 class TestUserNewId:
-    """Ensure User model has new_id field for API compatibility."""
+    """Ensure User model has id field for API compatibility."""
 
     def test_user_has_new_id_field(self) -> None:
-        """User must have a new_id str field."""
+        """User must have a id str field."""
         user = User(
             email="test@example.com",
             hashed_password="hashed",
         )
-        assert user.new_id is not None
-        assert isinstance(user.new_id, str)
+        assert user.id is not None
+        assert isinstance(user.id, str)
 
     def test_user_new_id_is_valid_uuid(self) -> None:
-        """new_id must be a valid UUID string."""
+        """id must be a valid UUID string."""
         user = User(
             email="test@example.com",
             hashed_password="hashed",
         )
         # Should not raise — validates it's a proper UUID
-        parsed = uuid.UUID(user.new_id)
-        assert str(parsed) == user.new_id
+        parsed = uuid.UUID(user.id)
+        assert str(parsed) == user.id

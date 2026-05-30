@@ -72,22 +72,22 @@ async def db_session() -> AsyncSession:
     session = async_session_maker()
 
     try:
-        try:
-            for model in [
-                Assignment,
-                RefreshToken,
-                AuthorizationCode,
-                ClientCredentials,
-                IntegrationConfig,
-                Payment,
-                DonationConfig,
-                VideoUpload,
-                Media,
-            ]:
+        for model in [
+            Assignment,
+            RefreshToken,
+            AuthorizationCode,
+            ClientCredentials,
+            IntegrationConfig,
+            Payment,
+            DonationConfig,
+            VideoUpload,
+            Media,
+        ]:
+            try:
                 await session.execute(delete(model))
-            await session.commit()
-        except Exception:
-            await session.rollback()
+            except Exception:
+                await session.rollback()
+        await session.commit()
 
         # Ensure FIRST_SUPERUSER exists in the test database
         from app.core.security import get_password_hash, verify_password

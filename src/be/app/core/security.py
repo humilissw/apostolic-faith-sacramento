@@ -3,11 +3,14 @@ import uuid
 
 import jwt
 from pwdlib import PasswordHash
+from pwdlib.hashers.argon2 import Argon2Hasher
+from pwdlib.hashers.bcrypt import BcryptHasher
 
 from app.config import settings
 from app.models import User
 
-password_hash = PasswordHash.recommended()
+# Argon2 for new hashes, Bcrypt for verifying existing bcrypt hashes from seeds/migrations
+password_hash = PasswordHash(hashers=[Argon2Hasher(), BcryptHasher()])
 # pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # ALGORITHM = "HS256"

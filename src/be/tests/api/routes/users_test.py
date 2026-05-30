@@ -612,7 +612,7 @@ async def test_bulk_delete_users_partial(
     r = await users_client.post(
         f"{settings.API_V1_STR}/users/admin/bulk-delete",
         headers=superuser_token_headers,
-        json=[str(u.new_id) for u in users] + [fake_id],
+        json=[str(u.id) for u in users] + [fake_id],
     )
     assert r.status_code == 200
     assert "Deleted 2" in r.json()["message"]

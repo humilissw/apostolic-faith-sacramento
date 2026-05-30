@@ -46,7 +46,7 @@ def upgrade() -> None:
         op.execute(
             f"""
             INSERT INTO feature_flags (id, name, description, is_enabled, created_on, updated_on)
-            VALUES ('UUID()', '{name}', '{desc}', 1, NOW(), NULL)
+            VALUES (UUID(), '{name}', '{desc}', 1, NOW(), NULL)
             ON DUPLICATE KEY UPDATE is_enabled = 1, updated_on = NOW()
             """
         )

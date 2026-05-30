@@ -43,8 +43,8 @@ ALL_SCOPES = [
 FIRST_SUPERUSER_EMAIL = "admin@example.com"
 FIRST_SUPERUSER_PASSWORD = "!maSup3rUs3r1!"
 
-# bcrypt hash of FIRST_SUPERUSER_PASSWORD, generated with passlib
-FIRST_SUPERUSER_HASHED_PASSWORD = "$2b$12$6nti9sIUHIgGjoruqNy46.0Xp/CFcox2UiEKLaUg9jBJ1ZnndNCxO"
+# argon2id hash of FIRST_SUPERUSER_PASSWORD, generated with pwdlib
+FIRST_SUPERUSER_HASHED_PASSWORD = "$argon2id$v=19$m=65536,t=3,p=4$0QfytiVEv2h9pSVo8jKMfQ$4Az2LJqvd3ef/M2+U8bVRo9ZuVDgwQklVvjorBO6erE"
 
 
 def _gen_uuid_str() -> str:
