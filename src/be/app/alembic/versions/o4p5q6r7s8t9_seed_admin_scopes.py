@@ -1,4 +1,4 @@
-"""seed superuser scopes with all application scopes
+"""seed superuser account and all application scopes
 
 Revision ID: o4p5q6r7s8t9
 Revises: n3o4p5q6r7s8
@@ -40,58 +40,69 @@ ALL_SCOPES = [
 ]
 
 FIRST_SUPERUSER_EMAIL = "admin@example.com"
+FIRST_SUPERUSER_PASSWORD = "!maSup3rUs3r1!"
+
+# bcrypt hash of FIRST_SUPERUSER_PASSWORD, generated with passlib
+FIRST_SUPERUSER_HASHED_PASSWORD = "$2b$12$6nti9sIUHIgGjoruqNy46.0Xp/CFcox2UiEKLaUg9jBJ1ZnndNCxO"
 
 
 def upgrade() -> None:
     conn = op.get_bind()
 
-    # Get the user id for the first superuser
-    result = conn.execute(
+    # Check if user already exists
+    user_id = conn.execute(
         sa.text("SELECT id FROM users WHERE email = :email LIMIT 1").bindparams(
             email=FIRST_SUPERUSER_EMAIL
         )
-    )
-    row = result.fetchone()
+    ).fetchone()
 
-    if row is None:
-        return
-
-    user_id = row[0]
-
-    # Check which scopes already exist for this user
-    existing = conn.execute(
-        sa.text("SELECT scope FROM user_scopes WHERE user_id = :uid").bindparams(uid=user_id)
-    )
-    existing_scopes = {r[0] for r in existing}
-
-    # Insert missing scopes
-    to_insert = [scope for scope in ALL_SCOPES if scope not in existing_scopes]
-
-    if not to_insert:
-        return
-
-    for scope in to_insert:
+    if user_id is None:
+        # Create the superuser
+        new_uid = str(op.get_bind().execute(sa.text("SELECT UUID()")).fetchone()[0])
         conn.execute(
             sa.text(
-                "INSERT IGNORE INTO user_scopes (id, user_id, scope, created_on) VALUES (UUID(), :sid, :sc, NOW())"
-            ).bindparams(sid=user_id, sc=scope)
+                "INSERT INTO users (id, email, is_active, is_superuser, hashed_password, created_on, updated_on, new_id) "
+                "VALUES (:uid, :email, 1, 1, :pw, NOW(), NULL, :new_id)"
+            ).bindparams(
+                uid=new_uid,
+                email=FIRST_SUPERUSER_EMAIL,
+                pw=FIRST_SUPERUSER_HASHED_PASSWORD,
+                new_id=str(op.get_bind().execute(sa.text("SELECT UUID()")).fetchone()[0]),
+            )
         )
+        user_id = new_uid
+    else:
+        user_id = user_id[0]
+
+    # Get existing scopes
+    result = conn.execute(
+        sa.text("SELECT scope FROM user_scopes WHERE user_id = :uid").bindparams(uid=user_id)
+    )
+    existing_scopes = {r[0] for r in result}
+
+    # Insert missing scopes
+    for scope in ALL_SCOPES:
+        if scope not in existing_scopes:
+            conn.execute(
+                sa.text(
+                    "INSERT IGNORE INTO user_scopes (id, user_id, scope, created_on) VALUES (UUID(), :uid, :sc, NOW())"
+                ).bindparams(uid=user_id, sc=scope)
+            )
 
 
 def downgrade() -> None:
     conn = op.get_bind()
 
-    result = conn.execute(
+    user_id = conn.execute(
         sa.text("SELECT id FROM users WHERE email = :email LIMIT 1").bindparams(
             email=FIRST_SUPERUSER_EMAIL
         )
-    )
-    row = result.fetchone()
+    ).fetchone()
 
-    if row is None:
+    if user_id is None:
         return
 
-    user_id = row[0]
+    user_id = user_id[0]
 
     placeholders = ", ".join(f":scope_{i}" for i in range(len(ALL_SCOPES)))
     query = "DELETE FROM user_scopes " f"WHERE user_id = :uid AND scope IN ({placeholders})"
