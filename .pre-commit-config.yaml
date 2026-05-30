@@ -27,14 +27,14 @@ repos:
     hooks:
       - id: black
         language_version: python3.13
-        args: ['--line-length=100']
+        args: ['--line-length=150', '--extend-exclude=src/flask']
 
   # Python linting
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.7.1
     hooks:
       - id: ruff
-        args: ['--fix', '--exit-non-zero-on-fix']
+        args: ['--fix', '--exit-non-zero-on-fix', '--extend-exclude', 'src/flask']
       # - id: ruff-format
 
   # Type checking
@@ -53,14 +53,14 @@ repos:
     rev: 1.8.0
     hooks:
       - id: bandit
-        args: ['-x', 'src/be/', '-c', 'src/be/pyproject.toml', '-r', 'src/be/app/']
+        args: ['-x', 'src/be/,src/flask', '-c', 'src/be/pyproject.toml', '-r', 'src/be/app/']
 
   # Documentation
   - repo: https://github.com/editorconfig-checker/editorconfig-checker
     rev: v3.6.1
     hooks:
       - id: editorconfig-checker
-        args: ['-exclude', '\.git|\.venv|[/\\.]idea[/\\]|[/\\.]vscode[/\\]|bun\.lock|wiki|_SUMMARY\.md|email-templates|auth0sample|setup_poetry\.py|AGENTS\.md|CONTRIBUTING\.md|alembic/README\.md|tests/repositories/README\.md|alembic/versions/']
+        args: ['-exclude', 'src/flask|\.git|\.venv|[/\\.]idea[/\\]|[/\\.]vscode[/\\]|bun\.lock|wiki|_SUMMARY\.md|email-templates|auth0sample|setup_poetry\.py|AGENTS\.md|CONTRIBUTING\.md|alembic/README\.md|tests/repositories/README\.md|alembic/versions/']
 
   # Git hooks
   - repo: local

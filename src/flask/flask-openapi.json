@@ -1,0 +1,4422 @@
+{
+  "components": {
+    "schemas": {
+      "Announcement": {
+        "properties": {
+          "created_on": {
+            "default": "2026-05-29T03:22:45.084735Z",
+            "format": "date-time",
+            "title": "Created On",
+            "type": "string"
+          },
+          "id": {
+            "maxLength": 36,
+            "title": "Id",
+            "type": "string"
+          },
+          "message": {
+            "maxLength": 4000,
+            "title": "Message",
+            "type": "string"
+          },
+          "recipients": {
+            "maxLength": 4000,
+            "title": "Recipients",
+            "type": "string"
+          },
+          "sender": {
+            "maxLength": 200,
+            "title": "Sender",
+            "type": "string"
+          },
+          "updated_on": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated On"
+          }
+        },
+        "required": [
+          "updated_on",
+          "sender",
+          "recipients",
+          "message"
+        ],
+        "title": "Announcement",
+        "type": "object"
+      },
+      "Assignment": {
+        "$defs": {
+          "AssignmentType": {
+            "enum": [
+              "music",
+              "service"
+            ],
+            "title": "AssignmentType",
+            "type": "string"
+          }
+        },
+        "description": "Assignment of a user to a church service or music event.",
+        "properties": {
+          "created_on": {
+            "default": "2026-05-29T03:22:45.084735Z",
+            "format": "date-time",
+            "title": "Created On",
+            "type": "string"
+          },
+          "event_date": {
+            "format": "date-time",
+            "title": "Event Date",
+            "type": "string"
+          },
+          "group_leader": {
+            "default": false,
+            "title": "Group Leader",
+            "type": "boolean"
+          },
+          "id": {
+            "maxLength": 36,
+            "title": "Id",
+            "type": "string"
+          },
+          "instrument": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Instrument"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Notes"
+          },
+          "role": {
+            "default": "",
+            "maxLength": 200,
+            "title": "Role",
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/$defs/AssignmentType",
+            "maxLength": 10
+          },
+          "updated_on": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated On"
+          },
+          "user_id": {
+            "maxLength": 36,
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "updated_on",
+          "user_id",
+          "event_date",
+          "type"
+        ],
+        "title": "Assignment",
+        "type": "object"
+      },
+      "AssignmentCreate": {
+        "$defs": {
+          "AssignmentType": {
+            "enum": [
+              "music",
+              "service"
+            ],
+            "title": "AssignmentType",
+            "type": "string"
+          }
+        },
+        "description": "Assignment creation request schema.",
+        "properties": {
+          "event_date": {
+            "format": "date-time",
+            "title": "Event Date",
+            "type": "string"
+          },
+          "instrument": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Instrument"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Notes"
+          },
+          "role": {
+            "default": "",
+            "maxLength": 200,
+            "title": "Role",
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/$defs/AssignmentType"
+          },
+          "user_id": {
+            "maxLength": 36,
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "event_date",
+          "type"
+        ],
+        "title": "AssignmentCreate",
+        "type": "object"
+      },
+      "AssignmentPublic": {
+        "description": "Assignment response schema.",
+        "properties": {
+          "created_on": {
+            "format": "date-time",
+            "title": "Created On",
+            "type": "string"
+          },
+          "event_date": {
+            "format": "date-time",
+            "title": "Event Date",
+            "type": "string"
+          },
+          "group_leader": {
+            "title": "Group Leader",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "instrument": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instrument"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          },
+          "updated_on": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated On"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "user_id",
+          "event_date",
+          "type",
+          "role",
+          "instrument",
+          "notes",
+          "group_leader",
+          "created_on",
+          "updated_on"
+        ],
+        "title": "AssignmentPublic",
+        "type": "object"
+      },
+      "AssignmentUpdate": {
+        "$defs": {
+          "AssignmentType": {
+            "enum": [
+              "music",
+              "service"
+            ],
+            "title": "AssignmentType",
+            "type": "string"
+          }
+        },
+        "description": "Assignment update request schema (all fields optional).",
+        "properties": {
+          "event_date": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Event Date"
+          },
+          "instrument": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Instrument"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Notes"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Role"
+          },
+          "type": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/AssignmentType"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "title": "AssignmentUpdate",
+        "type": "object"
+      },
+      "AssignmentsPublic": {
+        "$defs": {
+          "AssignmentPublic": {
+            "description": "Assignment response schema.",
+            "properties": {
+              "created_on": {
+                "format": "date-time",
+                "title": "Created On",
+                "type": "string"
+              },
+              "event_date": {
+                "format": "date-time",
+                "title": "Event Date",
+                "type": "string"
+              },
+              "group_leader": {
+                "title": "Group Leader",
+                "type": "boolean"
+              },
+              "id": {
+                "title": "Id",
+                "type": "string"
+              },
+              "instrument": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Instrument"
+              },
+              "notes": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Notes"
+              },
+              "role": {
+                "title": "Role",
+                "type": "string"
+              },
+              "type": {
+                "title": "Type",
+                "type": "string"
+              },
+              "updated_on": {
+                "anyOf": [
+                  {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Updated On"
+              },
+              "user_id": {
+                "title": "User Id",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "user_id",
+              "event_date",
+              "type",
+              "role",
+              "instrument",
+              "notes",
+              "group_leader",
+              "created_on",
+              "updated_on"
+            ],
+            "title": "AssignmentPublic",
+            "type": "object"
+          }
+        },
+        "description": "Paginated assignments response schema.",
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/$defs/AssignmentPublic"
+            },
+            "title": "Data",
+            "type": "array"
+          }
+        },
+        "required": [
+          "data",
+          "count"
+        ],
+        "title": "AssignmentsPublic",
+        "type": "object"
+      },
+      "AuthorizationCode": {
+        "description": "Stores authorization codes for the authorization code flow with PKCE.",
+        "properties": {
+          "client_id": {
+            "maxLength": 100,
+            "title": "Client Id",
+            "type": "string"
+          },
+          "code": {
+            "maxLength": 200,
+            "title": "Code",
+            "type": "string"
+          },
+          "code_challenge": {
+            "maxLength": 200,
+            "title": "Code Challenge",
+            "type": "string"
+          },
+          "created_on": {
+            "default": "2026-05-29T03:22:45.092586Z",
+            "format": "date-time",
+            "title": "Created On",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "id": {
+            "maxLength": 36,
+            "title": "Id",
+            "type": "string"
+          },
+          "redirect_uri": {
+            "default": "",
+            "maxLength": 1000,
+            "title": "Redirect Uri",
+            "type": "string"
+          },
+          "used": {
+            "default": false,
+            "title": "Used",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "client_id",
+          "code_challenge",
+          "expires_at"
+        ],
+        "title": "AuthorizationCode",
+        "type": "object"
+      },
+      "BaseModel": {
+        "properties": {},
+        "title": "BaseModel",
+        "type": "object"
+      },
+      "ChurchService": {
+        "properties": {
+          "created_on": {
+            "default": "2026-05-29T03:22:45.084735Z",
+            "format": "date-time",
+            "title": "Created On",
+            "type": "string"
+          },
+          "edited": {
+            "default": false,
+            "title": "Edited",
+            "type": "boolean"
+          },
+          "file_location": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Location"
+          },
+          "id": {
+            "maxLength": 36,
+            "title": "Id",
+            "type": "string"
+          },
+          "service_date": {
+            "format": "date-time",
+            "title": "Service Date",
+            "type": "string"
+          },
+          "service_title": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Service Title"
+          },
+          "speaker": {
+            "maxLength": 200,
+            "title": "Speaker",
+            "type": "string"
+          },
+          "updated_on": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated On"
+          },
+          "uploaded": {
+            "default": false,
+            "title": "Uploaded",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "updated_on",
+          "service_date",
+          "speaker",
+          "service_title",
+          "file_location"
+        ],
+        "title": "ChurchService",
+        "type": "object"
+      },
+      "ClientCredentials": {
+        "description": "OAuth2 client credentials for service-to-service auth.",
+        "properties": {
+          "client_id": {
+            "maxLength": 100,
+            "title": "Client Id",
+            "type": "string"
+          },
+          "client_secret_hash": {
+            "maxLength": 4000,
+            "title": "Client Secret Hash",
+            "type": "string"
+          },
+          "created_on": {
+            "default": "2026-05-29T03:22:45.093689Z",
+            "format": "date-time",
+            "title": "Created On",
+            "type": "string"
+          },
+          "id": {
+            "maxLength": 36,
+            "title": "Id",
+            "type": "string"
+          },
+          "is_active": {
+            "default": true,
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "scopes": {
+            "maxLength": 1000,
+            "title": "Scopes",
+            "type": "string"
+          }
+        },
+        "required": [
+          "client_id",
+          "client_secret_hash",
+          "scopes"
+        ],
+        "title": "ClientCredentials",
+        "type": "object"
+      },
+      "ClientCredentialsCreate": {
+        "properties": {
+          "client_id": {
+            "title": "Client Id",
+            "type": "string"
+          },
+          "scopes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Scopes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "client_id",
+          "scopes"
+        ],
+        "title": "ClientCredentialsCreate",
+        "type": "object"
+      },
+      "ClientCredentialsPublic": {
+        "properties": {
+          "client_id": {
+            "title": "Client Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "scopes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Scopes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "client_id",
+          "scopes",
+          "is_active"
+        ],
+        "title": "ClientCredentialsPublic",
+        "type": "object"
+      },
+      "ClientCredentialsUpdate": {
+        "properties": {
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Is Active"
+          },
+          "scopes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Scopes"
+          }
+        },
+        "title": "ClientCredentialsUpdate",
+        "type": "object"
+      },
+      "DefaultBase": {
+        "properties": {
+          "created_on": {
+            "default": "2026-05-29T03:22:45.084735Z",
+            "format": "date-time",
+            "title": "Created On",
+            "type": "string"
+          },
+          "id": {
+            "maxLength": 36,
+            "title": "Id",
+            "type": "string"
+          },
+          "updated_on": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated On"
+          }
+        },
+        "required": [
+          "updated_on"
+        ],
+        "title": "DefaultBase",
+        "type": "object"
+      },
+      "DonationConfig": {
+        "properties": {
+          "amount_cents": {
+            "title": "Amount Cents",
+            "type": "integer"
+          },
+          "created_on": {
+            "default": "2026-05-29T03:22:45.084735Z",
+            "format": "date-time",
+            "title": "Created On",
+            "type": "string"
+          },
+          "frequency": {
+            "maxLength": 20,
+            "title": "Frequency",
+            "type": "string"
+          },
+          "id": {
+            "maxLength": 36,
+            "title": "Id",
+            "type": "string"
+          },
+          "is_default": {
+            "default": false,
+            "title": "Is Default",
+            "type": "boolean"
+          },
+          "label": {
+            "maxLength": 100,
+            "title": "Label",
+            "type": "string"
+          },
+          "updated_on": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated On"
+          }
+        },
+        "required": [
+          "updated_on",
+          "label",
+          "amount_cents",
+          "frequency"
+        ],
+        "title": "DonationConfig",
+        "type": "object"
+      },
+      "FeatureFlag": {
+        "description": "Feature flag for controlling feature visibility.",
+        "properties": {
+          "created_on": {
+            "default": "2026-05-29T03:22:45.105011Z",
+            "format": "date-time",
+            "title": "Created On",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 500,
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "maxLength": 36,
+            "title": "Id",
+            "type": "string"
+          },
+          "is_enabled": {
+            "default": true,
+            "title": "Is Enabled",
+            "type": "boolean"
+          },
+          "name": {
+            "maxLength": 100,
+            "title": "Name",
+            "type": "string"
+          },
+          "updated_on": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Updated On"
+          }
+        },
+        "required": [
+          "name",
+          "description"
+        ],
+        "title": "FeatureFlag",
+        "type": "object"
+      },
+      "FeatureFlagBase": {
+        "description": "Base properties for feature flags.",
+        "properties": {
+          "description": {
+            "maxLength": 500,
+            "title": "Description",
+            "type": "string"
+          },
+          "is_enabled": {
+            "default": true,
+            "title": "Is Enabled",
+            "type": "boolean"
+          },
+          "name": {
+            "maxLength": 100,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "description"
+        ],
+        "title": "FeatureFlagBase",
+        "type": "object"
+      },
+      "FeatureFlagCreate": {
+        "description": "Properties to receive via API on creation.",
+        "properties": {
+          "description": {
+            "maxLength": 500,
+            "title": "Description",
+            "type": "string"
+          },
+          "is_enabled": {
+            "default": true,
+            "title": "Is Enabled",
+            "type": "boolean"
+          },
+          "name": {
+            "maxLength": 100,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "description"
+        ],
+        "title": "FeatureFlagCreate",
+        "type": "object"
+      },
+      "FeatureFlagPublic": {
+        "description": "Properties to return via API (id, timestamps).",
+        "properties": {
+          "created_on": {
+            "format": "date-time",
+            "title": "Created On",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 500,
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "is_enabled": {
+            "default": true,
+            "title": "Is Enabled",
+            "type": "boolean"
+          },
+          "name": {
+            "maxLength": 100,
+            "title": "Name",
+            "type": "string"
+          },
+          "updated_on": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated On"
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "id",
+          "created_on",
+          "updated_on"
+        ],
+        "title": "FeatureFlagPublic",
+        "type": "object"
+      },
+      "FeatureFlagUpdate": {
+        "description": "Properties to receive via API on update (all optional).",
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Description"
+          },
+          "is_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Is Enabled"
+          }
+        },
+        "title": "FeatureFlagUpdate",
+        "type": "object"
+      },
+      "FeatureFlagsPublic": {
+        "$defs": {
+          "FeatureFlagPublic": {
+            "description": "Properties to return via API (id, timestamps).",
+            "properties": {
+              "created_on": {
+                "format": "date-time",
+                "title": "Created On",
+                "type": "string"
+              },
+              "description": {
+                "maxLength": 500,
+                "title": "Description",
+                "type": "string"
+              },
+              "id": {
+                "title": "Id",
+                "type": "string"
+              },
+              "is_enabled": {
+                "default": true,
+                "title": "Is Enabled",
+                "type": "boolean"
+              },
+              "name": {
+                "maxLength": 100,
+                "title": "Name",
+                "type": "string"
+              },
+              "updated_on": {
+                "anyOf": [
+                  {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Updated On"
+              }
+            },
+            "required": [
+              "name",
+              "description",
+              "id",
+              "created_on",
+              "updated_on"
+            ],
+            "title": "FeatureFlagPublic",
+            "type": "object"
+          }
+        },
+        "description": "Paginated list of feature flags.",
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/$defs/FeatureFlagPublic"
+            },
+            "title": "Data",
+            "type": "array"
+          }
+        },
+        "required": [
+          "data",
+          "count"
+        ],
+        "title": "FeatureFlagsPublic",
+        "type": "object"
+      },
+      "IntegrationConfig": {
+        "description": "Third-party integration configuration with encrypted credentials.",
+        "properties": {
+          "config_json": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Config Json"
+          },
+          "created_on": {
+            "default": "2026-05-29T03:22:45.084735Z",
+            "format": "date-time",
+            "title": "Created On",
+            "type": "string"
+          },
+          "cred_encrypted_blob": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Cred Encrypted Blob"
+          },
+          "cred_encrypted_iv": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Cred Encrypted Iv"
+          },
+          "cred_key_id": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Cred Key Id"
+          },
+          "display_name": {
+            "maxLength": 100,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "enabled": {
+            "default": false,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "icon": {
+            "default": "Plug",
+            "maxLength": 50,
+            "title": "Icon",
+            "type": "string"
+          },
+          "id": {
+            "maxLength": 36,
+            "title": "Id",
+            "type": "string"
+          },
+          "last_synced_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Last Synced At"
+          },
+          "status": {
+            "default": "disconnected",
+            "maxLength": 20,
+            "title": "Status",
+            "type": "string"
+          },
+          "type": {
+            "maxLength": 50,
+            "title": "Type",
+            "type": "string"
+          },
+          "updated_on": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated On"
+          }
+        },
+        "required": [
+          "type",
+          "display_name"
+        ],
+        "title": "IntegrationConfig",
+        "type": "object"
+      },
+      "IntegrationConfigBase": {
+        "description": "Shared properties for integration configs.",
+        "properties": {
+          "display_name": {
+            "maxLength": 100,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "enabled": {
+            "default": false,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "icon": {
+            "default": "Plug",
+            "maxLength": 50,
+            "title": "Icon",
+            "type": "string"
+          },
+          "status": {
+            "default": "disconnected",
+            "maxLength": 20,
+            "title": "Status",
+            "type": "string"
+          },
+          "type": {
+            "maxLength": 50,
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "display_name"
+        ],
+        "title": "IntegrationConfigBase",
+        "type": "object"
+      },
+      "IntegrationConfigCreate": {
+        "description": "Properties to receive via API on creation.",
+        "properties": {
+          "config_json": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Config Json"
+          },
+          "credentials": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Credentials",
+            "type": "object"
+          },
+          "display_name": {
+            "maxLength": 100,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "enabled": {
+            "default": false,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "icon": {
+            "default": "Plug",
+            "maxLength": 50,
+            "title": "Icon",
+            "type": "string"
+          },
+          "status": {
+            "default": "disconnected",
+            "maxLength": 20,
+            "title": "Status",
+            "type": "string"
+          },
+          "type": {
+            "maxLength": 50,
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "display_name"
+        ],
+        "title": "IntegrationConfigCreate",
+        "type": "object"
+      },
+      "IntegrationConfigPublic": {
+        "description": "Properties to return via API (credentials stripped).",
+        "properties": {
+          "config_json": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Config Json"
+          },
+          "created_on": {
+            "format": "date-time",
+            "title": "Created On",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 100,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "enabled": {
+            "default": false,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "icon": {
+            "default": "Plug",
+            "maxLength": 50,
+            "title": "Icon",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "status": {
+            "default": "disconnected",
+            "maxLength": 20,
+            "title": "Status",
+            "type": "string"
+          },
+          "type": {
+            "maxLength": 50,
+            "title": "Type",
+            "type": "string"
+          },
+          "updated_on": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated On"
+          }
+        },
+        "required": [
+          "type",
+          "display_name",
+          "id",
+          "created_on",
+          "updated_on"
+        ],
+        "title": "IntegrationConfigPublic",
+        "type": "object"
+      },
+      "IntegrationConfigPublicWithCreds": {
+        "description": "Integration config with masked credential fields.",
+        "properties": {
+          "config_json": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Config Json"
+          },
+          "created_on": {
+            "format": "date-time",
+            "title": "Created On",
+            "type": "string"
+          },
+          "credential_fields": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Credential Fields",
+            "type": "object"
+          },
+          "display_name": {
+            "maxLength": 100,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "enabled": {
+            "default": false,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "icon": {
+            "default": "Plug",
+            "maxLength": 50,
+            "title": "Icon",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "status": {
+            "default": "disconnected",
+            "maxLength": 20,
+            "title": "Status",
+            "type": "string"
+          },
+          "type": {
+            "maxLength": 50,
+            "title": "Type",
+            "type": "string"
+          },
+          "updated_on": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated On"
+          }
+        },
+        "required": [
+          "type",
+          "display_name",
+          "id",
+          "created_on",
+          "updated_on"
+        ],
+        "title": "IntegrationConfigPublicWithCreds",
+        "type": "object"
+      },
+      "IntegrationConfigUpdate": {
+        "description": "Properties to receive via API on update (all optional).",
+        "properties": {
+          "config_json": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Config Json"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Display Name"
+          },
+          "enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Enabled"
+          },
+          "icon": {
+            "anyOf": [
+              {
+                "maxLength": 50,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Icon"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "maxLength": 20,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Status"
+          }
+        },
+        "title": "IntegrationConfigUpdate",
+        "type": "object"
+      },
+      "IntegrationsPublic": {
+        "$defs": {
+          "IntegrationConfigPublic": {
+            "description": "Properties to return via API (credentials stripped).",
+            "properties": {
+              "config_json": {
+                "anyOf": [
+                  {
+                    "maxLength": 4000,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Config Json"
+              },
+              "created_on": {
+                "format": "date-time",
+                "title": "Created On",
+                "type": "string"
+              },
+              "display_name": {
+                "maxLength": 100,
+                "title": "Display Name",
+                "type": "string"
+              },
+              "enabled": {
+                "default": false,
+                "title": "Enabled",
+                "type": "boolean"
+              },
+              "icon": {
+                "default": "Plug",
+                "maxLength": 50,
+                "title": "Icon",
+                "type": "string"
+              },
+              "id": {
+                "title": "Id",
+                "type": "string"
+              },
+              "status": {
+                "default": "disconnected",
+                "maxLength": 20,
+                "title": "Status",
+                "type": "string"
+              },
+              "type": {
+                "maxLength": 50,
+                "title": "Type",
+                "type": "string"
+              },
+              "updated_on": {
+                "anyOf": [
+                  {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Updated On"
+              }
+            },
+            "required": [
+              "type",
+              "display_name",
+              "id",
+              "created_on",
+              "updated_on"
+            ],
+            "title": "IntegrationConfigPublic",
+            "type": "object"
+          }
+        },
+        "description": "Paginated list of integration configs.",
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/$defs/IntegrationConfigPublic"
+            },
+            "title": "Data",
+            "type": "array"
+          }
+        },
+        "required": [
+          "data",
+          "count"
+        ],
+        "title": "IntegrationsPublic",
+        "type": "object"
+      },
+      "Item": {
+        "properties": {
+          "created_on": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": "2026-05-29T03:22:45.077510Z",
+            "title": "Created On"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Description"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Id"
+          },
+          "owner_id": {
+            "anyOf": [
+              {
+                "maxLength": 36,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner Id"
+          },
+          "title": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "updated_on": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Updated On"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "title": "Item",
+        "type": "object"
+      },
+      "ItemBase": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Description"
+          },
+          "title": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "title": "ItemBase",
+        "type": "object"
+      },
+      "ItemCreate": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Description"
+          },
+          "title": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "title": "ItemCreate",
+        "type": "object"
+      },
+      "ItemPublic": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Description"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "owner_id": {
+            "title": "Owner Id",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "id",
+          "owner_id"
+        ],
+        "title": "ItemPublic",
+        "type": "object"
+      },
+      "ItemUpdate": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Description"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Title"
+          }
+        },
+        "title": "ItemUpdate",
+        "type": "object"
+      },
+      "ItemsPublic": {
+        "$defs": {
+          "ItemPublic": {
+            "properties": {
+              "description": {
+                "anyOf": [
+                  {
+                    "maxLength": 255,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Description"
+              },
+              "id": {
+                "title": "Id",
+                "type": "integer"
+              },
+              "owner_id": {
+                "title": "Owner Id",
+                "type": "string"
+              },
+              "title": {
+                "maxLength": 255,
+                "minLength": 1,
+                "title": "Title",
+                "type": "string"
+              }
+            },
+            "required": [
+              "title",
+              "id",
+              "owner_id"
+            ],
+            "title": "ItemPublic",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/$defs/ItemPublic"
+            },
+            "title": "Data",
+            "type": "array"
+          }
+        },
+        "required": [
+          "data",
+          "count"
+        ],
+        "title": "ItemsPublic",
+        "type": "object"
+      },
+      "Media": {
+        "properties": {
+          "created_on": {
+            "format": "date-time",
+            "title": "Created On",
+            "type": "string"
+          },
+          "id": {
+            "maxLength": 36,
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "title": "Name",
+            "type": "string"
+          },
+          "owner_id": {
+            "maxLength": 36,
+            "title": "Owner Id",
+            "type": "string"
+          },
+          "updated_on": {
+            "format": "date-time",
+            "title": "Updated On",
+            "type": "string"
+          },
+          "uploaded_on": {
+            "format": "date-time",
+            "title": "Uploaded On",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "owner_id",
+          "uploaded_on",
+          "created_on",
+          "updated_on"
+        ],
+        "title": "Media",
+        "type": "object"
+      },
+      "Member": {
+        "properties": {
+          "baptism_date": {
+            "format": "date-time",
+            "title": "Baptism Date",
+            "type": "string"
+          },
+          "birthday": {
+            "format": "date-time",
+            "title": "Birthday",
+            "type": "string"
+          },
+          "created_on": {
+            "default": "2026-05-29T03:22:45.084735Z",
+            "format": "date-time",
+            "title": "Created On",
+            "type": "string"
+          },
+          "first_name": {
+            "maxLength": 200,
+            "title": "First Name",
+            "type": "string"
+          },
+          "id": {
+            "maxLength": 36,
+            "title": "Id",
+            "type": "string"
+          },
+          "last_name": {
+            "maxLength": 200,
+            "title": "Last Name",
+            "type": "string"
+          },
+          "updated_on": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated On"
+          },
+          "wedding_anniversary": {
+            "format": "date-time",
+            "title": "Wedding Anniversary",
+            "type": "string"
+          }
+        },
+        "required": [
+          "updated_on",
+          "first_name",
+          "last_name",
+          "birthday",
+          "wedding_anniversary",
+          "baptism_date"
+        ],
+        "title": "Member",
+        "type": "object"
+      },
+      "Message": {
+        "properties": {
+          "message": {
+            "default": null,
+            "maxLength": 4000,
+            "minLength": 8,
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "title": "Message",
+        "type": "object"
+      },
+      "NewPassword": {
+        "properties": {
+          "new_password": {
+            "maxLength": 128,
+            "minLength": 8,
+            "title": "New Password",
+            "type": "string"
+          },
+          "token": {
+            "maxLength": 4000,
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "new_password"
+        ],
+        "title": "NewPassword",
+        "type": "object"
+      },
+      "Payment": {
+        "properties": {
+          "amount_cents": {
+            "title": "Amount Cents",
+            "type": "integer"
+          },
+          "created_on": {
+            "default": "2026-05-29T03:22:45.084735Z",
+            "format": "date-time",
+            "title": "Created On",
+            "type": "string"
+          },
+          "currency": {
+            "default": "usd",
+            "maxLength": 3,
+            "title": "Currency",
+            "type": "string"
+          },
+          "donor_email": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Donor Email"
+          },
+          "donor_name": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Donor Name"
+          },
+          "id": {
+            "maxLength": 36,
+            "title": "Id",
+            "type": "string"
+          },
+          "metadata_json": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Metadata Json"
+          },
+          "receipt_url": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Receipt Url"
+          },
+          "status": {
+            "default": "pending",
+            "maxLength": 20,
+            "title": "Status",
+            "type": "string"
+          },
+          "stripe_payment_intent_id": {
+            "maxLength": 255,
+            "title": "Stripe Payment Intent Id",
+            "type": "string"
+          },
+          "stripe_subscription_id": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Stripe Subscription Id"
+          },
+          "updated_on": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated On"
+          }
+        },
+        "required": [
+          "updated_on",
+          "amount_cents",
+          "stripe_payment_intent_id"
+        ],
+        "title": "Payment",
+        "type": "object"
+      },
+      "RefreshToken": {
+        "properties": {
+          "created_on": {
+            "default": "2026-05-29T03:22:45.080999Z",
+            "format": "date-time",
+            "title": "Created On",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "id": {
+            "maxLength": 36,
+            "title": "Id",
+            "type": "string"
+          },
+          "revoked": {
+            "default": false,
+            "title": "Revoked",
+            "type": "boolean"
+          },
+          "token": {
+            "maxLength": 4000,
+            "title": "Token",
+            "type": "string"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "token",
+          "expires_at"
+        ],
+        "title": "RefreshToken",
+        "type": "object"
+      },
+      "RevokeTokenRequest": {
+        "properties": {
+          "token": {
+            "maxLength": 4000,
+            "minLength": 8,
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "title": "RevokeTokenRequest",
+        "type": "object"
+      },
+      "SQLModel": {
+        "properties": {},
+        "title": "SQLModel",
+        "type": "object"
+      },
+      "Test": {
+        "properties": {
+          "id": {
+            "maxLength": 36,
+            "title": "Id",
+            "type": "string"
+          },
+          "test1": {
+            "title": "Test1",
+            "type": "integer"
+          },
+          "test2": {
+            "title": "Test2",
+            "type": "integer"
+          },
+          "test3": {
+            "title": "Test3",
+            "type": "integer"
+          },
+          "test4": {
+            "title": "Test4",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "test1",
+          "test2",
+          "test3",
+          "test4"
+        ],
+        "title": "Test",
+        "type": "object"
+      },
+      "TestConnectionResponse": {
+        "description": "Response from testing a third-party connection.",
+        "properties": {
+          "message": {
+            "default": "",
+            "title": "Message",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "success": {
+            "title": "Success",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success",
+          "status"
+        ],
+        "title": "TestConnectionResponse",
+        "type": "object"
+      },
+      "TimeOffRequest": {
+        "$defs": {
+          "TimeOffRequestStatus": {
+            "enum": [
+              "pending",
+              "approved",
+              "declined"
+            ],
+            "title": "TimeOffRequestStatus",
+            "type": "string"
+          }
+        },
+        "description": "Time-off request submitted by a user.",
+        "properties": {
+          "created_on": {
+            "default": "2026-05-29T03:22:45.084735Z",
+            "format": "date-time",
+            "title": "Created On",
+            "type": "string"
+          },
+          "date": {
+            "format": "date-time",
+            "title": "Date",
+            "type": "string"
+          },
+          "id": {
+            "maxLength": 36,
+            "title": "Id",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Notes"
+          },
+          "status": {
+            "$ref": "#/$defs/TimeOffRequestStatus",
+            "default": "pending",
+            "maxLength": 20
+          },
+          "updated_on": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated On"
+          },
+          "user_id": {
+            "maxLength": 36,
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "updated_on",
+          "user_id",
+          "date"
+        ],
+        "title": "TimeOffRequest",
+        "type": "object"
+      },
+      "TimeOffRequestCreate": {
+        "description": "Time-off request creation schema.",
+        "properties": {
+          "date": {
+            "format": "date-time",
+            "title": "Date",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Notes"
+          }
+        },
+        "required": [
+          "date"
+        ],
+        "title": "TimeOffRequestCreate",
+        "type": "object"
+      },
+      "TimeOffRequestPublic": {
+        "description": "Time-off request response schema.",
+        "properties": {
+          "created_on": {
+            "format": "date-time",
+            "title": "Created On",
+            "type": "string"
+          },
+          "date": {
+            "format": "date-time",
+            "title": "Date",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "updated_on": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated On"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "user_id",
+          "date",
+          "status",
+          "notes",
+          "created_on",
+          "updated_on"
+        ],
+        "title": "TimeOffRequestPublic",
+        "type": "object"
+      },
+      "Token": {
+        "properties": {
+          "access_token": {
+            "default": null,
+            "maxLength": 4000,
+            "minLength": 8,
+            "title": "Access Token",
+            "type": "string"
+          },
+          "access_token_expires": {
+            "default": 0,
+            "title": "Access Token Expires",
+            "type": "integer"
+          },
+          "refresh_token": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Refresh Token"
+          },
+          "refresh_token_expires": {
+            "default": 0,
+            "title": "Refresh Token Expires",
+            "type": "integer"
+          },
+          "scopes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Scopes",
+            "type": "array"
+          },
+          "token_type": {
+            "default": "bearer",
+            "title": "Token Type",
+            "type": "string"
+          }
+        },
+        "title": "Token",
+        "type": "object"
+      },
+      "TokenPayload": {
+        "properties": {
+          "aud": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Aud"
+          },
+          "iss": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Iss"
+          },
+          "jti": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Jti"
+          },
+          "scopes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Scopes"
+          },
+          "sub": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sub"
+          }
+        },
+        "title": "TokenPayload",
+        "type": "object"
+      },
+      "TokenRefresh": {
+        "properties": {
+          "refresh_token": {
+            "maxLength": 4000,
+            "minLength": 8,
+            "title": "Refresh Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "refresh_token"
+        ],
+        "title": "TokenRefresh",
+        "type": "object"
+      },
+      "TokenScopes": {
+        "description": "Decoded token scopes and associated user info.",
+        "properties": {
+          "aud": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Aud"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "iss": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Iss"
+          },
+          "jti": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Jti"
+          },
+          "scopes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Scopes",
+            "type": "array"
+          },
+          "sub": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sub"
+          }
+        },
+        "required": [
+          "email",
+          "scopes"
+        ],
+        "title": "TokenScopes",
+        "type": "object"
+      },
+      "UpdatePassword": {
+        "properties": {
+          "current_password": {
+            "maxLength": 128,
+            "minLength": 8,
+            "title": "Current Password",
+            "type": "string"
+          },
+          "new_password": {
+            "maxLength": 128,
+            "minLength": 8,
+            "title": "New Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "current_password",
+          "new_password"
+        ],
+        "title": "UpdatePassword",
+        "type": "object"
+      },
+      "UpdateTokenResponse": {
+        "properties": {
+          "access_token": {
+            "maxLength": 4000,
+            "minLength": 8,
+            "title": "Access Token",
+            "type": "string"
+          },
+          "access_token_expires": {
+            "default": 0,
+            "title": "Access Token Expires",
+            "type": "integer"
+          },
+          "scopes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Scopes",
+            "type": "array"
+          },
+          "token_type": {
+            "default": "bearer",
+            "title": "Token Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "access_token"
+        ],
+        "title": "UpdateTokenResponse",
+        "type": "object"
+      },
+      "User": {
+        "properties": {
+          "created_on": {
+            "default": "2026-05-29T03:22:45.071520Z",
+            "format": "date-time",
+            "title": "Created On",
+            "type": "string"
+          },
+          "email": {
+            "format": "email",
+            "maxLength": 255,
+            "title": "Email",
+            "type": "string"
+          },
+          "full_name": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Full Name"
+          },
+          "hashed_password": {
+            "maxLength": 4000,
+            "title": "Hashed Password",
+            "type": "string"
+          },
+          "id": {
+            "maxLength": 36,
+            "title": "Id",
+            "type": "string"
+          },
+          "is_active": {
+            "default": true,
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "is_superuser": {
+            "default": false,
+            "title": "Is Superuser",
+            "type": "boolean"
+          },
+          "new_id": {
+            "maxLength": 36,
+            "title": "New Id",
+            "type": "string"
+          },
+          "updated_on": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Updated On"
+          }
+        },
+        "required": [
+          "email",
+          "hashed_password"
+        ],
+        "title": "User",
+        "type": "object"
+      },
+      "UserBase": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "maxLength": 255,
+            "title": "Email",
+            "type": "string"
+          },
+          "full_name": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Full Name"
+          },
+          "is_active": {
+            "default": true,
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "is_superuser": {
+            "default": false,
+            "title": "Is Superuser",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "title": "UserBase",
+        "type": "object"
+      },
+      "UserCreate": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "maxLength": 255,
+            "title": "Email",
+            "type": "string"
+          },
+          "full_name": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Full Name"
+          },
+          "is_active": {
+            "default": true,
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "is_superuser": {
+            "default": false,
+            "title": "Is Superuser",
+            "type": "boolean"
+          },
+          "password": {
+            "maxLength": 128,
+            "minLength": 8,
+            "title": "Password",
+            "type": "string"
+          },
+          "scopes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Scopes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "UserCreate",
+        "type": "object"
+      },
+      "UserPublic": {
+        "properties": {
+          "assigned_scopes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Assigned Scopes",
+            "type": "array"
+          },
+          "email": {
+            "format": "email",
+            "title": "Email",
+            "type": "string"
+          },
+          "full_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Full Name"
+          },
+          "id": {
+            "maxLength": 36,
+            "title": "Id",
+            "type": "string"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "new_id": {
+            "title": "New Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "is_active",
+          "id",
+          "new_id",
+          "full_name"
+        ],
+        "title": "UserPublic",
+        "type": "object"
+      },
+      "UserRegister": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "maxLength": 255,
+            "title": "Email",
+            "type": "string"
+          },
+          "full_name": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Full Name"
+          },
+          "password": {
+            "maxLength": 128,
+            "minLength": 8,
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "UserRegister",
+        "type": "object"
+      },
+      "UserScope": {
+        "description": "Maps users to their assigned scopes (claims).",
+        "properties": {
+          "created_on": {
+            "default": "2026-05-29T03:22:45.074051Z",
+            "format": "date-time",
+            "title": "Created On",
+            "type": "string"
+          },
+          "id": {
+            "maxLength": 36,
+            "title": "Id",
+            "type": "string"
+          },
+          "scope": {
+            "maxLength": 50,
+            "title": "Scope",
+            "type": "string"
+          },
+          "user_id": {
+            "maxLength": 36,
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "scope"
+        ],
+        "title": "UserScope",
+        "type": "object"
+      },
+      "UserUpdate": {
+        "properties": {
+          "email": {
+            "anyOf": [
+              {
+                "format": "email",
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Email"
+          },
+          "full_name": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Full Name"
+          },
+          "is_active": {
+            "default": true,
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "is_superuser": {
+            "default": false,
+            "title": "Is Superuser",
+            "type": "boolean"
+          },
+          "password": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 8,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Password"
+          }
+        },
+        "title": "UserUpdate",
+        "type": "object"
+      },
+      "UserUpdateMe": {
+        "properties": {
+          "email": {
+            "anyOf": [
+              {
+                "format": "email",
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Email"
+          },
+          "full_name": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Full Name"
+          }
+        },
+        "title": "UserUpdateMe",
+        "type": "object"
+      },
+      "UsersPublic": {
+        "$defs": {
+          "UserPublic": {
+            "properties": {
+              "assigned_scopes": {
+                "items": {
+                  "type": "string"
+                },
+                "title": "Assigned Scopes",
+                "type": "array"
+              },
+              "email": {
+                "format": "email",
+                "title": "Email",
+                "type": "string"
+              },
+              "full_name": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Full Name"
+              },
+              "id": {
+                "maxLength": 36,
+                "title": "Id",
+                "type": "string"
+              },
+              "is_active": {
+                "title": "Is Active",
+                "type": "boolean"
+              },
+              "new_id": {
+                "title": "New Id",
+                "type": "string"
+              }
+            },
+            "required": [
+              "email",
+              "is_active",
+              "id",
+              "new_id",
+              "full_name"
+            ],
+            "title": "UserPublic",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/$defs/UserPublic"
+            },
+            "title": "Data",
+            "type": "array"
+          }
+        },
+        "required": [
+          "data",
+          "count"
+        ],
+        "title": "UsersPublic",
+        "type": "object"
+      },
+      "VideoUpload": {
+        "properties": {
+          "created_on": {
+            "default": "2026-05-29T03:22:45.084735Z",
+            "format": "date-time",
+            "title": "Created On",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 4000,
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "maxLength": 36,
+            "title": "Id",
+            "type": "string"
+          },
+          "media_association_date": {
+            "format": "date-time",
+            "title": "Media Association Date",
+            "type": "string"
+          },
+          "owner_id": {
+            "maxLength": 36,
+            "title": "Owner Id",
+            "type": "string"
+          },
+          "reference_text": {
+            "maxLength": 50,
+            "title": "Reference Text",
+            "type": "string"
+          },
+          "speaker_name": {
+            "maxLength": 200,
+            "title": "Speaker Name",
+            "type": "string"
+          },
+          "updated_on": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated On"
+          },
+          "upload_location": {
+            "maxLength": 1000,
+            "title": "Upload Location",
+            "type": "string"
+          },
+          "upload_name": {
+            "maxLength": 1000,
+            "title": "Upload Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "updated_on",
+          "owner_id",
+          "upload_location",
+          "upload_name",
+          "media_association_date",
+          "speaker_name",
+          "reference_text",
+          "description"
+        ],
+        "title": "VideoUpload",
+        "type": "object"
+      },
+      "VideoUploadBase": {
+        "properties": {
+          "created_on": {
+            "format": "date-time",
+            "title": "Created On",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "updated_on": {
+            "format": "date-time",
+            "title": "Updated On",
+            "type": "string"
+          },
+          "upload_location": {
+            "title": "Upload Location",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "created_on",
+          "updated_on",
+          "upload_location"
+        ],
+        "title": "VideoUploadBase",
+        "type": "object"
+      },
+      "VideoUploadRequest": {
+        "properties": {
+          "upload_name": {
+            "title": "Upload Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "upload_name"
+        ],
+        "title": "VideoUploadRequest",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "Apostolic Faith Sacramento API",
+    "title": "AFC API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.0.3",
+  "paths": {
+    "/": {
+      "get": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "List Integrations"
+      },
+      "post": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Create Integration"
+      }
+    },
+    "/admin/all": {
+      "get": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Get All Users"
+      }
+    },
+    "/admin/bulk-delete": {
+      "post": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Bulk Delete Users"
+      }
+    },
+    "/admin/{user_id}/scopes": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Get User Scopes"
+      },
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Set User Scopes"
+      }
+    },
+    "/auth/google": {
+      "get": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Auth Via Google"
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Me"
+      }
+    },
+    "/bulk": {
+      "post": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Bulk Assign"
+      }
+    },
+    "/calendar": {
+      "get": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Get Calendar Assignments"
+      }
+    },
+    "/calendar-with-names": {
+      "get": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Get Calendar With Names"
+      }
+    },
+    "/config": {
+      "get": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Get Donation Configs"
+      }
+    },
+    "/create-intent": {
+      "post": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Create Payment Intent Endpoint"
+      }
+    },
+    "/create-subscription": {
+      "post": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Create Subscription Endpoint"
+      }
+    },
+    "/health-check": {
+      "get": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Health Check"
+      }
+    },
+    "/known": {
+      "get": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Get Known Feature Flags"
+      }
+    },
+    "/liveness": {
+      "get": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Get Liveness"
+      }
+    },
+    "/login/access-token": {
+      "post": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Login Access Token"
+      }
+    },
+    "/login/auth-code": {
+      "post": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Authorization Code Token"
+      }
+    },
+    "/login/authorize": {
+      "post": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Authorization Code"
+      }
+    },
+    "/login/client-credentials": {
+      "post": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Client Credentials Login"
+      }
+    },
+    "/login/google": {
+      "get": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Login Via Google"
+      }
+    },
+    "/login/implicit-token": {
+      "post": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Implicit Token"
+      }
+    },
+    "/login/logout": {
+      "post": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Logout"
+      }
+    },
+    "/login/pkce-challenge": {
+      "post": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Pkce Challenge"
+      }
+    },
+    "/login/refresh-token": {
+      "post": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Refresh Token"
+      }
+    },
+    "/login/revoke-token": {
+      "post": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Revoke Token"
+      }
+    },
+    "/login/test-token": {
+      "post": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Test Token"
+      }
+    },
+    "/login/token-scopes": {
+      "post": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Token Scopes"
+      }
+    },
+    "/logout": {
+      "post": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Google Logout"
+      }
+    },
+    "/me": {
+      "delete": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Delete User Me"
+      },
+      "get": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Read User Me"
+      },
+      "patch": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Update User Me"
+      }
+    },
+    "/me/password": {
+      "patch": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Update Password Me"
+      }
+    },
+    "/my-assignments": {
+      "get": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Get My Assignments"
+      }
+    },
+    "/my-calendar": {
+      "get": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Get My Calendar"
+      }
+    },
+    "/names": {
+      "get": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Get Enabled Flag Names"
+      }
+    },
+    "/openapi.json": {
+      "get": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "JSON response"
+          }
+        },
+        "summary": "Get Openapi Spec"
+      }
+    },
+    "/password-recovery-html-content/{email}": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "email",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Recover Password Html Content"
+      }
+    },
+    "/password-recovery/{email}": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "email",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Recover Password"
+      }
+    },
+    "/pre-seed": {
+      "post": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Pre Seed Integrations"
+      }
+    },
+    "/readiness": {
+      "get": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Get Readiness"
+      }
+    },
+    "/reset-password": {
+      "post": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Reset Password"
+      }
+    },
+    "/signup": {
+      "post": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Register User"
+      }
+    },
+    "/status": {
+      "get": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Get Integrations Status"
+      }
+    },
+    "/sync-status/{integration_id}": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "integration_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Sync Status"
+      }
+    },
+    "/test-connection": {
+      "post": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Test Connection"
+      }
+    },
+    "/test-email": {
+      "post": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Test Email"
+      }
+    },
+    "/time-off-request": {
+      "post": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Create Time Off Request"
+      }
+    },
+    "/time-off-requests": {
+      "get": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Get My Time Off"
+      }
+    },
+    "/time-off-requests/{time_off_id}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "time_off_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Delete Time Off Request"
+      }
+    },
+    "/time-off-requests/{time_off_id}/approve": {
+      "patch": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "time_off_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Approve Time Off Request"
+      }
+    },
+    "/time-off-requests/{time_off_id}/decline": {
+      "patch": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "time_off_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Decline Time Off Request"
+      }
+    },
+    "/users": {
+      "post": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Create User"
+      }
+    },
+    "/webhook": {
+      "post": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Webhook Endpoint"
+      }
+    },
+    "/{assignment_id}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "assignment_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Delete Assignment"
+      },
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "assignment_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Get Assignment"
+      },
+      "patch": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "assignment_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Update Assignment"
+      }
+    },
+    "/{cc_id}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cc_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Delete Client Credentials"
+      },
+      "patch": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cc_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Update Client Credentials"
+      }
+    },
+    "/{flag_name}": {
+      "patch": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "flag_name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Update Feature Flag"
+      }
+    },
+    "/{id}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Delete Item"
+      },
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Read Item"
+      },
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Update Item"
+      }
+    },
+    "/{integration_id}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "integration_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Delete Integration"
+      },
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "integration_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Get Integration"
+      },
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "integration_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Update Integration"
+      }
+    },
+    "/{integration_id}/credentials": {
+      "patch": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "integration_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Update Credentials"
+      }
+    },
+    "/{media_id}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "media_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Delete Media Endpoint"
+      },
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "media_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Read Media By Id"
+      },
+      "patch": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "media_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Update Media Endpoint"
+      }
+    },
+    "/{payment_id}": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "payment_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Get Payment"
+      }
+    },
+    "/{user_id}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Remove All User Scopes"
+      },
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Read User By Id"
+      },
+      "patch": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Update User"
+      }
+    },
+    "/{user_id}/scopes": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Get User Scopes"
+      },
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Set User Scopes"
+      }
+    },
+    "/{video_upload_id}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "video_upload_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Delete Video Upload Endpoint"
+      },
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "video_upload_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Read Video Upload By Id"
+      },
+      "patch": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "video_upload_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Update Video Upload Endpoint"
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ]
+}

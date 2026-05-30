@@ -208,3 +208,4 @@ infrastructure/db/public_app/
 docs/_build/
 src/be/3.11.14/
 .venv/
+src/flask/.venv/

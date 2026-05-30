@@ -53,16 +53,16 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--cov=app --cov-report=term-missing --cov-fail-under=60"
+addopts = "--cov=backend --cov-report=term-missing --cov-fail-under=60"
 
 [tool.coverage.run]
-source = ["app"]
+source = ["backend"]
 omit = [
-    "app/tests*",
-    "app/auth0sample*",
-    "app/backend_pre_start*",
-    "app/tests_pre_start*",
-    "app/initial_data*",
+    "backend/tests*",
+    "backend/auth0sample*",
+    "backend/backend_pre_start*",
+    "backend/tests_pre_start*",
+    "backend/initial_data*",
 ]
 
 [tool.coverage.report]
@@ -83,13 +83,13 @@ exclude_lines = [
 script_location = "%(here)s/alembic"
 
 [tool.ruff.lint.per-file-ignores]
-"app/api/routes/login.py" = ["E712"]
-"app/api/routes/google.py" = ["E712"]
+"backend/api/routes/login.py" = ["E712"]
+"backend/api/routes/google.py" = ["E712"]
 
 # Bandit security linter configuration
 [tool.bandit]
 exclude_dirs = [
-    'src/flask/app/alembic/'
+    'src/flask/backend/alembic/'
 ]
 skips = [
     "B101",  # assert_used - fine in tests and safety checks
