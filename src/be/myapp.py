@@ -1,15 +1,4 @@
-import sys
+from app.main import app as myfastapp
+from a2wsgi import ASGIMiddleware
 
-
-# sys.path.insert(0, os.path.dirname(__file__))
-
-
-def not_real_application(environ, start_response):
-    start_response("200 OK", [("Content-Type", "text/plain")])
-    message = "It works!\n"
-    version = "Python %s\n" % sys.version.split()[0]
-    response = "\n".join([message, version])
-    return [response.encode()]
-
-
-# passenger_wsgi.py
+fastapiapp = ASGIMiddleware(app=myfastapp)

@@ -41,7 +41,8 @@ dependencies = [
     "stripe (>=13.0.0,<14.0.0)",
     "cryptography (>=42.0.0,<44.0.0)",
     "mariadb[binary,pool] (>=2.0.0rc2,<3.0.0)",
-    "gunicorn (>=26.0.0,<27.0.0)"
+    "gunicorn (>=26.0.0,<27.0.0)",
+    "a2wsgi (>=1.10.10,<2.0.0)"
 ]
 
 
