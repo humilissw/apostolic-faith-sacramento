@@ -6,6 +6,7 @@ Create Date: 2026-05-30
 
 """
 
+import uuid
 from typing import Sequence, Union
 
 from alembic import op
@@ -46,68 +47,68 @@ FIRST_SUPERUSER_PASSWORD = "!maSup3rUs3r1!"
 FIRST_SUPERUSER_HASHED_PASSWORD = "$2b$12$6nti9sIUHIgGjoruqNy46.0Xp/CFcox2UiEKLaUg9jBJ1ZnndNCxO"
 
 
+def _gen_uuid_str() -> str:
+    """Generate a raw UUID string for inlining into SQL."""
+    return str(uuid.uuid4())
+
+
+def _execute(conn, sql: str) -> None:
+    """Execute a raw SQL string (MariaDB-safe, no bind params on id columns)."""
+    conn.execute(sa.text(sql))  # type: ignore[arg-type]
+
+
 def upgrade() -> None:
     conn = op.get_bind()
 
     # Check if user already exists
-    user_id = conn.execute(
-        sa.text("SELECT id FROM users WHERE email = :email LIMIT 1").bindparams(
-            email=FIRST_SUPERUSER_EMAIL
-        )
-    ).fetchone()
+    query: str = "SELECT `id` FROM `users` WHERE `email` = %s LIMIT 1" % FIRST_SUPERUSER_EMAIL
+    row = conn.execute(sa.text(query)).fetchone()
 
-    if user_id is None:
-        # Create the superuser
-        new_uid = str(op.get_bind().execute(sa.text("SELECT UUID()")).fetchone()[0])
-        conn.execute(
-            sa.text(
-                "INSERT INTO users (id, email, is_active, is_superuser, hashed_password, created_on, updated_on, new_id) "
-                "VALUES (:uid, :email, 1, 1, :pw, NOW(), NULL, :new_id)"
-            ).bindparams(
-                uid=new_uid,
-                email=FIRST_SUPERUSER_EMAIL,
-                pw=FIRST_SUPERUSER_HASHED_PASSWORD,
-                new_id=str(op.get_bind().execute(sa.text("SELECT UUID()")).fetchone()[0]),
-            )
-        )
-        user_id = new_uid
-    else:
-        user_id = user_id[0]
+    if row is None:
+        # Create the superuser with inline UUIDs
+        # MariaDB coerces string UUID bind params to integers on id columns -> truncation
+        uid = _gen_uuid_str()
+        new_id = _gen_uuid_str()
+        insert_query: str = (
+            "INSERT INTO `users` (`id`, `email`, `is_active`, `is_superuser`, "
+            "`hashed_password`, `created_on`, `updated_on`, `new_id`) "
+            "VALUES (%s, %s, 1, 1, %s, NOW(), NULL, %s)"
+        ) % (uid, FIRST_SUPERUSER_EMAIL, FIRST_SUPERUSER_HASHED_PASSWORD, new_id)
+        _execute(conn, insert_query)
+        row = (uid,)
+
+    user_id = row[0]
 
     # Get existing scopes
-    result = conn.execute(
-        sa.text("SELECT scope FROM user_scopes WHERE user_id = :uid").bindparams(uid=user_id)
-    )
+    scopes_query: str = "SELECT `scope` FROM `user_scopes` WHERE `user_id` = %s" % user_id
+    result = conn.execute(sa.text(scopes_query))
     existing_scopes = {r[0] for r in result}
 
-    # Insert missing scopes
+    # Insert missing scopes with inline UUID() function (no bind params on id columns)
     for scope in ALL_SCOPES:
         if scope not in existing_scopes:
-            conn.execute(
-                sa.text(
-                    "INSERT IGNORE INTO user_scopes (id, user_id, scope, created_on) VALUES (UUID(), :uid, :sc, NOW())"
-                ).bindparams(uid=user_id, sc=scope)
-            )
+            insert_query_2: str = (
+                "INSERT IGNORE INTO `user_scopes` (`id`, `user_id`, `scope`, `created_on`) "
+                "VALUES (UUID(), %s, %s, NOW())"
+            ) % (user_id, scope)
+            _execute(conn, insert_query_2)
 
 
 def downgrade() -> None:
     conn = op.get_bind()
 
-    user_id = conn.execute(
-        sa.text("SELECT id FROM users WHERE email = :email LIMIT 1").bindparams(
-            email=FIRST_SUPERUSER_EMAIL
-        )
-    ).fetchone()
+    query: str = "SELECT `id` FROM `users` WHERE `email` = %s LIMIT 1" % FIRST_SUPERUSER_EMAIL
+    row = conn.execute(sa.text(query)).fetchone()
 
-    if user_id is None:
+    if row is None:
         return
 
-    user_id = user_id[0]
+    user_id = row[0]
 
-    placeholders = ", ".join(f":scope_{i}" for i in range(len(ALL_SCOPES)))
-    query = "DELETE FROM user_scopes " f"WHERE user_id = :uid AND scope IN ({placeholders})"
-    params = {"uid": user_id}
-    for i, scope in enumerate(ALL_SCOPES):
-        params[f"scope_{i}"] = scope
-
-    conn.execute(sa.text(query).bindparams(**params))
+    placeholders = ", ".join(["%s" for _ in ALL_SCOPES])
+    delete_query: str = "DELETE FROM `user_scopes` WHERE `user_id` = %s AND `scope` IN (%s)" % (
+        user_id,
+        placeholders,
+    )
+    delete_query = delete_query % tuple(ALL_SCOPES)
+    _execute(conn, delete_query)
