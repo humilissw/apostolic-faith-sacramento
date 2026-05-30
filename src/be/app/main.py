@@ -6,6 +6,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.routing import APIRoute
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
 from app.api.main import api_router
 from app.api.deps import oauth2_scheme
 from app.core.scopes import Scope
@@ -69,12 +70,15 @@ try:
     def read_root(request: Request):
         return templates.TemplateResponse(request, "index.html")
 
-    handler = app
+    # handler = app
 
-    if __name__ == "__main__":
-        import uvicorn
+    # if __name__ == "__main__":
+    #     import uvicorn
 
-        uvicorn.run("app.main:app", host="0.0.0.0", port=5001, reload=True)
+    #     uvicorn.run("app.main:app", host="0.0.0.0", port=5001, reload=True)
+
+    uvicorn.run("app.main:app")
+
 
 except Exception:
     print(traceback.format_exc())
