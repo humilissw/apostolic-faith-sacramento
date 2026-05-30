@@ -66,7 +66,6 @@ class User(UserBase, table=True):  # type: ignore[call-arg]
         default=datetime.datetime.now(datetime.timezone.utc), nullable=False
     )
     updated_on: datetime.datetime | None = Field(nullable=True, default=None)
-    new_id: str = Field(default_factory=lambda: str(uuid.uuid4()), max_length=36, exclude=True)
     # items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
 
 
@@ -87,7 +86,6 @@ class UserPublic(SQLModel):
     email: EmailStr
     is_active: bool
     id: str = Field(max_length=36)
-    new_id: str
     full_name: Annotated[str | None, Field(exclude=True)]
     assigned_scopes: list[str] = Field(default_factory=list)
 

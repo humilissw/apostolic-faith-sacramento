@@ -9,7 +9,7 @@ from app.repositories.user_scope_repo import UserScopeRepository
 router = APIRouter(prefix="/users/admin", tags=["user-scopes"])
 
 
-@router.get("/{user_id}/scopes", response_model=list[str])
+@router.get("/{user_id}/scopes", response_model=list[str], operation_id="get_user_scopes_admin")
 async def get_user_scopes(
     user_id: str,
     session: SessionDep,
@@ -21,7 +21,7 @@ async def get_user_scopes(
     return scopes
 
 
-@router.put("/{user_id}/scopes", response_model=list[str])
+@router.put("/{user_id}/scopes", response_model=list[str], operation_id="set_user_scopes_admin")
 async def set_user_scopes(
     user_id: str,
     scopes: list[str],

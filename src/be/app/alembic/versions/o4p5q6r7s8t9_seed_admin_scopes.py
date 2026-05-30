@@ -79,15 +79,13 @@ def upgrade() -> None:
 
     if row is None:
         # Create the superuser with inline UUIDs
-        # MariaDB coerces string UUID bind params to integers on id columns -> truncation
         uid = _gen_uuid_str()
-        new_id = _gen_uuid_str()
         pw_q = _quote(FIRST_SUPERUSER_HASHED_PASSWORD)
         email_q2 = _quote(FIRST_SUPERUSER_EMAIL)
         insert_query: str = (
             f"INSERT INTO `users` (`id`, `email`, `is_active`, `is_superuser`, "
-            f"`hashed_password`, `created_on`, `updated_on`, `new_id`) "
-            f"VALUES ('{uid}', {email_q2}, 1, 1, {pw_q}, NOW(), NULL, '{new_id}')"
+            f"`hashed_password`, `created_on`, `updated_on`) "
+            f"VALUES ('{uid}', {email_q2}, 1, 1, {pw_q}, NOW(), NULL)"
         )
         _execute(conn, insert_query)
         row = (uid,)

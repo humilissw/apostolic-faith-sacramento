@@ -54,14 +54,9 @@ class UserRepository:
 
     async def get_by_id(self, user_id: int | str) -> User | None:
         """
-        Retrieve a user entry by id or new_id.
+        Retrieve a user entry by id.
         """
         statement = select(User).where(User.id == user_id)  # type: ignore[arg-type]
-        result = await self.session.execute(statement)
-        user = result.scalar_one_or_none()
-        if user:
-            return user  # type: ignore[no-any-return]
-        statement = select(User).where(User.new_id == str(user_id))  # type: ignore[arg-type]
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()  # type: ignore[no-any-return]
 

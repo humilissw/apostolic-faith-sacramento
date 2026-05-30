@@ -158,7 +158,7 @@ tests/
 3. Use `.scalar()` for single result
 4. Always `await session.commit()` after mutations
 5. Always `await session.refresh(obj)` after commit
-6. Use `new_id` (UUID) and `id` (int) together
+6. Use `id` (UUID string) consistently for user identifiers
 7. Check permissions before allowing access
 
 ## Resources

@@ -41,7 +41,6 @@ async def _populate_scopes(session: AsyncSession, user: User) -> UserPublic:
         email=user.email,
         is_active=user.is_active,
         id=user.id,
-        new_id=user.new_id,
         full_name=user.full_name,
         assigned_scopes=scopes,
     )
@@ -106,7 +105,7 @@ async def update_user_me(
 
     if user_in.email:
         existing_user = await repository.get_by_email(email=user_in.email)
-        if existing_user and existing_user.new_id != current_user.new_id:
+        if existing_user and existing_user.id != current_user.id:
             raise HTTPException(status_code=409, detail="User with this email already exists")
     user_data = user_in.model_dump(exclude_unset=True)
     current_user.sqlmodel_update(user_data)
