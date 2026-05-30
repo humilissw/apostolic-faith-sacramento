@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=25",
+    "node": ">=24",
     "npm": ">=11.0.0"
   },
   "scripts": {
