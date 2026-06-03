@@ -59,7 +59,7 @@ export default function FlagsAdminPage() {
       try {
         const [flagsRes, knownRes] = await Promise.all([
           fetchFeatureFlags(),
-          fetch(`${API_BASE}${API_V1}/feature-flags/known`).then((r) => r.json()),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/feature-flags/known`).then((r) => r.json()),
         ]);
         if (!cancelled) {
           setFlags(flagsRes.data);
@@ -73,7 +73,6 @@ export default function FlagsAdminPage() {
       }
     }
 
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://localhost:8000/";
     const API_V1 = "api/v1";
     load();
     return () => { cancelled = true; };

@@ -8,7 +8,6 @@ import { AnimatedSheet } from "@/components/animated-sheet";
 import UploadForm from "@/components/upload-form";
 import { fetchWithAuth } from "@/lib/api";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://localhost:8000/";
 const API_V1 = "api/v1";
 
 interface VideoUpload {
@@ -40,7 +39,7 @@ export default function VideoUploadsPage() {
 
     async function fetchVideos() {
       try {
-        const fetchPromise = fetchWithAuth(`${API_BASE}${API_V1}/video-uploads/`);
+        const fetchPromise = fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/video-uploads/`);
         const timeoutPromise = new Promise<never>((_, rej) =>
           setTimeout(() => rej(new Error("Request timed out. Is the API running?")), 15000),
         );
@@ -66,7 +65,7 @@ export default function VideoUploadsPage() {
   async function handleUploadSuccess() {
     setOpen(false);
     try {
-      const res = await fetchWithAuth(`${API_BASE}${API_V1}/video-uploads/`);
+      const res = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/video-uploads/`);
       const json: VideoUploadsResponse = await res.json();
       setVideos(json.data);
     } catch {
@@ -120,7 +119,7 @@ export default function VideoUploadsPage() {
           <div className="flex flex-wrap gap-x-5 gap-y-5 justify-center py-15 sm:px-10 md:px-20 lg:px-40 xl:px-80">
             {videos.map((v) => (
               <div key={v.id}>
-                <Link href={v.download_url.startsWith("http") ? v.download_url : `${API_BASE}${API_V1}${v.download_url}`} target="_blank" rel="noopener noreferrer">
+                <Link href={v.download_url.startsWith("http") ? v.download_url : `${process.env.NEXT_PUBLIC_API_URL}${API_V1}${v.download_url}`} target="_blank" rel="noopener noreferrer">
                   <div className="rounded-xl shadow-xl/10">
                     <div className="flex xs:h-100 xs:w-60 md:h-60 md:w-140">
                       <div className="flex flex-col md:flex-row items-center">

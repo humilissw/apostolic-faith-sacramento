@@ -4,8 +4,6 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://localhost:8000/";
-
 function GoogleCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -29,7 +27,7 @@ function GoogleCallbackContent() {
 
       // Verify the session cookies set by the backend are valid
       try {
-        const res = await fetch(`${API_BASE}/api/v1/auth/me`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/me`, {
           method: "GET",
           credentials: "include",
         });

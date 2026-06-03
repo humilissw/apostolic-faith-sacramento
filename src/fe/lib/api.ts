@@ -1,4 +1,3 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://localhost:8000/";
 const API_V1 = "api/v1";
 
 export interface LoginResponse {
@@ -64,7 +63,7 @@ export async function login(
   formData.append("password", password);
   formData.append("scope", scopes.join(" "));
 
-  const res = await fetch(`${API_BASE}${API_V1}/login/access-token`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/login/access-token`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -82,7 +81,7 @@ export async function login(
 // --- Token refresh ---
 
 export async function refreshToken(refresh_token: string): Promise<UpdateTokenResponse> {
-  const res = await fetch(`${API_BASE}${API_V1}/login/refresh-token`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/login/refresh-token`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -98,7 +97,7 @@ export async function refreshToken(refresh_token: string): Promise<UpdateTokenRe
 }
 
 export async function logout(): Promise<void> {
-  const res = await fetch(`${API_BASE}${API_V1}/login/logout`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/login/logout`, {
     method: "POST",
     credentials: "include",
   });
@@ -108,7 +107,7 @@ export async function logout(): Promise<void> {
 }
 
 export async function revokeToken(token: string): Promise<void> {
-  const res = await fetch(`${API_BASE}${API_V1}/login/revoke-token`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/login/revoke-token`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -121,7 +120,7 @@ export async function revokeToken(token: string): Promise<void> {
 }
 
 export async function requestPkceChallenge(): Promise<PkceChallenge> {
-  const res = await fetch(`${API_BASE}${API_V1}/login/pkce-challenge`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/login/pkce-challenge`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
   });
@@ -134,7 +133,7 @@ export async function requestPkceChallenge(): Promise<PkceChallenge> {
 }
 
 export function googleLoginUrl(code_challenge: string): string {
-  return `${API_BASE}${API_V1}/google/login/google?code_challenge=${encodeURIComponent(code_challenge)}&code_challenge_method=S256`;
+  return `${process.env.NEXT_PUBLIC_API_URL}${API_V1}/google/login/google?code_challenge=${encodeURIComponent(code_challenge)}&code_challenge_method=S256`;
 }
 
 // --- Auth-aware fetch (cookies auto-sent via credentials: "include") ---
@@ -227,7 +226,7 @@ export interface PaymentRecord {
 }
 
 export async function createPaymentIntent(data: DonationFormData): Promise<PaymentIntentResult> {
-  const res = await fetch(`${API_BASE}${API_V1}/payments/create-intent`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/payments/create-intent`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -243,7 +242,7 @@ export async function createPaymentIntent(data: DonationFormData): Promise<Payme
 }
 
 export async function createSubscription(data: DonationFormData): Promise<CheckoutSessionResult> {
-  const res = await fetch(`${API_BASE}${API_V1}/payments/create-subscription`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/payments/create-subscription`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -259,7 +258,7 @@ export async function createSubscription(data: DonationFormData): Promise<Checko
 }
 
 export async function fetchDonationConfigs(): Promise<DonationConfig[]> {
-  const res = await fetch(`${API_BASE}${API_V1}/payments/config`);
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/payments/config`);
   if (!res.ok) {
     throw new Error("Failed to fetch donation configs");
   }
@@ -268,7 +267,7 @@ export async function fetchDonationConfigs(): Promise<DonationConfig[]> {
 }
 
 export async function fetchUserPayments(): Promise<{ data: PaymentRecord[]; count: number }> {
-  const res = await fetchWithAuth(`${API_BASE}${API_V1}/payments/`);
+  const res = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/payments/`);
   if (!res.ok) {
     throw new Error("Failed to fetch payments");
   }
@@ -311,7 +310,7 @@ export interface TestConnectionResult {
 }
 
 export async function fetchIntegrationsStatus(): Promise<Record<string, { enabled: boolean; status: string }>> {
-  const res = await fetch(`${API_BASE}${API_V1}/integrations/status`);
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/integrations/status`);
   if (!res.ok) {
     throw new Error("Failed to fetch integration status");
   }
@@ -319,7 +318,7 @@ export async function fetchIntegrationsStatus(): Promise<Record<string, { enable
 }
 
 export async function fetchIntegrations(): Promise<IntegrationsResponse> {
-  const res = await fetchWithAuth(`${API_BASE}${API_V1}/integrations/`);
+  const res = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/integrations/`);
   if (!res.ok) {
     throw new Error("Failed to fetch integrations");
   }
@@ -327,7 +326,7 @@ export async function fetchIntegrations(): Promise<IntegrationsResponse> {
 }
 
 export async function fetchIntegration(id: string): Promise<IntegrationWithCreds> {
-  const res = await fetchWithAuth(`${API_BASE}${API_V1}/integrations/${id}`);
+  const res = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/integrations/${id}`);
   if (!res.ok) {
     throw new Error("Failed to fetch integration");
   }
@@ -342,7 +341,7 @@ export async function createIntegration(data: {
   config_json?: string | null;
   credentials: Record<string, string>;
 }): Promise<IntegrationWithCreds> {
-  const res = await fetchWithAuth(`${API_BASE}${API_V1}/integrations/`, {
+  const res = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/integrations/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -361,7 +360,7 @@ export async function updateIntegration(id: string, data: Partial<{
   status: string;
   config_json: string | null;
 }>): Promise<IntegrationWithCreds> {
-  const res = await fetchWithAuth(`${API_BASE}${API_V1}/integrations/${id}`, {
+  const res = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/integrations/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -377,7 +376,7 @@ export async function updateIntegrationCredentials(
   id: string,
   credentials: Record<string, string>,
 ): Promise<IntegrationWithCreds> {
-  const res = await fetchWithAuth(`${API_BASE}${API_V1}/integrations/${id}/credentials`, {
+  const res = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/integrations/${id}/credentials`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ credentials }),
@@ -390,7 +389,7 @@ export async function updateIntegrationCredentials(
 }
 
 export async function deleteIntegration(id: string): Promise<void> {
-  const res = await fetchWithAuth(`${API_BASE}${API_V1}/integrations/${id}`, {
+  const res = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/integrations/${id}`, {
     method: "DELETE",
   });
   if (!res.ok) {
@@ -404,7 +403,7 @@ export async function testIntegrationConnection(data: {
   credentials: Record<string, string>;
   config_json?: string | null;
 }): Promise<TestConnectionResult> {
-  const res = await fetchWithAuth(`${API_BASE}${API_V1}/integrations/test-connection`, {
+  const res = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/integrations/test-connection`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -417,7 +416,7 @@ export async function testIntegrationConnection(data: {
 }
 
 export async function preSeedIntegrations(): Promise<IntegrationsResponse> {
-  const res = await fetchWithAuth(`${API_BASE}${API_V1}/integrations/pre-seed`, {
+  const res = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/integrations/pre-seed`, {
     method: "POST",
   });
   if (!res.ok) {
@@ -444,7 +443,7 @@ export interface UsersWithScopesResponse {
 }
 
 export async function fetchUsersWithScopes(skip: number = 0, limit: number = 50): Promise<UsersWithScopesResponse> {
-  const res = await fetchWithAuth(`${API_BASE}${API_V1}/users/?skip=${skip}&limit=${limit}`);
+  const res = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/users/?skip=${skip}&limit=${limit}`);
   if (!res.ok) {
     throw new Error("Failed to fetch users");
   }
@@ -453,7 +452,7 @@ export async function fetchUsersWithScopes(skip: number = 0, limit: number = 50)
 }
 
 export async function fetchAllUsers(): Promise<UsersWithScopesResponse> {
-  const res = await fetchWithAuth(`${API_BASE}${API_V1}/users/admin/all`);
+  const res = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/users/admin/all`);
   if (!res.ok) {
     throw new Error("Failed to fetch all users");
   }
@@ -463,7 +462,7 @@ export async function fetchAllUsers(): Promise<UsersWithScopesResponse> {
 
 export async function setUserScopes(userId: string, scopes: string[]): Promise<string[]> {
   const res = await fetchWithAuth(
-    `${API_BASE}${API_V1}/users/admin/${userId}/scopes`,
+    `${process.env.NEXT_PUBLIC_API_URL}${API_V1}/users/admin/${userId}/scopes`,
     {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -479,7 +478,7 @@ export async function setUserScopes(userId: string, scopes: string[]): Promise<s
 
 export async function deleteUser(userId: string): Promise<void> {
   const res = await fetchWithAuth(
-    `${API_BASE}${API_V1}/users/${userId}`,
+    `${process.env.NEXT_PUBLIC_API_URL}${API_V1}/users/${userId}`,
     {
       method: "DELETE",
     },
@@ -492,7 +491,7 @@ export async function deleteUser(userId: string): Promise<void> {
 
 export async function deleteUsers(userIds: string[]): Promise<void> {
   const res = await fetchWithAuth(
-    `${API_BASE}${API_V1}/users/admin/bulk-delete`,
+    `${process.env.NEXT_PUBLIC_API_URL}${API_V1}/users/admin/bulk-delete`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -516,7 +515,7 @@ export interface CreateUserRequest {
 
 export async function createUser(data: CreateUserRequest): Promise<UserWithScopes> {
   const res = await fetchWithAuth(
-    `${API_BASE}${API_V1}/users/`,
+    `${process.env.NEXT_PUBLIC_API_URL}${API_V1}/users/`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -549,7 +548,7 @@ export async function patchVideoUpload(
   id: string,
   data: Partial<VideoUploadAdmin>,
 ): Promise<VideoUploadAdmin> {
-  const res = await fetchWithAuth(`${API_BASE}${API_V1}/video-uploads/${id}`, {
+  const res = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/video-uploads/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -562,7 +561,7 @@ export async function patchVideoUpload(
 }
 
 export async function createVideoUpload(data: Partial<VideoUploadAdmin>): Promise<VideoUploadAdmin> {
-  const res = await fetchWithAuth(`${API_BASE}${API_V1}/video-uploads/`, {
+  const res = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/video-uploads/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -575,7 +574,7 @@ export async function createVideoUpload(data: Partial<VideoUploadAdmin>): Promis
 }
 
 export async function deleteVideoUpload(id: string): Promise<void> {
-  const res = await fetchWithAuth(`${API_BASE}${API_V1}/video-uploads/${id}`, {
+  const res = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/video-uploads/${id}`, {
     method: "DELETE",
   });
   if (!res.ok) {
@@ -587,7 +586,7 @@ export async function deleteVideoUpload(id: string): Promise<void> {
 // --- All video uploads (for admin) ---
 
 export async function fetchAllVideoUploads(): Promise<{ data: VideoUploadAdmin[]; count: number }> {
-  const res = await fetchWithAuth(`${API_BASE}${API_V1}/video-uploads/`);
+  const res = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/video-uploads/`);
   if (!res.ok) {
     throw new Error("Failed to fetch video uploads");
   }
@@ -668,7 +667,7 @@ export interface AssignmentsResponse {
 }
 
 export async function fetchAssignments(): Promise<AssignmentsResponse> {
-  const res = await fetchWithAuth(`${API_BASE}${API_V1}/scheduler/`);
+  const res = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/scheduler/`);
   if (!res.ok) {
     throw new Error("Failed to fetch assignments");
   }
@@ -676,7 +675,7 @@ export async function fetchAssignments(): Promise<AssignmentsResponse> {
 }
 
 export async function fetchAssignment(id: string): Promise<Assignment> {
-  const res = await fetchWithAuth(`${API_BASE}${API_V1}/scheduler/${id}`);
+  const res = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/scheduler/${id}`);
   if (!res.ok) {
     throw new Error("Failed to fetch assignment");
   }
@@ -684,7 +683,7 @@ export async function fetchAssignment(id: string): Promise<Assignment> {
 }
 
 export async function createAssignment(data: AssignmentCreateInput): Promise<Assignment> {
-  const res = await fetchWithAuth(`${API_BASE}${API_V1}/scheduler/`, {
+  const res = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/scheduler/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -701,7 +700,7 @@ export async function createAssignment(data: AssignmentCreateInput): Promise<Ass
 }
 
 export async function updateAssignment(id: string, data: AssignmentUpdateInput): Promise<Assignment> {
-  const res = await fetchWithAuth(`${API_BASE}${API_V1}/scheduler/${id}`, {
+  const res = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/scheduler/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -714,7 +713,7 @@ export async function updateAssignment(id: string, data: AssignmentUpdateInput):
 }
 
 export async function deleteAssignment(id: string): Promise<void> {
-  const res = await fetchWithAuth(`${API_BASE}${API_V1}/scheduler/${id}`, {
+  const res = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/scheduler/${id}`, {
     method: "DELETE",
   });
   if (!res.ok) {
@@ -724,7 +723,7 @@ export async function deleteAssignment(id: string): Promise<void> {
 }
 
 export async function bulkAssignAssignments(data: BulkAssignRequest): Promise<BulkAssignResponse> {
-  const res = await fetchWithAuth(`${API_BASE}${API_V1}/scheduler/bulk`, {
+  const res = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/scheduler/bulk`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -737,7 +736,7 @@ export async function bulkAssignAssignments(data: BulkAssignRequest): Promise<Bu
 }
 
 export async function fetchMyAssignments(): Promise<AssignmentsResponse> {
-  const res = await fetchWithAuth(`${API_BASE}${API_V1}/scheduler/my-assignments`);
+  const res = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/scheduler/my-assignments`);
   if (!res.ok) {
     throw new Error("Failed to fetch my assignments");
   }
@@ -746,7 +745,7 @@ export async function fetchMyAssignments(): Promise<AssignmentsResponse> {
 
 export async function fetchCalendarAssignments(startDate: string, endDate: string): Promise<AssignmentsResponse> {
   const res = await fetchWithAuth(
-    `${API_BASE}${API_V1}/scheduler/calendar?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`
+    `${process.env.NEXT_PUBLIC_API_URL}${API_V1}/scheduler/calendar?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`
   );
   if (!res.ok) {
     throw new Error("Failed to fetch calendar assignments");
@@ -756,7 +755,7 @@ export async function fetchCalendarAssignments(startDate: string, endDate: strin
 
 export async function fetchCalendarWithNames(startDate: string, endDate: string): Promise<AssignmentsResponse> {
   const res = await fetchWithAuth(
-    `${API_BASE}${API_V1}/scheduler/calendar-with-names?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`
+    `${process.env.NEXT_PUBLIC_API_URL}${API_V1}/scheduler/calendar-with-names?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`
   );
   if (!res.ok) {
     throw new Error("Failed to fetch calendar with names");
@@ -766,7 +765,7 @@ export async function fetchCalendarWithNames(startDate: string, endDate: string)
 
 export async function fetchMyCalendar(startDate: string, endDate: string): Promise<AssignmentsResponse> {
   const res = await fetchWithAuth(
-    `${API_BASE}${API_V1}/scheduler/my-calendar?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`
+    `${process.env.NEXT_PUBLIC_API_URL}${API_V1}/scheduler/my-calendar?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`
   );
   if (!res.ok) {
     throw new Error("Failed to fetch my calendar");
@@ -792,7 +791,7 @@ export interface TimeOffRequestsResponse {
 }
 
 export async function createTimeOffRequest(data: { date: string; notes?: string | null }): Promise<TimeOffRequest> {
-  const res = await fetchWithAuth(`${API_BASE}${API_V1}/scheduler/time-off-request`, {
+  const res = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/scheduler/time-off-request`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -805,7 +804,7 @@ export async function createTimeOffRequest(data: { date: string; notes?: string 
 }
 
 export async function fetchMyTimeOffRequests(): Promise<TimeOffRequestsResponse> {
-  const res = await fetchWithAuth(`${API_BASE}${API_V1}/scheduler/time-off-requests`);
+  const res = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/scheduler/time-off-requests`);
   if (!res.ok) {
     throw new Error("Failed to fetch time-off requests");
   }
@@ -814,7 +813,7 @@ export async function fetchMyTimeOffRequests(): Promise<TimeOffRequestsResponse>
 
 export async function approveTimeOffRequest(timeOffId: string): Promise<void> {
   const res = await fetchWithAuth(
-    `${API_BASE}${API_V1}/scheduler/time-off-requests/${timeOffId}/approve`,
+    `${process.env.NEXT_PUBLIC_API_URL}${API_V1}/scheduler/time-off-requests/${timeOffId}/approve`,
     { method: "PATCH" }
   );
   if (!res.ok) {
@@ -825,7 +824,7 @@ export async function approveTimeOffRequest(timeOffId: string): Promise<void> {
 
 export async function declineTimeOffRequest(timeOffId: string): Promise<void> {
   const res = await fetchWithAuth(
-    `${API_BASE}${API_V1}/scheduler/time-off-requests/${timeOffId}/decline`,
+    `${process.env.NEXT_PUBLIC_API_URL}${API_V1}/scheduler/time-off-requests/${timeOffId}/decline`,
     { method: "PATCH" }
   );
   if (!res.ok) {
@@ -836,7 +835,7 @@ export async function declineTimeOffRequest(timeOffId: string): Promise<void> {
 
 export async function deleteTimeOffRequest(timeOffId: string): Promise<void> {
   const res = await fetchWithAuth(
-    `${API_BASE}${API_V1}/scheduler/time-off-requests/${timeOffId}`,
+    `${process.env.NEXT_PUBLIC_API_URL}${API_V1}/scheduler/time-off-requests/${timeOffId}`,
     { method: "DELETE" }
   );
   if (!res.ok) {
@@ -847,7 +846,7 @@ export async function deleteTimeOffRequest(timeOffId: string): Promise<void> {
 
 export async function fetchTimeOffByDateRange(start: string, end: string): Promise<TimeOffRequestsResponse> {
   const res = await fetchWithAuth(
-    `${API_BASE}${API_V1}/scheduler/time-off-requests?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`
+    `${process.env.NEXT_PUBLIC_API_URL}${API_V1}/scheduler/time-off-requests?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`
   );
   if (!res.ok) {
     throw new Error("Failed to fetch time-off requests");
@@ -872,7 +871,7 @@ export interface FeatureFlagsResponse {
 }
 
 export async function fetchFeatureFlags(): Promise<FeatureFlagsResponse> {
-  const res = await fetch(`${API_BASE}${API_V1}/feature-flags/`);
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/feature-flags/`);
   if (!res.ok) {
     throw new Error("Failed to fetch feature flags");
   }
@@ -881,7 +880,7 @@ export async function fetchFeatureFlags(): Promise<FeatureFlagsResponse> {
 
 export async function updateFeatureFlag(name: string, enabled: boolean): Promise<FeatureFlagEntry> {
   const res = await fetchWithAuth(
-    `${API_BASE}${API_V1}/feature-flags/${name}`,
+    `${process.env.NEXT_PUBLIC_API_URL}${API_V1}/feature-flags/${name}`,
     {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -896,7 +895,7 @@ export async function updateFeatureFlag(name: string, enabled: boolean): Promise
 }
 
 export async function preSeedFeatureFlags(): Promise<FeatureFlagsResponse> {
-  const res = await fetchWithAuth(`${API_BASE}${API_V1}/feature-flags/pre-seed`, {
+  const res = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/feature-flags/pre-seed`, {
     method: "POST",
   });
   if (!res.ok) {

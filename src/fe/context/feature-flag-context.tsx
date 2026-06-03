@@ -8,7 +8,6 @@ import {
   useState,
 } from "react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://localhost:8000/";
 const API_V1 = "api/v1";
 
 interface FeatureFlagContextValue {
@@ -27,7 +26,7 @@ export function FeatureFlagProvider({ children }: { children: React.ReactNode })
 
     async function fetchFlags() {
       try {
-        const res = await fetch(`${API_BASE}${API_V1}/feature-flags/`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/feature-flags/`);
         if (!res.ok || cancelled) return;
         const data = await res.json();
         const flagMap: Record<string, boolean> = {};

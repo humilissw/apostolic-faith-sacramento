@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://localhost:8000/";
 const API_V1 = "api/v1";
 
 interface VideoUpload {
@@ -35,7 +34,7 @@ export default function Media() {
 
     async function fetchVideos() {
       try {
-        const res = await fetch(`${API_BASE}${API_V1}/video-uploads/`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${API_V1}/video-uploads/`);
         if (!res.ok) throw new Error(`Response: ${res.status}`);
         const json: VideosResponse = await res.json();
         if (!cancelled) setVideos(json.data);
@@ -86,7 +85,7 @@ export default function Media() {
             <Link
               target="_blank"
               rel="noopener noreferrer"
-              href={videos[0].upload_location.startsWith("http") ? videos[0].upload_location : `${API_BASE}${API_V1}${videos[0].upload_location}`}
+              href={videos[0].upload_location.startsWith("http") ? videos[0].upload_location : `${process.env.NEXT_PUBLIC_API_URL}${API_V1}${videos[0].upload_location}`}
             >
               <div className="rounded-xl shadow-xl/20">
                 <div className="flex xs:h-100 xs:w-60 md:h-75 md:w-150 lg:h-100 lg:w-200">
@@ -122,7 +121,7 @@ export default function Media() {
           {videos.slice(1).map((v) => (
             <div key={v.id}>
               <Link
-                href={v.upload_location.startsWith("http") ? v.upload_location : `${API_BASE}${API_V1}${v.upload_location}`}
+                href={v.upload_location.startsWith("http") ? v.upload_location : `${process.env.NEXT_PUBLIC_API_URL}${API_V1}${v.upload_location}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
