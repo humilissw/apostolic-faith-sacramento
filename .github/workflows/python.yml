@@ -1,0 +1,192 @@
+name: Python application
+
+on:
+  push:
+    branches: [ main, feature/* ]
+  pull_request:
+    branches: [ main, feature/* ]
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/be
+
+    strategy:
+      matrix:
+        python-version: ["3.13.5", "3.14.0"]
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install poetry
+        run: pipx install poetry
+
+      - name: Configure poetry
+        run: poetry config virtualenvs.in-project true
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Lint with flake8 (errors only)
+        run: poetry run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude .venv
+        continue-on-error: true
+
+      - name: Lint with flake8 (all warnings)
+        run: poetry run flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --exclude .venv
+
+  test:
+    name: Test (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/be
+    needs: [lint]
+
+    strategy:
+      matrix:
+        python-version: ["3.13.5", "3.14.0"]
+
+    services:
+      mysql:
+        image: mariadb:12.1-ubi
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping" --health-interval=10s
+          --health-timeout=5s --health-retries=3
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install poetry
+        run: pipx install poetry
+
+      - name: Configure poetry
+        run: poetry config virtualenvs.in-project true
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Wait for MySQL
+        run: |
+          for i in {1..30}; do
+            if mysql -h 127.0.0.1 -u root -proot -e "SELECT 1" 2>/dev/null; then
+              echo "MySQL is ready"
+              exit 0
+            fi
+            echo "Waiting for MySQL... ($i)"
+            sleep 1
+          done
+          echo "MySQL failed to start"
+          exit 1
+
+      - name: Copy CI env file
+        run: cp .env.ci .env
+
+      - name: Copy Alembic cfg file
+        run: cp alembic.test.ini alembic.ini
+
+      - name: Run data migrations
+        run: poetry run alembic upgrade head
+
+      - name: Run tests
+        run: poetry run pytest --tb=short -v
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/be
+    needs: [test]
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+
+      - name: Install poetry
+        run: pipx install poetry
+
+      - name: Configure poetry
+        run: poetry config virtualenvs.in-project true
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Build package
+        run: poetry build
+
+      - name: Save build output
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-dist
+          path: src/be/dist/
+          retention-days: 7
+
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: [build]
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: |
+          cd src/be
+          docker build -t afc-backend:${{ github.sha }} .
+
+      - name: Save Docker image
+        run: docker save afc-backend:${{ github.sha }} | gzip > afc-backend-${{ github.sha }}.tar.gz
+
+      - name: Upload Docker artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-docker-image
+          path: afc-backend-${{ github.sha }}.tar.gz
+          retention-days: 7
+
+  artifact:
+    name: Verify Artifact
+    runs-on: ubuntu-latest
+    needs: [build]
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-dist
+          path: downloaded-build/
+
+      - name: List artifact contents
+        run: ls -laR downloaded-build/

@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python Debugger: FastAPI",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "autoStartBrowser": true,
+      "envFile": "${workspaceFolder}/.env",
+      "autoReload": {
+        "enable": true
+      },
+      "args": [
+        "app.main:app",
+        "--reload",
+        "--ssl-certfile=security_keys/cert.pem",
+        "--ssl-keyfile=security_keys/cert_key.pem"
+      ],
+      "jinja": true
+    }
+  ]
+}
