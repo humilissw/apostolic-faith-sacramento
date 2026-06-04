@@ -14,9 +14,7 @@ const nextConfig = {
 
   // Optional: Change the output directory `out` -> `dist`
   // distDir: 'dist',
-  // experimental: {
-
-  // }
+  experimental: { workerThreads: false, cpus: 2 }
 }
 
 module.exports = nextConfig
