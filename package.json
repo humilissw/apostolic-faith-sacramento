@@ -9,8 +9,8 @@
   },
   "scripts": {
     "dev": "next dev",
-    "https": "next dev --experimental-https --experimental-https-key security_keys/cert_key.pem --experimental-https-cert security_keys/cert.pem --turbopack",
-    "build": "next build",
+    "https": "next dev --experimental-https--turbopack",
+    "build": "NODE_ENV=production next build",
     "start": "next start",
     "test": "jest",
     "test:watch": "jest --watch",
