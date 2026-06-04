@@ -1,0 +1,9 @@
+{
+  "name": "apostolic-faith-sacramento",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "cd src/fe && npm start",
+    "build": "cd src/fe && npm run build"
+  }
+}
