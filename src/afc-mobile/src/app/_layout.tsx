@@ -1,10 +1,10 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
 import { withLayoutContext } from 'expo-router';
 import { useColorScheme } from 'react-native';
-
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
-
 import "../../global.css"
+import { Colors } from '@/constants/theme';
+
 
 const DrawerNavigator = (
   require('expo-router/build/react-navigation/drawer').createDrawerNavigator()
@@ -23,9 +23,18 @@ export default function RootLayout() {
         initialRouteName="index"
         drawerType="front"
         screenOptions={{
+          headerTitleAlign: "left",
+          headerTitleStyle: {
+            fontSize: 24,
+            fontWeight: "bold",
+          },
+          headerStyle: {
+            height: 110,
+            backgroundColor: "#e8d187"
+          },
           headerSize: {
             home: 44,
-            explore: 44,
+            //explore: 44,
             sermons: 44,
             doctrines: 44,
             media: 44,
@@ -35,7 +44,7 @@ export default function RootLayout() {
           },
           labels: {
             home: 'Home',
-            explore: 'Explore',
+            //explore: 'Explore',
             sermons: 'Sermons',
             doctrines: 'Our Beliefs',
             media: 'Media',
@@ -45,7 +54,7 @@ export default function RootLayout() {
           },
           icons: {
             home: require('@/assets/images/tabIcons/home.png'),
-            explore: require('@/assets/images/tabIcons/explore.png'),
+            //explore: require('@/assets/images/tabIcons/explore.png'),
             sermons: require('@/assets/images/tabIcons/explore.png'),
             doctrines: require('@/assets/images/tabIcons/explore.png'),
             media: require('@/assets/images/tabIcons/explore.png'),
@@ -55,14 +64,24 @@ export default function RootLayout() {
           },
         }}
       >
-        <ExpoRouterDrawer.Screen name="index" />
-        <ExpoRouterDrawer.Screen name="explore" />
-        <ExpoRouterDrawer.Screen name="sermons" />
-        <ExpoRouterDrawer.Screen name="doctrines" />
-        <ExpoRouterDrawer.Screen name="media" />
-        <ExpoRouterDrawer.Screen name="live-service" />
-        <ExpoRouterDrawer.Screen name="donate" />
-        <ExpoRouterDrawer.Screen name="contact" />
+        <ExpoRouterDrawer.Screen name="index" options={{ 
+          title: "Home", 
+          headerTitleAlign: "left",
+          headerTitleStyle: {
+            fontSize: 24,
+            fontWeight: "bold",
+          },
+          headerStyle: {
+            height: 110,
+          }
+          }}/>
+        {/* <ExpoRouterDrawer.Screen name="explore" options={{ title: "Explore" }}/> */}
+        <ExpoRouterDrawer.Screen name="sermons" options={{ title: "Sermons" }}/>
+        <ExpoRouterDrawer.Screen name="doctrines" options={{ title: "Our Beliefs" }}/>
+        <ExpoRouterDrawer.Screen name="media" options={{ title: "Media" }}/>
+        <ExpoRouterDrawer.Screen name="live-service" options={{ title: "Live Service" }}/>
+        <ExpoRouterDrawer.Screen name="donate" options={{ title: "Donate" }}/>
+        <ExpoRouterDrawer.Screen name="contact" options={{ title: "Contact" }}/>
       </ExpoRouterDrawer>
     </ThemeProvider>
   );

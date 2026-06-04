@@ -45,9 +45,6 @@ export default function HomeScreen() {
             onPress={() => (navigation as any).openDrawer()}
             hitSlop={Spacing.two}
           >
-            <ThemedText type="default" style={styles.hamburgerText}>
-              {'☰'}
-            </ThemedText>
           </TouchableOpacity>
         </ThemedView>
 

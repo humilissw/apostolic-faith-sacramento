@@ -1,68 +1,89 @@
 const { hairlineWidth } = require('nativewind/theme');
+const { Colors } = require('@/constants/theme');
+
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: 'class',
   content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}'],
   presets: [require('nativewind/preset')],
-  theme: {
+ theme: {
     extend: {
       colors: {
-        border: 'hsl(var(--border))',
-        input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))',
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
-        primary: {
-          DEFAULT: 'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))',
+        background: {
+          DEFAULT: Colors.light.background,
+          dark: Colors.dark.background,
         },
-        secondary: {
-          DEFAULT: 'hsl(var(--secondary))',
-          foreground: 'hsl(var(--secondary-foreground))',
-        },
-        destructive: {
-          DEFAULT: 'hsl(var(--destructive))',
-          foreground: 'hsl(var(--destructive-foreground))',
-        },
-        muted: {
-          DEFAULT: 'hsl(var(--muted))',
-          foreground: 'hsl(var(--muted-foreground))',
-        },
-        accent: {
-          DEFAULT: 'hsl(var(--accent))',
-          foreground: 'hsl(var(--accent-foreground))',
-        },
-        popover: {
-          DEFAULT: 'hsl(var(--popover))',
-          foreground: 'hsl(var(--popover-foreground))',
+        foreground: {
+          DEFAULT: Colors.light.foreground,
+          dark: Colors.dark.foreground,
         },
         card: {
-          DEFAULT: 'hsl(var(--card))',
-          foreground: 'hsl(var(--card-foreground))',
+          DEFAULT: Colors.light.card,
+          dark: Colors.dark.card,
+          foreground: Colors.light.cardForeground,
+          'foreground-dark': Colors.dark.cardForeground,
         },
-      },
-      borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
-      },
-      borderWidth: {
-        hairline: hairlineWidth(),
-      },
-      keyframes: {
-        'accordion-down': {
-          from: { height: '0' },
-          to: { height: 'var(--radix-accordion-content-height)' },
+        popover: {
+          DEFAULT: Colors.light.popover,
+          dark: Colors.dark.popover,
+          foreground: Colors.light.popoverForeground,
+          'foreground-dark': Colors.dark.popoverForeground,
         },
-        'accordion-up': {
-          from: { height: 'var(--radix-accordion-content-height)' },
-          to: { height: '0' },
+        primary: {
+          DEFAULT: Colors.light.primary,
+          dark: Colors.dark.primary,
+          foreground: Colors.light.primaryForeground,
+          'foreground-dark': Colors.dark.primaryForeground,
         },
-      },
-      animation: {
-        'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out',
+        secondary: {
+          DEFAULT: Colors.light.secondary,
+          dark: Colors.dark.secondary,
+          foreground: Colors.light.secondaryForeground,
+          'foreground-dark': Colors.dark.secondaryForeground,
+        },
+        muted: {
+          DEFAULT: Colors.light.muted,
+          dark: Colors.dark.muted,
+          foreground: Colors.light.mutedForeground,
+          'foreground-dark': Colors.dark.mutedForeground,
+        },
+        accent: {
+          DEFAULT: Colors.light.accent,
+          dark: Colors.dark.accent,
+          foreground: Colors.light.accentForeground,
+          'foreground-dark': Colors.dark.accentForeground,
+        },
+        destructive: {
+          DEFAULT: Colors.light.destructive,
+          dark: Colors.dark.destructive,
+          foreground: Colors.light.destructiveForeground,
+          'foreground-dark': Colors.dark.destructiveForeground,
+        },
+        border: {
+          DEFAULT: Colors.light.border,
+          dark: Colors.dark.border,
+        },
+        input: {
+          DEFAULT: Colors.light.input,
+          dark: Colors.dark.input,
+        },
+        ring: {
+          DEFAULT: Colors.light.ring,
+          dark: Colors.dark.ring,
+        },
+        'background-element': {
+          DEFAULT: Colors.light.backgroundElement,
+          dark: Colors.dark.backgroundElement,
+        },
+        'background-selected': {
+          DEFAULT: Colors.light.backgroundSelected,
+          dark: Colors.dark.backgroundSelected,
+        },
+        'text-secondary': {
+          DEFAULT: Colors.light.textSecondary,
+          dark: Colors.dark.textSecondary,
+        },
       },
     },
   },
