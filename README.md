@@ -1,61 +1,36 @@
-[![Main Workflow (parent triggers others)](https://github.com/humilissw/apostolic-faith-sacramento/actions/workflows/main.yml/badge.svg)](https://github.com/humilissw/apostolic-faith-sacramento/actions/workflows/main.yml)
-# apostolic-faith-sacramento
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-Mono Repo for AFC Sacramento
+## Getting Started
 
-## Documentation
-
-- [Architecture](./ARCHITECTURE.md) - System architecture, design patterns, and API reference
-- [Database Schema](./erDiagram.mmd) - Entity-relationship diagram (Mermaid)
-- [Backend](./src/be/CLAUDE.md) - Backend development guide
-- [Frontend](./src/fe/CLAUDE.md) - Frontend development guide
-
-# Generate an SSL-cert
-
-## Linux/Mac OS
-
-- Template:
-```bash
-openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -sha256 -days 3650 -nodes -subj "/C=XX/ST=StateName/L=CityName/O=CompanyName/OU=CompanySectionName/CN=CommonNameOrHostname"
-```
-
-- Example:
-```bash
-openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -sha256 -days 3650 -nodes -subj "/C=XX/ST=StateName/L=CityName/O=CompanyName/OU=CompanySectionName/CN=localhost"
-```
-
-# Generates public and private keys for decrypting tokens
-```bash
-openssl genrsa -out private.pem 2048
-```
+First, run the development server:
 
 ```bash
-openssl rsa -in private.pem -outform PEM -pubout -out public.pemowers
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-## Windows
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-1. Install Chocolatey.
-2. Install mkcert.
-3. Setup mkcert.
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-### Mkcert configuration
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-- Installing the root CA:
-```pwsh
-mkcert -install
-```
+## Learn More
 
-- Select "Yes/OK" to install the root CA.
+To learn more about Next.js, take a look at the following resources:
 
-- Generate a self-signed certificate for localhost. Place this in infrastructure/certs.
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-```pwsh
-mkcert -key-file key.pem -cert-file cert.pem example.com *.example.com localhost
-```
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-# setup precommit
+## Deploy on Vercel
 
-`pipx install pre-commit`
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-`pre-commit install`
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
