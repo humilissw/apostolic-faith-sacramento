@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "godaddy-nodejs-hosting": {
+      "source": "godaddy/nodejs-hosting-agent-skill",
+      "sourceType": "github",
+      "skillPath": "skills/godaddy-nodejs-hosting/SKILL.md",
+      "computedHash": "5c4cceeaf0b2ce52571c3e2f2a67fd5a3892cfaee7a411a0e3bff08bda23a53a"
+    }
+  }
+}
