@@ -14,9 +14,9 @@ const nextConfig = {
 
   // Optional: Change the output directory `out` -> `dist`
   // distDir: 'dist',
-  experimental: {
-    turbo: undefined
-  }
+  // experimental: {
+
+  // }
 }
 
 module.exports = nextConfig
