@@ -135,7 +135,7 @@ export default function VideoUploadsPage() {
                           <h1 className="text-xl">{v.upload_name || "Untitled"}</h1>
                           <h1 className="text-black/40 font-normal">{v.speaker_name || "Unknown"}</h1>
                           <h1 className="text-black/40 font-normal">
-                            {new Date(v.created_on).toLocaleDateString("en-US")}
+                            {new Date(v.media_association_date).toLocaleDateString("en-US")}
                           </h1>
                         </div>
                       </div>
