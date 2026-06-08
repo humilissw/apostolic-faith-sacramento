@@ -16,7 +16,7 @@ print(
     "********--------App Settings loaded: "
     + str((settings.BACKEND_CORS_ORIGINS is not None and settings.BACKEND_CORS_ORIGINS != ""))
 )
-print("***** Route Path: " + settings.API_V1_STR)
+print("***** Route Path: " + "/" + settings.API_V1_STR)
 
 origins = [
     "http://localhost.tiangolo.com",
@@ -41,7 +41,7 @@ app = FastAPI(
     title=settings.PROJECT_NAME,
     description=settings.PROJECT_DESCRIPTION,
     version=settings.VERSION,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    openapi_url=f"/{settings.API_V1_STR}/openapi.json",
     # generate_unique_id_function=custom_generate_unique_id,
 )
 
@@ -61,7 +61,7 @@ try:
     }
     app.security = [{"OAuth2PasswordBearer": [s.value for s in Scope]}]
 
-    app.include_router(api_router, prefix=settings.API_V1_STR)
+    app.include_router(api_router, prefix= "/" +settings.API_V1_STR)
 
     templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 
