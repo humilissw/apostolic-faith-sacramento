@@ -44,9 +44,9 @@ export default function Home() {
         </div>
       </div>
     </div>
-    <div className="flex flex-col md:flex-row justify-center items-center gap-8 md:gap-20 bg-white px-6 md:px-16 py-12 md:py-15 -mt-8">
+    <div className="flex flex-col md:flex-row justify-center items-center md:gap-20 bg-white px-6 md:px-16 py-12 md:py-15">
       <div className="w-full md:w-2xl">
-        <h1 className="font-noto-sans text-3xl sm:text-4xl md:text-5xl font-light pb-5">Welcome!</h1>
+        <h1 className="font-noto-sans text-center md:text-left text-3xl sm:text-4xl md:text-5xl font-light">Welcome!</h1>
           <HomepageParagraph />
         </div>
       <div className="w-full md:w-auto flex md:block justify-center">

@@ -107,9 +107,9 @@ export default function Navbar() {
   }
 
   if (isAuthenticated && enableVideoUploads) {
-    //navItems.push([
-    //  { title: "Video Uploads", url: "/video-uploads/", icon: Video },
-    //]);
+    navItems.push([
+      { title: "Video Uploads", url: "/video-uploads/", icon: Video },
+    ]);
   }
 
   if (isAuthenticated && enableSchedulerCalendar && (auth.hasScope("scheduler:admin") || auth.hasScope("member:limited"))) {
@@ -123,7 +123,7 @@ export default function Navbar() {
       schedulerItems.push({ title: "My Scheduler", url: "/my-scheduler/", icon: Calendar });
     }
     if (schedulerItems.length > 0) {
-      //navItems.push(schedulerItems);
+      navItems.push(schedulerItems);
     }
   }
 
@@ -142,7 +142,7 @@ export default function Navbar() {
       adminItems.push({ title: "Feature Flags", url: "/flags-admin/", icon: ToggleRight });
     }
     if (adminItems.length > 0) {
-      //navItems.push(adminItems);
+      navItems.push(adminItems);
     }
   }
 
