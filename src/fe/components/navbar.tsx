@@ -147,15 +147,12 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="bg-white border-b">
-      <div className="mx-auto px-4 py-3">
-        <div className="flex justify-between items-center px-5">
-          <div className="flex">
+    <nav className="flex items-centerbg-white border-b py-4 px-6">
+          <div className="flex flex-1">
             <AFCLogo width={120} height={145} />
           </div>
 
 
-          <div className="flex items-center">
 
             <div className="flex gap-6">
               {navItems.map((group) =>
@@ -175,35 +172,7 @@ export default function Navbar() {
               )}
             </div>
 
-            
-            
-
-      
-
-{/*
-            <div className="flex justify-center px-6 py-8 gap-8">
-                <AnimatedSheet
-                  open={open}
-                  onOpenChange={setOpen}
-                  title="Upload a Video"
-                  className="max-w-lg"
-                  triggerContent={
-                    <Button className="font-noto-sans bg-white text-black text-lg px-8 py-6">
-                      Hamburger
-                    </Button>
-                  }
-                >
-                  <div className="mt-4 pb-6 px-2">
-                    putting this here
-                  </div>
-                </AnimatedSheet>
-              </div>
-              */}
-
-
-
-
-            <div className="flex items-center gap-2 ml-4">
+            <div className="flex flex-1 items-center justify-end gap-2 ml-4">
               {isAuthenticated ? (
                 <Button
                   className="font-noto-sans bg-white text-black hover:bg-gray-700"
@@ -223,7 +192,6 @@ export default function Navbar() {
                 </Link>
               )}
             </div>
-          </div>
 
           {isAuthenticated && (
             <>
@@ -235,8 +203,6 @@ export default function Navbar() {
               </div>
             </>
           )}
-        </div>
-      </div>
     </nav>
   );
 }
