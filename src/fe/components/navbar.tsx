@@ -27,6 +27,7 @@ import {
 import AFCLogo from "@/components/afc-logo";
 import { AnimatedSheet } from "./animated-sheet";
 import { useState } from "react";
+import { AdminMenu } from "./admin-drawer-menu";
 
 const publicNav = [
   { title: "Home", url: "/", icon: Home },
@@ -53,12 +54,10 @@ function NavItemLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
 
   return item.external ? (
     <a href={item.url} target="_blank" rel="noopener noreferrer" className={className}>
-      {/*<item.icon className="h-4 w-4" />*/}
       {item.title}
     </a>
   ) : (
     <Link href={item.url} className={className}>
-      {/*<item.icon className="h-4 w-4" />*/}
       {item.title}
     </Link>
   );
@@ -106,55 +105,13 @@ export default function Navbar() {
     }
   }
 
-  if (isAuthenticated && enableVideoUploads) {
-    navItems.push([
-      { title: "Video Uploads", url: "/video-uploads/", icon: Video },
-    ]);
-  }
-
-  if (isAuthenticated && enableSchedulerCalendar && (auth.hasScope("scheduler:admin") || auth.hasScope("member:limited"))) {
-    const schedulerItems: NavItem[] = [
-      { title: "Scheduler Calendar", url: "/scheduler-calendar/", icon: Calendar },
-    ];
-    if (auth.hasScope("scheduler:admin") && enableSchedulerAdmin) {
-      schedulerItems.push({ title: "Scheduler Admin", url: "/scheduler-admin/", icon: Calendar });
-    }
-    if (enableMyScheduler && (auth.hasScope("scheduler:admin") || auth.hasScope("member:limited"))) {
-      schedulerItems.push({ title: "My Scheduler", url: "/my-scheduler/", icon: Calendar });
-    }
-    if (schedulerItems.length > 0) {
-      navItems.push(schedulerItems);
-    }
-  }
-
-  if (isAuthenticated && auth.hasScope("superuser")) {
-    const adminItems: NavItem[] = [];
-    if (enableUsersAdmin) {
-      adminItems.push({ title: "User Management", url: "/users-admin/", icon: Users });
-    }
-    if (enableVideoUploadsAdmin) {
-      adminItems.push({ title: "Video Upload Admin", url: "/video-uploads-admin/", icon: Film });
-    }
-    if (enableIntegrations) {
-      adminItems.push({ title: "Integrations", url: "/integrations/", icon: Settings });
-    }
-    if (enableFlagsAdmin) {
-      adminItems.push({ title: "Feature Flags", url: "/flags-admin/", icon: ToggleRight });
-    }
-    if (adminItems.length > 0) {
-      navItems.push(adminItems);
-    }
-  }
-
   return (
     <nav className="flex items-centerbg-white border-b py-4 px-6">
-          <div className="flex flex-1">
+          <div className="flex flex-col gap-3 flex-1">
             <AFCLogo width={120} height={145} />
           </div>
 
-
-
-            <div className="flex gap-6">
+            <div className="flex items-center gap-4">
               {navItems.map((group) =>
                 group.map((item) => (
                   <NavItemLink
@@ -171,8 +128,9 @@ export default function Navbar() {
                 ))
               )}
             </div>
-
+              
             <div className="flex flex-1 items-center justify-end gap-2 ml-4">
+              {isAuthenticated && <AdminMenu />}
               {isAuthenticated ? (
                 <Button
                   className="font-noto-sans bg-white text-black hover:bg-gray-700"
