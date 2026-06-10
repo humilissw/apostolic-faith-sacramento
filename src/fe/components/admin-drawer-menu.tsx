@@ -75,7 +75,6 @@ function DrawerItemLink({ item, isActive }: { item: DrawerItem; isActive: boolea
   );
 }
 
-
 export function AdminMenu() {
       const auth = useAuth();
       const pathname = usePathname();
@@ -142,12 +141,14 @@ export function AdminMenu() {
   return (
     <Drawer open={open} onOpenChange={setOpen} direction="right">
       <DrawerTrigger asChild>
-        <Button onClick={() => setOpen(true)} className="w-22 bg-zinc-300 hover:bg-zinc-400" variant="outline">Admin <ShieldIcon className="w-4 h-4" /></Button>
+        <Button onClick={() => setOpen(true)} className="bg-zinc-300 hover:bg-zinc-400" variant="outline" size="sm">Admin <ShieldIcon className="w-4 h-4" /></Button>
       </DrawerTrigger>
       <DrawerContent aria-describedby={undefined}>
         <DrawerHeader className="flex flex-row justify-between pb-3 ">
           <DrawerTitle className="">Admin Menu</DrawerTitle>
-          <button onClick={() => setOpen(false)}><XIcon color="gray"/></button>
+          <button onClick={() => setOpen(false)}>
+            <XIcon color="gray"/>
+          </button>
         </DrawerHeader>
             <div>
                 {drawerItems.map((group) =>
@@ -165,6 +166,12 @@ export function AdminMenu() {
                   />
                 ))
               )}
+              <button 
+                className = "flex justify-start items-center rounded-md h-auto w-full text-sm p-4 transition-colors gap-2 border-t text-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" 
+                onClick={() => auth.logout()}
+              >
+                <CircleUserRound className="w-4 h-4"/> Log out
+              </button>
             </div>
       </DrawerContent>
     </Drawer>

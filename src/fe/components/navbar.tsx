@@ -28,6 +28,7 @@ import AFCLogo from "@/components/afc-logo";
 import { AnimatedSheet } from "./animated-sheet";
 import { useState } from "react";
 import { AdminMenu } from "./admin-drawer-menu";
+import { ProfileDropdown } from "./profile-dropdown";
 
 const publicNav = [
   { title: "Home", url: "/", icon: Home },
@@ -106,7 +107,7 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="flex items-centerbg-white border-b py-4 px-6">
+    <nav className="flex items-centerbg-white border-b py-4 px-8">
           <div className="flex flex-col gap-3 flex-1">
             <AFCLogo width={120} height={145} />
           </div>
@@ -132,13 +133,9 @@ export default function Navbar() {
             <div className="flex flex-1 items-center justify-end gap-2 ml-4">
               {isAuthenticated && <AdminMenu />}
               {isAuthenticated ? (
-                <Button
-                  className="font-noto-sans bg-white text-black hover:bg-gray-700"
-                  size="sm"
-                  onClick={() => auth.logout()}
-                >
-                  <CircleUserRound className="h-10 w-10 mr-1" />
-                </Button>
+                <div>
+                  <ProfileDropdown />
+                </div>
               ) : (
                 <Link href="/login/">
                   <Button
@@ -151,16 +148,6 @@ export default function Navbar() {
               )}
             </div>
 
-          {isAuthenticated && (
-            <>
-              <div className="flex items-center gap-3 pt-1 pb-2">
-                <User className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">
-                  {isAuthenticated ? "Signed in" : "Guest"}
-                </span>
-              </div>
-            </>
-          )}
     </nav>
   );
 }
