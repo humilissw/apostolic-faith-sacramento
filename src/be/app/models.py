@@ -235,6 +235,10 @@ class DefaultBase(SQLModel):
     )
     updated_on: datetime.datetime = Field(nullable=True)
 
+class ArchivedMedia(DefaultBase, table=True):
+    __tablename__ = "archived_media"
+    file_location: Optional[str] = Field(max_length=1000, nullable=False)
+
 
 class Member(DefaultBase, table=True):  # type: ignore[call-arg]
     __tablename__ = "members"
