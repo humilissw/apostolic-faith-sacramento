@@ -95,6 +95,12 @@ KNOWN_FEATURE_FLAGS: dict[str, dict[str, str | list[str]]] = {
         "icon": "ToggleRight",
         "required_scopes": ["superuser"],
     },
+    "enable_archived_media": {
+        "display_name": "Archived Media",
+        "description": "Show the archived media page",
+        "icon": "ToggleRight",
+        "required_scopes": ["superuser"],
+    }
 }
 
 
