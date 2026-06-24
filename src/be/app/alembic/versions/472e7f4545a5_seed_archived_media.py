@@ -13,6 +13,7 @@ from sqlalchemy.dialects import mysql
 import os
 import json
 from app.config import settings
+import uuid
 
 
 # revision identifiers, used by Alembic.
@@ -29,8 +30,8 @@ def upgrade() -> None:
         data = json.load(f)
     
     media = [
-        {"id": key, "file_location": value}
-        for key, value in data.items()
+        {"id": str(uuid.uuid4()), "file_location": value}
+        for value in data.values()
         if "zoom" not in value
     ]
 
