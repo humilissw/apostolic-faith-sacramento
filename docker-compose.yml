@@ -1,40 +1,99 @@
 services:
+  # ---- API Gateway (Traefik reverse proxy with TLS) -------------------------
+  gateway:
+    image: traefik:v3.3
+    container_name: gateway
+    restart: unless-stopped
+    expose:
+      - "80"
+      - "443"
+      - "8443"   # internal healthcheck entrypoint (webapi) — docker-net only
+    ports:
+      - "80:80"
+      - "443:443"
+      # Dashboard disabled — for local dev use `docker exec gateway traefik api` instead
+    volumes:
+      - ./infrastructure/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./infrastructure/traefik/dynamic/:/etc/traefik/dynamic:ro
+      # Use matching self-signed SSL cert pair for localhost dev
+      - ./infrastructure/certs:/etc/traefik/certs:rw
+      - ./infrastructure/traefik/letsencrypt:/letsencrypt:rw
+    depends_on:
+      - backend
+      - frontend
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - app
+
+  # ---- Backend (FastAPI) ---------------------------------------------------
   backend:
     build:
       context: src/be
       dockerfile: Dockerfile
+    restart: unless-stopped
     env_file:
       - src/be/.env
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"       # accessible within Docker network; NOT published to host
     networks:
       - app
     depends_on:
       - database
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://gateway:8443/api/v1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s        # allows time for DB migrations at startup
     environment:
-      - DB_SERVER=mariadb
+      - DB_SERVER=database
       - DB_PORT=3306
       - ENVIRONMENT=local
 
+  # ---- Frontend (Next.js dev on port 3000) ---------------------------------
   frontend:
     build:
       context: src/fe
       dockerfile: Dockerfile
-    ports:
-      - "3000:80"
+      args:
+        # Empty string → relative URL so requests go through Traefik gateway, not direct to backend
+        NEXT_PUBLIC_API_URL: ""
+        NEXT_PUBLIC_FEATURE_FLAG_DEFAULTS: '[\"home\",\"doctrines\",\"sermons\",\"live_service\",\"media\",\"donate\",\"contact\"]'
+        NEXT_PUBLIC_STRIPE_CURRENCY: "usd"
+    restart: unless-stopped
+    expose:
+      - "3000"       # accessible within Docker network; NOT published to host
     networks:
       - app
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
 
+  # ---- Database ------------------------------------------------------------
   database:
     image: mariadb:12.1-ubi
     env_file:
       - infrastructure/db/db.env
-    ports:
-      - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
     networks:
       - app
+    healthcheck:
+      test: ["CMD", "mariadb-admin", "-u'$$MYSQL_ROOT_USER'", "-p'$$MYSQL_ROOT_PASSWORD'", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
 networks:
   app:
