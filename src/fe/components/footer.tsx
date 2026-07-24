@@ -1,6 +1,6 @@
 'use client';
 
-import AFCLogo from "@/components/afc-logo";
+import AFCLogoWhite from "@/components/afc-logo-white";
 import Link from "next/link";
 import { FaFacebookSquare, FaRegCopyright } from "react-icons/fa";
 import { IoLocationOutline, IoLogoYoutube, IoMailOutline } from "react-icons/io5";
@@ -13,7 +13,7 @@ export default function Footer() {
 
             <div className="flex flex-col gap-10 pt-7 pl-5 pb-10 md:flex-row md:gap-20 ">
                 <div className="hidden md:flex md:flex-col">
-                    <AFCLogo width={175} height={175}/>
+                    <AFCLogoWhite width={175} height={175}/>
                     <div className="flex flex-row items-center justify-center gap-5 md:gap-5">
                         <Link href="https://www.facebook.com/p/Sacramento-AFC-100064440229528/" aria-label="Go to Apostolic Faith Church - Sacramento Facebook Page" target="_blank" rel="noopener noreferrer"> <FaFacebookSquare size="25"/> </Link>
                         <Link href="https://www.youtube.com/@ApostolicFaithSacramento" aria-label="Go to Apostolic Faith Church - Sacramento YouTube Channel" target="_blank" rel="noopener noreferrer"> <IoLogoYoutube size="25"/> </Link>

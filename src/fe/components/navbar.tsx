@@ -47,7 +47,7 @@ interface NavItem {
 }
 
 function NavItemLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
-  const className = `flex justify-center items-center rounded-md h-auto w-30 text-sm transition-colors ${
+  const className = `flex justify-center items-center rounded-md h-8 w-30 text-sm transition-colors ${
     isActive
       ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
       : "text-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
