@@ -95,14 +95,15 @@ class Settings(BaseSettings):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def SQLALCHEMY_ASYNC_DATABASE_URI(self) -> MySQLDsn:
-        return MySQLDsn.build(
+        url = MySQLDsn.build(
             scheme="mysql+asyncmy",
             username=self.DB_USER,
             password=self.DB_PASSWORD,
             host=self.DB_SERVER,
-            port=self.DB_PORT,
+            port=int(self.DB_PORT),
             path=self.DB_DB,
         )
+        return url
 
 
 settings = Settings()

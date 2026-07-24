@@ -76,3 +76,9 @@ pipx install poetry
 ```
 
 # Housekeeping stuff
+
+## Running
+
+```bash
+uvicorn app.main:app --reload --ssl-certfile=security_keys/cert.pem --ssl-keyfile=security_keys/cert_key.pem
+```
