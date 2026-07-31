@@ -1,6 +1,9 @@
 # Pre-commit configuration for Apostolic Faith Sacramento
 # Install with: pre-commit install
 
+# Exclude mobile directory from all hooks
+exclude: '^src/mobile/'
+
 repos:
   # General checks
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -50,7 +53,7 @@ repos:
     rev: 1.8.0
     hooks:
       - id: bandit
-        args: ['-c', 'src/be/pyproject.toml', '-r', 'app/']
+        args: ['-c', 'src/be/pyproject.toml', '-r', 'src/be/app/']
 
   # Documentation
   - repo: https://github.com/editorconfig-checker/editorconfig-checker

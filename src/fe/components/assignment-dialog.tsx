@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Check, X } from "lucide-react";
 import { toast } from "sonner";
 import type { Assignment } from "@/lib/api";
 import { createAssignment, updateAssignment } from "@/lib/api";
@@ -14,7 +15,7 @@ interface AssignmentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   assignment: Assignment | null;
-  users?: Array<{ id: string; email: string }>;
+  users?: Array<{ id: string; email: string; full_name?: string }>;
   onSuccess: () => void;
 }
 
@@ -46,9 +47,36 @@ export default function AssignmentDialog({
   const [formInstrument, setFormInstrument] = useState(assignment?.instrument ?? "");
   const [formNotes, setFormNotes] = useState(assignment?.notes ?? "");
 
+  // Typeahead user select state
+  const [userQuery, setUserQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const typeaheadRef = useRef<HTMLDivElement>(null);
+
+  const typedUser = users.find((u) => u.id === formUserId);
+
+  const matchedUsers = userQuery.trim() === ""
+    ? []
+    : users.filter((u) =>
+        u.email.toLowerCase().includes(userQuery.toLowerCase())
+        || (u.full_name && u.full_name.toLowerCase().includes(userQuery.toLowerCase()))
+      );
+
+  // Close suggestions on click outside
+  useEffect(() => {
+    if (!showSuggestions) return;
+    const handler = (e: MouseEvent) => {
+      if (typeaheadRef.current && !typeaheadRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showSuggestions]);
+
   // Sync form when a new assignment is selected
   useEffect(() => {
     if (!assignment) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFormUserId(assignment.user_id);
     setFormEventDate(new Date(assignment.event_date).toISOString().split("T")[0]);
     setFormType(assignment.type);
@@ -99,11 +127,10 @@ export default function AssignmentDialog({
     }
   };
 
-  const selectedUser = users.find((u) => u.id === formUserId);
-
   return (
     <Dialog open={open} onOpenChange={(val) => {
       if (!val) {
+        setShowSuggestions(false);
         // Reset form fields when closing
         if (assignment) {
           setFormUserId(assignment.user_id);
@@ -130,25 +157,60 @@ export default function AssignmentDialog({
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="user_id">User</Label>
-            <Select value={formUserId} onValueChange={setFormUserId}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a user" />
-              </SelectTrigger>
-              <SelectContent>
-                {users.length === 0 && (
-                  <SelectItem value="__none" disabled>
-                    No users available
-                  </SelectItem>
-                )}
-                {users.map((u) => (
-                  <SelectItem key={u.id} value={u.id}>
-                    {u.email}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {selectedUser && (
-              <p className="text-xs text-muted-foreground">{selectedUser.email}</p>
+            <div ref={typeaheadRef} className="relative">
+              <Input
+                type="text"
+                placeholder="Search for a user..."
+                value={typedUser ? typedUser.email : userQuery}
+                onChange={(e) => {
+                  setUserQuery(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => {
+                  if (!typedUser) setShowSuggestions(true);
+                }}
+                className="w-full"
+              />
+              {typedUser && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormUserId("");
+                    setUserQuery("");
+                    setShowSuggestions(true);
+                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+              {showSuggestions && !typedUser && matchedUsers.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                  {matchedUsers.map((u) => (
+                    <button
+                      key={u.id}
+                      type="button"
+                      onClick={() => {
+                        setFormUserId(u.id);
+                        setUserQuery("");
+                        setShowSuggestions(false);
+                      }}
+                      className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-muted transition-colors"
+                    >
+                      <Check className="w-3.5 h-3.5 shrink-0 text-blue-600" />
+                      <div className="flex-1 min-w-0">
+                        <div className="truncate">{u.email}</div>
+                        {u.full_name && (
+                          <div className="text-xs text-muted-foreground truncate">{u.full_name}</div>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            {typedUser && (
+              <p className="text-xs text-muted-foreground">{typedUser.email}</p>
             )}
           </div>
           <div className="space-y-2">

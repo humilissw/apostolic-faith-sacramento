@@ -102,6 +102,7 @@ origins = [
     "https://pre.afcsacramento.org",
     "https://afcsacramento.org",
     "https://www.afcsacramento.org",
+    "https://www.pre.afcsacramento.org",
 ]
 
 route_prefix = f"/{settings.API_V1_STR}"

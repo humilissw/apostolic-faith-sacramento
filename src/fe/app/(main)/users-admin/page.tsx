@@ -9,6 +9,8 @@ import {
   ChevronUp,
   ArrowUpDown,
   UserPlus,
+  Search,
+  X,
 } from "lucide-react";
 import {
   fetchUsersWithScopes,
@@ -47,6 +49,23 @@ export default function UsersAdminPage() {
   const [total, setTotal] = useState(0);
   const hasMore = total > 0 && users.length < total;
 
+  // Search/filter state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterScopes, setFilterScopes] = useState<string[]>([]);
+  const [scopeFilterOpen, setScopeFilterOpen] = useState(false);
+  const scopeFilterRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!scopeFilterOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (scopeFilterRef.current && !scopeFilterRef.current.contains(e.target as Node)) {
+        setScopeFilterOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [scopeFilterOpen]);
+
   type SortDir = "asc" | "desc";
   const [sortCol, setSortCol] = useState<number | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>("asc");
@@ -72,6 +91,32 @@ export default function UsersAdminPage() {
       return dir * cmp;
     });
   }, [users, sortCol, sortDir]);
+
+  // All unique scopes from current users
+  const allScopes = useMemo(() => {
+    const s = new Set<string>();
+    users.forEach((u) => u.assigned_scopes.forEach((sc) => s.add(sc)));
+    return Array.from(s).sort();
+  }, [users]);
+
+  // Apply search + scope filters to sorted users
+  const filteredUsers = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    let list = sortedUsers;
+    if (q) {
+      list = list.filter((u) =>
+        u.email.toLowerCase().includes(q)
+        || (u.full_name && u.full_name.toLowerCase().includes(q))
+        || u.assigned_scopes.some((sc) => sc.toLowerCase().includes(q))
+      );
+    }
+    if (filterScopes.length > 0) {
+      list = list.filter((u) =>
+        filterScopes.every((fs) => u.assigned_scopes.includes(fs))
+      );
+    }
+    return list;
+  }, [sortedUsers, searchQuery, filterScopes]);
 
   const scrollBodyRef = useRef<HTMLDivElement>(null);
 
@@ -152,8 +197,8 @@ export default function UsersAdminPage() {
   };
 
   const toggleAll = () => {
-    if (selectedUsers.size === users.length) setSelectedUsers(new Set());
-    else setSelectedUsers(new Set(users.map((u) => u.id)));
+    if (selectedUsers.size === filteredUsers.length) setSelectedUsers(new Set());
+    else setSelectedUsers(new Set(filteredUsers.map((u) => u.id)));
   };
 
   const handleRemoveUser = async (id: string) => {
@@ -176,10 +221,11 @@ export default function UsersAdminPage() {
 
   const handleBulkDelete = async () => {
     if (!confirm(`Delete ${selectedUsers.size} selected users?`)) return;
+    const ids = Array.from(selectedUsers);
+    setSelectedUsers(new Set());
     try {
-      await deleteUsers(Array.from(selectedUsers));
-      setUsers((prev) => prev.filter((u) => !selectedUsers.has(u.id)));
-      setSelectedUsers(new Set());
+      await deleteUsers(ids);
+      setUsers((prev) => prev.filter((u) => !ids.includes(u.id)));
     } catch {
       setError("Failed to delete users");
     }
@@ -190,9 +236,9 @@ export default function UsersAdminPage() {
     setDialogOpen(true);
   };
 
-  const isAllSelected = users.length > 0 && selectedUsers.size === users.length;
+  const isAllSelected = filteredUsers.length > 0 && selectedUsers.size === filteredUsers.length;
   const isIndeterminate =
-    selectedUsers.size > 0 && selectedUsers.size < users.length;
+    selectedUsers.size > 0 && selectedUsers.size < filteredUsers.length;
 
   if (loading) {
     return (
@@ -234,7 +280,77 @@ export default function UsersAdminPage() {
         )}
       </div>
 
-      <div className="relative h-[calc(100vh-280px)] overflow-hidden flex flex-col">
+      {/* Search and filter bar */}
+      <div className="flex gap-2 mb-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search by email, name, or scope..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-9 h-9 border rounded-md px-3 text-sm"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+        <div className="relative">
+          <button
+            ref={scopeFilterRef}
+            onClick={() => setScopeFilterOpen(!scopeFilterOpen)}
+            className="h-9 px-3 border rounded-md text-sm flex items-center gap-1.5"
+          >
+            <ShieldCheck className="w-4 h-4" />
+            Scopes
+            {filterScopes.length > 0 && (
+              <span className="flex items-center justify-center w-4 h-4 rounded-full bg-blue-600 text-white text-[10px]">
+                {filterScopes.length}
+              </span>
+            )}
+            <ChevronDown className="w-3.5 h-3.5" />
+          </button>
+          {scopeFilterOpen && (
+            <div className="absolute right-0 mt-1 w-56 bg-popover border rounded-lg shadow-lg z-20 p-2 space-y-1">
+              {allScopes.length === 0 && (
+                <p className="text-xs text-muted-foreground px-2 py-1">No scopes found</p>
+              )}
+              {allScopes.map((scope) => (
+                <label key={scope} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm">
+                  <input
+                    type="checkbox"
+                    checked={filterScopes.includes(scope)}
+                    onChange={() => {
+                      setFilterScopes((prev) =>
+                        prev.includes(scope)
+                          ? prev.filter((s) => s !== scope)
+                          : [...prev, scope]
+                      );
+                    }}
+                    className="h-3.5 w-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  {scope}
+                </label>
+              ))}
+              {filterScopes.length > 0 && (
+                <button
+                  onClick={() => setFilterScopes([])}
+                  className="w-full text-left px-2 py-1.5 text-xs text-red-600 hover:bg-red-50 rounded"
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="relative h-[calc(100vh-340px)] overflow-hidden flex flex-col">
         <Card className="flex flex-col h-full">
           {/* Header — fixed table, never scrolls */}
           <div className="w-full shrink-0">
@@ -295,7 +411,7 @@ export default function UsersAdminPage() {
             </Table>
           </div>
           <p className="px-4 py-2 text-sm text-muted-foreground shrink-0">
-            Displaying {users.length} of {total} Users
+            Displaying {filteredUsers.length} of {total} Users
           </p>
           {/* Scrollable body — width synced to header */}
           <div
@@ -305,7 +421,7 @@ export default function UsersAdminPage() {
           >
             <Table className="w-full" style={{ tableLayout: "fixed" }}>
               <TableBody>
-                {sortedUsers.map((user) => (
+                {filteredUsers.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell
                       style={getBodyCellStyle(0)}

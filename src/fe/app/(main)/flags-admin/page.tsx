@@ -40,8 +40,16 @@ const KNOWN_FLAGS: Record<string, { displayName: string; icon: string }> = {
   enable_events_admin: { displayName: "Events Admin", icon: "Calendar" },
 };
 
+interface KnownFlagMeta {
+  display_name: string;
+  description: string;
+  icon: string;
+  required_scopes: string[];
+}
+
 export default function FlagsAdminPage() {
   const [flags, setFlags] = useState<FeatureFlagEntry[]>([]);
+  const [knownFlags, setKnownFlags] = useState<Record<string, KnownFlagMeta>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toggling, setToggling] = useState<string | null>(null);
@@ -50,8 +58,14 @@ export default function FlagsAdminPage() {
     let cancelled = false;
     async function load() {
       try {
-        const data = await fetchFeatureFlags();
-        if (!cancelled) setFlags(data.data);
+        const [flagsRes, knownRes] = await Promise.all([
+          fetchFeatureFlags(),
+          fetch(`${API_BASE}${API_V1}/feature-flags/known`).then((r) => r.json()),
+        ]);
+        if (!cancelled) {
+          setFlags(flagsRes.data);
+          setKnownFlags(knownRes);
+        }
       } catch (err) {
         if (!cancelled)
           setError(err instanceof Error ? err.message : "Failed to load");
@@ -59,6 +73,9 @@ export default function FlagsAdminPage() {
         if (!cancelled) setLoading(false);
       }
     }
+
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://localhost:8000/";
+    const API_V1 = "api/v1";
     load();
     return () => { cancelled = true; };
   }, []);
@@ -127,44 +144,64 @@ export default function FlagsAdminPage() {
               <TableHead>Flag Name</TableHead>
               <TableHead>Display Name</TableHead>
               <TableHead>Description</TableHead>
+              <TableHead>Required Scopes</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="w-20">Toggle</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {flags.map((flag) => (
-              <TableRow key={flag.id}>
-                <TableCell className="font-mono text-sm">{flag.name}</TableCell>
-                <TableCell>{KNOWN_FLAGS[flag.name]?.displayName ?? flag.name}</TableCell>
-                <TableCell className="text-muted-foreground">{flag.description}</TableCell>
-                <TableCell>
-                  <span
-                    className={
-                      flag.is_enabled
-                        ? "inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"
-                        : "inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600"
-                    }
-                  >
-                    {flag.is_enabled ? (
-                      <Check className="w-3 h-3" />
+            {flags.map((flag) => {
+              const scopes = knownFlags[flag.name]?.required_scopes ?? [];
+              return (
+                <TableRow key={flag.id}>
+                  <TableCell className="font-mono text-sm">{flag.name}</TableCell>
+                  <TableCell>{KNOWN_FLAGS[flag.name]?.displayName ?? flag.name}</TableCell>
+                  <TableCell className="text-muted-foreground">{flag.description}</TableCell>
+                  <TableCell>
+                    {scopes.length === 0 ? (
+                      <span className="text-muted-foreground">None (public)</span>
                     ) : (
-                      <X className="w-3 h-3" />
+                      <div className="flex flex-wrap gap-1">
+                        {scopes.map((scope) => (
+                          <span
+                            key={scope}
+                            className="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono bg-blue-50 text-blue-700 border border-blue-200"
+                          >
+                            {scope}
+                          </span>
+                        ))}
+                      </div>
                     )}
-                    {flag.is_enabled ? "Enabled" : "Disabled"}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={flag.is_enabled}
-                      onCheckedChange={(enabled) => handleToggle(flag.name, enabled)}
-                      disabled={toggling === flag.name}
-                    />
-                    <Label className="sr-only">{flag.name}</Label>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+                  </TableCell>
+                  <TableCell>
+                    <span
+                      className={
+                        flag.is_enabled
+                          ? "inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                          : "inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600"
+                      }
+                    >
+                      {flag.is_enabled ? (
+                        <Check className="w-3 h-3" />
+                      ) : (
+                        <X className="w-3 h-3" />
+                      )}
+                      {flag.is_enabled ? "Enabled" : "Disabled"}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={flag.is_enabled}
+                        onCheckedChange={(enabled) => handleToggle(flag.name, enabled)}
+                        disabled={toggling === flag.name}
+                      />
+                      <Label className="sr-only">{flag.name}</Label>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </Card>

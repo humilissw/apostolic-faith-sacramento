@@ -32,6 +32,7 @@ class UserBase(SQLModel):
 # Properties to receive via API on creation
 class UserCreate(UserBase):
     password: str = Field(min_length=8, max_length=128)
+    scopes: list[str] = Field(default_factory=list)
 
 
 class UserRegister(SQLModel):
@@ -464,6 +465,7 @@ class Assignment(DefaultBase, table=True):  # type: ignore[call-arg]
     role: str = Field(default="", max_length=200, nullable=False)
     instrument: str | None = Field(default=None, max_length=200)
     notes: str | None = Field(default=None, max_length=4000)
+    group_leader: bool = Field(default=False)
     __table_args__ = (
         saIndex("ix_assignments_user_id", "user_id"),
         saIndex("ix_assignments_event_date", "event_date"),
@@ -481,6 +483,7 @@ class AssignmentPublic(BaseModel):
     role: str
     instrument: str | None
     notes: str | None
+    group_leader: bool
     created_on: datetime.datetime
     updated_on: datetime.datetime | None
 

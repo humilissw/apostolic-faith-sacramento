@@ -6,6 +6,7 @@ import { render, screen } from '@testing-library/react'
 
 jest.mock('@/lib/api', () => ({
   fetchAssignments: jest.fn().mockResolvedValue({ data: [], count: 0 }),
+  fetchAllUsers: jest.fn().mockResolvedValue({ data: [], count: 0 }),
   fetchUsersWithScopes: jest.fn().mockResolvedValue({ data: [], count: 0 }),
   fetchMyTimeOffRequests: jest.fn().mockResolvedValue({ data: [], count: 0 }),
   deleteAssignment: jest.fn(),

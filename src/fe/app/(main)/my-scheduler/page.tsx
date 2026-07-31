@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Music, Users, Calendar as CalendarIcon, RefreshCw } from "lucide-react";
+import { Music, Users, Calendar as CalendarIcon, RefreshCw, Clock, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import {
   fetchMyAssignments,
+  fetchMyTimeOffRequests,
   type Assignment,
+  type TimeOffRequest,
 } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,6 +21,7 @@ import {
 
 export default function MySchedulerPage() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,8 +29,12 @@ export default function MySchedulerPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchMyAssignments();
-      setAssignments(data.data);
+      const [assgnRes, toRes] = await Promise.all([
+        fetchMyAssignments(),
+        fetchMyTimeOffRequests(),
+      ]);
+      setAssignments(assgnRes.data);
+      setTimeOffRequests(toRes.data);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to load";
       console.error("my-scheduler load failed:", msg);
@@ -136,6 +143,61 @@ export default function MySchedulerPage() {
           </TableBody>
         </Table>
       </Card>
+
+      <div className="mt-8">
+        <h2 className="text-2xl font-bold text-foreground mb-4 flex items-center gap-2">
+          <Clock className="w-5 h-5" />
+          Time Off Requests
+        </h2>
+        <Card>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Notes</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {timeOffRequests.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center py-16">
+                    <Clock className="w-8 h-8 mx-auto mb-3 text-muted-foreground" />
+                    <p className="text-muted-foreground">No time-off requests</p>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                timeOffRequests
+                  .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                  .map((req) => (
+                    <TableRow key={req.id}>
+                      <TableCell className="font-medium">
+                        {formatDate(req.date)}
+                      </TableCell>
+                      <TableCell>
+                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
+                          req.status === "approved"
+                            ? "bg-green-100 text-green-800"
+                            : req.status === "declined"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}>
+                          {req.status === "approved"
+                            ? <CheckCircle2 className="w-3 h-3" />
+                            : req.status === "declined"
+                            ? <XCircle className="w-3 h-3" />
+                            : <AlertCircle className="w-3 h-3" />}
+                          {req.status.charAt(0).toUpperCase() + req.status.slice(1)}
+                        </span>
+                      </TableCell>
+                      <TableCell className="max-w-xs truncate">{req.notes || "—"}</TableCell>
+                    </TableRow>
+                  ))
+              )}
+            </TableBody>
+          </Table>
+        </Card>
+      </div>
     </div>
   );
 }

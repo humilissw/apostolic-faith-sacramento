@@ -6,6 +6,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 
 jest.mock('@/lib/api', () => ({
   fetchMyAssignments: jest.fn().mockResolvedValue({ data: [], count: 0 }),
+  fetchMyTimeOffRequests: jest.fn().mockResolvedValue({ data: [], count: 0 }),
 }))
 
 const { fetchMyAssignments } = jest.requireMock('@/lib/api')

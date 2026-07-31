@@ -56,8 +56,8 @@ jest.unmock('@/app/(main)/video-uploads/page')
 
 function renderPage(mockFn?: jest.Mock) {
   if (mockFn) {
-    const { fetchWithAuth } = require('@/lib/api')
-    ;(fetchWithAuth as jest.Mock).mockImplementation(mockFn)
+    const api = jest.requireMock('@/lib/api')
+    ;(api.fetchWithAuth as jest.Mock).mockImplementation(mockFn)
   }
   const VideoUploadsPage = jest.requireActual('@/app/(main)/video-uploads/page').default
   return render(<VideoUploadsPage />)

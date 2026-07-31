@@ -4,68 +4,96 @@ from app.models import FeatureFlag
 from app.repositories.feature_flag_repo import FeatureFlagRepository
 
 # Known feature flags for all views
-KNOWN_FEATURE_FLAGS: dict[str, dict[str, str]] = {
-    "enable_home": {"display_name": "Home", "description": "Show the home page", "icon": "Home"},
+KNOWN_FEATURE_FLAGS: dict[str, dict[str, str | list[str]]] = {
+    "enable_home": {
+        "display_name": "Home",
+        "description": "Show the home page",
+        "icon": "Home",
+        "required_scopes": [],
+    },
     "enable_doctrines": {
         "display_name": "Doctrines",
         "description": "Show the doctrines page",
         "icon": "BookOpen",
+        "required_scopes": [],
     },
     "enable_contact": {
         "display_name": "Contact",
         "description": "Show the contact page",
         "icon": "Mail",
+        "required_scopes": [],
     },
-    "enable_media": {"display_name": "Media", "description": "Show the media page", "icon": "Film"},
+    "enable_media": {
+        "display_name": "Media",
+        "description": "Show the media page",
+        "icon": "Film",
+        "required_scopes": [],
+    },
     "enable_donate": {
         "display_name": "Donate",
         "description": "Show the donate page",
         "icon": "CreditCard",
+        "required_scopes": [],
     },
     "enable_sermon": {
         "display_name": "Sermons",
-        "description": "Show the sermon page",
+        "description": "Show the sermon page (external YouTube)",
         "icon": "Video",
+        "required_scopes": [],
     },
     "enable_live_service": {
         "display_name": "Live Service",
         "description": "Show the live service page",
         "icon": "Broadcast",
+        "required_scopes": [],
     },
     "enable_video_uploads": {
         "display_name": "Video Uploads",
         "description": "Show the video uploads page",
         "icon": "Video",
+        "required_scopes": ["authenticated"],
     },
     "enable_scheduler_calendar": {
         "display_name": "Scheduler Calendar",
         "description": "Show the scheduler calendar",
         "icon": "Calendar",
+        "required_scopes": ["scheduler:admin", "member:limited"],
     },
     "enable_scheduler_admin": {
         "display_name": "Scheduler Admin",
         "description": "Show the scheduler admin page",
         "icon": "Calendar",
+        "required_scopes": ["scheduler:admin"],
     },
     "enable_my_scheduler": {
         "display_name": "My Scheduler",
         "description": "Show the my scheduler page",
         "icon": "Calendar",
+        "required_scopes": ["scheduler:admin", "member:limited"],
     },
     "enable_users_admin": {
         "display_name": "Users Admin",
         "description": "Show the users admin page",
         "icon": "Users",
+        "required_scopes": ["superuser"],
     },
     "enable_video_uploads_admin": {
         "display_name": "Video Uploads Admin",
         "description": "Show the video uploads admin page",
         "icon": "Film",
+        "required_scopes": ["superuser"],
     },
     "enable_integrations": {
         "display_name": "Integrations",
         "description": "Show the integrations page",
         "icon": "Settings",
+        "required_scopes": ["superuser"],
+    },
+    "enable_flags_admin": {
+        "display_name": "Flags Admin",
+        "description": "Show the feature flags admin page",
+        "icon": "ToggleRight",
+        "required_scopes": ["superuser"],
     },
     "enable_events": {
         "display_name": "Events",

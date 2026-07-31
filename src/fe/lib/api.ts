@@ -452,6 +452,15 @@ export async function fetchUsersWithScopes(skip: number = 0, limit: number = 50)
   return body as UsersWithScopesResponse;
 }
 
+export async function fetchAllUsers(): Promise<UsersWithScopesResponse> {
+  const res = await fetchWithAuth(`${API_BASE}${API_V1}/users/admin/all`);
+  if (!res.ok) {
+    throw new Error("Failed to fetch all users");
+  }
+  const body = await res.json();
+  return body as UsersWithScopesResponse;
+}
+
 export async function setUserScopes(userId: string, scopes: string[]): Promise<string[]> {
   const res = await fetchWithAuth(
     `${API_BASE}${API_V1}/users/admin/${userId}/scopes`,
@@ -502,6 +511,7 @@ export interface CreateUserRequest {
   full_name?: string;
   is_active?: boolean;
   is_superuser?: boolean;
+  scopes?: string[];
 }
 
 export async function createUser(data: CreateUserRequest): Promise<UserWithScopes> {
@@ -590,11 +600,14 @@ export async function fetchAllVideoUploads(): Promise<{ data: VideoUploadAdmin[]
 export interface Assignment {
   id: string;
   user_id: string;
+  user_email: string;
+  user_full_name: string | null;
   event_date: string;
   type: "music" | "service";
   role: string;
   instrument: string | null;
   notes: string | null;
+  group_leader: boolean;
   created_on: string;
   updated_on: string | null;
 }
@@ -622,6 +635,31 @@ export interface AssignmentUpdateInput {
   instrument?: string | null;
   notes?: string | null;
   user_id?: string;
+}
+
+export interface BulkAssignEntry {
+  user_id: string;
+  role: string;
+  instrument: string | null;
+  notes: string | null;
+  group_leader: boolean;
+}
+
+export interface BulkAssignRequest {
+  event_date: string;
+  type: "music" | "service";
+  entries: BulkAssignEntry[];
+}
+
+export interface BulkAssignConflict {
+  user_id: string;
+  message: string;
+  conflicts?: AssignmentConflict[];
+}
+
+export interface BulkAssignResponse {
+  created: Assignment[];
+  conflicts: BulkAssignConflict[];
 }
 
 export interface AssignmentsResponse {
@@ -685,6 +723,19 @@ export async function deleteAssignment(id: string): Promise<void> {
   }
 }
 
+export async function bulkAssignAssignments(data: BulkAssignRequest): Promise<BulkAssignResponse> {
+  const res = await fetchWithAuth(`${API_BASE}${API_V1}/scheduler/bulk`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(body || "Failed to bulk assign assignments");
+  }
+  return res.json();
+}
+
 export async function fetchMyAssignments(): Promise<AssignmentsResponse> {
   const res = await fetchWithAuth(`${API_BASE}${API_V1}/scheduler/my-assignments`);
   if (!res.ok) {
@@ -699,6 +750,16 @@ export async function fetchCalendarAssignments(startDate: string, endDate: strin
   );
   if (!res.ok) {
     throw new Error("Failed to fetch calendar assignments");
+  }
+  return res.json();
+}
+
+export async function fetchCalendarWithNames(startDate: string, endDate: string): Promise<AssignmentsResponse> {
+  const res = await fetchWithAuth(
+    `${API_BASE}${API_V1}/scheduler/calendar-with-names?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`
+  );
+  if (!res.ok) {
+    throw new Error("Failed to fetch calendar with names");
   }
   return res.json();
 }
@@ -770,6 +831,17 @@ export async function declineTimeOffRequest(timeOffId: string): Promise<void> {
   if (!res.ok) {
     const body = await res.text();
     throw new Error(body || "Failed to decline time-off request");
+  }
+}
+
+export async function deleteTimeOffRequest(timeOffId: string): Promise<void> {
+  const res = await fetchWithAuth(
+    `${API_BASE}${API_V1}/scheduler/time-off-requests/${timeOffId}`,
+    { method: "DELETE" }
+  );
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(body || "Failed to delete time-off request");
   }
 }
 

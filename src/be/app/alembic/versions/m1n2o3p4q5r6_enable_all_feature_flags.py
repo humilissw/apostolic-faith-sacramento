@@ -22,7 +22,7 @@ KNOWN_FLAGS = [
     ("enable_contact", "Show the contact page"),
     ("enable_media", "Show the media page"),
     ("enable_donate", "Show the donate page"),
-    ("enable_sermon", "Show the sermon page"),
+    ("enable_sermon", "Show the sermon page (external YouTube)"),
     ("enable_live_service", "Show the live service page"),
     ("enable_video_uploads", "Show the video uploads page"),
     ("enable_scheduler_calendar", "Show the scheduler calendar"),
@@ -31,6 +31,7 @@ KNOWN_FLAGS = [
     ("enable_users_admin", "Show the users admin page"),
     ("enable_video_uploads_admin", "Show the video uploads admin page"),
     ("enable_integrations", "Show the integrations page"),
+    ("enable_flags_admin", "Show the feature flags admin page"),
 ]
 
 
