@@ -9,11 +9,17 @@ import { useState, useEffect } from 'react';
 import Calendar from "@/components/calendar";
 import TestCalendar from "@/components/test-calendar";
 
+import {
+  fetchEvents,
+  type Event,
+} from "@/lib/api";
+
 interface EventsData {
   image: string;
   eventTitle: string;
   description: string;
   date: string;
+  special: boolean;
   startTime: string;
   endTime: string;
 }
@@ -79,7 +85,7 @@ export default function Events() {
 
         <div className="flex flex-col justify-center py-15 sm:gap-15 sm:justify-center sm:py-20">
             <div className="flex min-w-[700px] sm:min-w-0 max-w-6xl mx-auto">
-                <Button onClick={handleEventButton} className={eventButtonStyle} size="default" variant="default">Upcoming Events</Button>
+                <Button onClick={handleEventButton} className={eventButtonStyle} size="default" variant="default">Special Events</Button>
                 <Button onClick={handleCalendarButton} className={calendarButtonStyle} size="default" variant="default">Calendar</Button>
             </div>
 
@@ -92,7 +98,7 @@ export default function Events() {
                         src={data.image}
                         width={300}
                         height={300}
-                        alt="Picture of a cross with Palm Sunday text"
+                        alt="Beige background with photo of cross"
                         className='w-90 h-30 md:h-60'
                         />
                         <div className='flex flex-col pl-5 font-medium font-noto-sans'>

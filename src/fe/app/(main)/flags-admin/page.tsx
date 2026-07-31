@@ -36,6 +36,8 @@ const KNOWN_FLAGS: Record<string, { displayName: string; icon: string }> = {
   enable_users_admin: { displayName: "Users Admin", icon: "Users" },
   enable_video_uploads_admin: { displayName: "Video Uploads Admin", icon: "Film" },
   enable_integrations: { displayName: "Integrations", icon: "Settings" },
+  enable_events: { displayName: "Events", icon: "Calendar" },
+  enable_events_admin: { displayName: "Events Admin", icon: "Calendar" },
 };
 
 export default function FlagsAdminPage() {

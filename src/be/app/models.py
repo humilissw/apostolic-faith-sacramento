@@ -235,6 +235,15 @@ class DefaultBase(SQLModel):
     updated_on: datetime.datetime = Field(nullable=True)
 
 
+class Event(DefaultBase, table=True):  # type: ignore[call-arg]
+    __tablename__ = "events"
+    title: str = Field(max_length=200, nullable=False)
+    description: str = Field(max_length=4000, nullable=True)
+    date: datetime.datetime = Field(nullable=False)
+    start_time: datetime.datetime = Field(nullable=False)
+    end_time: datetime.datetime = Field(nullable=False)
+
+
 class Member(DefaultBase, table=True):  # type: ignore[call-arg]
     __tablename__ = "members"
     first_name: str = Field(max_length=200, nullable=False)

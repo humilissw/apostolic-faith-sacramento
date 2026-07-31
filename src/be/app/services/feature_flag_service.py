@@ -67,6 +67,11 @@ KNOWN_FEATURE_FLAGS: dict[str, dict[str, str]] = {
         "description": "Show the integrations page",
         "icon": "Settings",
     },
+    "enable_events": {
+        "display_name": "Events",
+        "description": "Show the events page",
+        "icon": "Calendar",
+    },
 }
 
 
