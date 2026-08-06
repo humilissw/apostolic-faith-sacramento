@@ -25,7 +25,7 @@ async def get_readiness() -> str:
 @router.get(
     "/",
     response_model=EventsPublic,
-    dependencies=[require_scope("api:all")],
+    dependencies=[require_scope("superuser")],
 )
 async def read_events(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
     """
@@ -33,10 +33,13 @@ async def read_events(session: SessionDep, skip: int = 0, limit: int = 100) -> A
 
     Returns a list of all event entries with pagination.
     """
+    print("in here?")
     repository = EventRepository(session=session)
     events, total_count = await repository.get_all(skip=skip, limit=limit)
 
-    return EventsPublic(data=events, count=total_count)
+    return EventsPublic(
+        data=[EventPublic.model_validate(i.model_dump()) for i in events], 
+        count=total_count)
 
 
 @router.get(

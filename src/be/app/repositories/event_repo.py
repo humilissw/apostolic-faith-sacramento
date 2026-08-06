@@ -1,6 +1,7 @@
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.requests.event_request import EventCreate, EventUpdate
+from app.responses.event_response import EventPublic, EventsPublic
 from app.models import Event
 
 
@@ -65,6 +66,7 @@ class EventRepository:
         count_statement = select(func.count()).select_from(Event)
         count_result = await self.session.execute(count_statement)
         total_count = count_result.scalar()
+        print("making it here?")
 
         # Get paginated results
         statement = select(Event).offset(skip).limit(limit)

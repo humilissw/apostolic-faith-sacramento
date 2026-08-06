@@ -942,8 +942,10 @@ export interface EventsResponse {
 }
 
 export async function fetchEvents(): Promise<EventsResponse> {
-  const res = await fetchWithAuth(`${API_BASE}${API_V1}/events/`);
+  const res = await fetch(`${API_BASE}${API_V1}/events/`);
+  console.log("Res ", res);
   if (!res.ok) {
+    console.log("did i error")
     throw new Error("Failed to fetch events");
   }
   return res.json();

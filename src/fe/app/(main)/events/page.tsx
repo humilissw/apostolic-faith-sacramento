@@ -11,18 +11,12 @@ import TestCalendar from "@/components/test-calendar";
 
 import {
   fetchEvents,
+  type EventsResponse,
   type Event,
 } from "@/lib/api";
 
-interface EventsData {
-  image: string;
-  eventTitle: string;
-  description: string;
-  date: string;
-  special: boolean;
-  startTime: string;
-  endTime: string;
-}
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://localhost:8000/";
+const API_V1 = "api/v1";
 
 const options: Intl.DateTimeFormatOptions = {
   weekday: "long",
@@ -37,6 +31,9 @@ export default function Events() {
     const [eventsButton, setEventsButton] = useState(true);
     const [eventButtonStyle, setEventButtonStyle] = useState("rounded-none border-y border-l border-black shadow-lg bg-zinc-900 hover:text-white");
     const [calendarButtonStyle, setCalendarButtonStyle] = useState("rounded-none border-black border shadow-lg bg-white/70 hover:bg-zinc-200 text-zinc-900")
+    const [events, setEvents] = useState<Event[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     function handleCalendarButton () {
         setCalendarButton(true);
@@ -52,26 +49,30 @@ export default function Events() {
         setCalendarButtonStyle("rounded-none border border-black bg-white/70 shadow-lg hover:bg-zinc-200 text-zinc-900")
     }
 
-    const [eventsData, setEventsData] = useState([]);
-    const fetchData = async () => {
-    try {
-        const response = await fetch('/eventsData.json');
-        if (!response.ok) {
-        throw new Error(`Response status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        setEventsData(result);
-    } catch (error) {
-        if (error instanceof Error) {
-        console.error(error.message);
-        }
-    }
-}
-
     useEffect(() => {
-        fetchData();
-    }, [])
+        let cancelled = false;
+        async function load() {
+          try {
+            const res = await Promise.all([
+              fetchEvents(),
+              fetch(`${API_BASE}${API_V1}/events/`).then((r) => r.json()),
+            ]);
+            if (!cancelled) {
+              setEvents(res[0].data);
+            }
+          } catch (err) {
+            if (!cancelled)
+              setError(err instanceof Error ? err.message : "Failed to load");
+          } finally {
+            if (!cancelled) setLoading(false);
+          }
+        }
+    
+        const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://localhost:8000/";
+        const API_V1 = "api/v1";
+        load();
+        return () => { cancelled = true; };
+      }, []);
 
 
   return (
@@ -91,21 +92,21 @@ export default function Events() {
 
             {eventsButton && 
             <div className='grid grid-cols-2 gap-y-20 px-65 justify-items-center'>
-                {eventsData.map((data: EventsData, index) => 
+                {events.map((data: Event, index) => 
                     <div className='flex flex-col md:flex-row '
                     key={index}>
                         <Image
-                        src={data.image}
+                        src="/tempEventsPhoto.png"
                         width={300}
                         height={300}
                         alt="Beige background with photo of cross"
                         className='w-90 h-30 md:h-60'
                         />
                         <div className='flex flex-col pl-5 font-medium font-noto-sans'>
-                            <h1 className='text-3xl'>{data.eventTitle}</h1>
+                            <h1 className='text-3xl'>{data.title}</h1>
                             
                             <h1 className='text-black/40 font-normal'>{new Date(data.date).toLocaleDateString('en-US', options)}</h1>
-                            <h1 className='text-black/40 font-normal'>{new Date(data.startTime).toLocaleTimeString('en-US', { hour: "2-digit", minute: "2-digit" })} - {new Date(data.endTime).toLocaleTimeString('en-US', { hour: "2-digit", minute: "2-digit" })}</h1>
+                            <h1 className='text-black/40 font-normal'>{new Date(data.start_time).toLocaleTimeString('en-US', { hour: "2-digit", minute: "2-digit" })} - {new Date(data.end_time).toLocaleTimeString('en-US', { hour: "2-digit", minute: "2-digit" })}</h1>
                             <h1 className='text-lg pt-5'>{data.description}</h1>
                         </div>
                         
