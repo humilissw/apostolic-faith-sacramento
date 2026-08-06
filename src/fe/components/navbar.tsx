@@ -34,6 +34,7 @@ const publicNav = [
   { title: "Home", url: "/", icon: Home },
   { title: "Our Beliefs", url: "/doctrines/", icon: BookOpen },
   { title: "Sermons", url: "https://www.youtube.com/@ApostolicFaithSacramento/streams", external: true, icon: Video },
+  { title: "Events", url: "/events/", icon: Calendar },
   { title: "Media", url: "/media/", icon: Film },
   { title: "Donate", url: "/donate/", icon: CreditCard },
   { title: "Contact Us", url: "/contact/", icon: Mail },
@@ -75,6 +76,7 @@ export default function Navbar() {
   const enableMedia = useFeatureFlag("enable_media");
   const enableDonate = useFeatureFlag("enable_donate");
   const enableContact = useFeatureFlag("enable_contact");
+  const enableEvents = useFeatureFlag("enable_events");
   const enableVideoUploads = useFeatureFlag("enable_video_uploads");
   const enableSchedulerCalendar = useFeatureFlag("enable_scheduler_calendar");
   const enableSchedulerAdmin = useFeatureFlag("enable_scheduler_admin");

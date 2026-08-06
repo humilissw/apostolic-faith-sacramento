@@ -6,6 +6,7 @@ class EventPublic(BaseModel):
     id: str
     title: str
     description: str
+    date: datetime
     start_time: datetime
     end_time: datetime
     created_on: datetime

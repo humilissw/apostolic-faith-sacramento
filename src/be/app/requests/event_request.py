@@ -9,6 +9,7 @@ class EventCreate(BaseModel):
     event_id: str = Field(max_length=36)
     title: str = Field(max_length=200)
     description: str | None = Field(default=None, max_length=4000)
+    date: datetime.datetime
     start_time: datetime.datetime
     end_time: datetime.datetime
 
@@ -17,5 +18,6 @@ class EventUpdate(BaseModel):
 
     title: str | None = Field(default=None, max_length=200) 
     description: str | None = Field(default=None, max_length=4000)
+    date: datetime.datetime | None = None
     start_time: datetime.datetime | None = None
     end_time: datetime.datetime | None = None

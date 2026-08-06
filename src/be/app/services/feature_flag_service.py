@@ -100,6 +100,12 @@ KNOWN_FEATURE_FLAGS: dict[str, dict[str, str | list[str]]] = {
         "description": "Show the events page",
         "icon": "Calendar",
     },
+    "enable_events_admin": {
+        "display_name": "Events Admin",
+        "description": "Show the events admin page",
+        "icon": "Calendar",
+        "required_scopes": ["superuser"],
+    },
 }
 
 

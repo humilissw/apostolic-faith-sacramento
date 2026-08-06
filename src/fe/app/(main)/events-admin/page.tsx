@@ -83,27 +83,32 @@ export default function Events() {
             </div>
 
             {eventsButton && 
-            <div className='grid grid-cols-2 gap-y-20 px-65 justify-items-center'>
-                {events.map((data: Event, index) => 
-                    <div className='flex flex-col md:flex-row '
-                    key={index}>
-                        <Image
-                        src="/tempEventsPhoto.png"
-                        width={300}
-                        height={300}
-                        alt="Beige background with photo of cross"
-                        className='w-90 h-30 md:h-60'
-                        />
-                        <div className='flex flex-col pl-5 font-medium font-noto-sans'>
-                            <h1 className='text-3xl'>{data.title}</h1>
-                            
-                            <h1 className='text-black/40 font-normal'>{new Date(data.date).toLocaleDateString('en-US', { day: "2-digit", month: "short"})}</h1>
-                            <h1 className='text-black/40 font-normal'>{new Date(data.start_time).toLocaleTimeString('en-US', { hour: "2-digit", minute: "2-digit", hour12: true })} - {new Date(data.end_time).toLocaleTimeString('en-US', { hour: "2-digit", minute: "2-digit" })}</h1>
-                            <h1 className='text-lg pt-5'>{data.description}</h1>
+            <div className="flex flex-col justify-center items-center">
+                <div className='ustify-center items-center w-sm py-15 sm:gap-15 sm:justify-center sm:py-20'>
+                    <Button size="sm">Add Event</Button>
+                </div>
+                <div className='grid grid-cols-2 gap-y-20 px-65 justify-items-center'>
+                    {events.map((data: Event, index) =>
+                        <div className='flex flex-col md:flex-row '
+                        key={index}>
+                            <Image
+                            src="/tempEventsPhoto.png"
+                            width={300}
+                            height={300}
+                            alt="Beige background with photo of cross"
+                            className='w-90 h-30 md:h-60'
+                            />
+                            <div className='flex flex-col pl-5 font-medium font-noto-sans'>
+                                <h1 className='text-3xl'>{data.title}</h1>
+                
+                                <h1 className='text-black/40 font-normal'>{new Date(data.date).toLocaleDateString('en-US', { day: "2-digit", month: "short"})}</h1>
+                                <h1 className='text-black/40 font-normal'>{new Date(data.start_time).toLocaleTimeString('en-US', { hour: "2-digit", minute: "2-digit", hour12: true })} - {new Date(data.end_time).toLocaleTimeString('en-US', { hour: "2-digit", minute: "2-digit" })}</h1>
+                                <h1 className='text-lg pt-5'>{data.description}</h1>
+                            </div>
+                
                         </div>
-                        
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
             }
 
