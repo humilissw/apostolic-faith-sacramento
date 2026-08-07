@@ -3,7 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 
-export default function AFCLogoWhite(props: { width: number; height: number; }) {
+export default function AFCLogoGrey(props: { width: number; height: number; }) {
     return (
         <Link href="/" className="shrink-0">
             <Image

@@ -15,13 +15,6 @@ import {
   Film,
   CreditCard,
   Mail,
-  Calendar,
-  Users,
-  Settings,
-  ToggleRight,
-  User,
-  CircleUserRound,
-  Circle
 } from "lucide-react";
 
 import AFCLogo from "@/components/afc-logo";
@@ -87,14 +80,6 @@ export default function Navbar() {
   const enableMedia = useFeatureFlag("enable_media");
   const enableDonate = useFeatureFlag("enable_donate");
   const enableContact = useFeatureFlag("enable_contact");
-  const enableVideoUploads = useFeatureFlag("enable_video_uploads");
-  const enableSchedulerCalendar = useFeatureFlag("enable_scheduler_calendar");
-  const enableSchedulerAdmin = useFeatureFlag("enable_scheduler_admin");
-  const enableMyScheduler = useFeatureFlag("enable_my_scheduler");
-  const enableUsersAdmin = useFeatureFlag("enable_users_admin");
-  const enableVideoUploadsAdmin = useFeatureFlag("enable_video_uploads_admin");
-  const enableIntegrations = useFeatureFlag("enable_integrations");
-  const enableFlagsAdmin = useFeatureFlag("enable_flags_admin");
 
   const isAuthenticated = auth.isAuthenticated;
 
@@ -119,18 +104,9 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="flex items-centerbg-white border-b py-4 px-8">
+    <nav className="flex items-center bg-white border-b py-4 px-8">
           <div className="flex flex-col gap-3 flex-1">
             <AFCLogo width={120} height={145} />
-          </div>
-
-            <div className="flex justify-center items-center xl:hidden">
-              <SidebarProvider className='' >
-              <NavSidebar />
-              <CustomTrigger state={false}/>
-              <SidebarInset className=''>
-              </SidebarInset>
-            </SidebarProvider>
           </div>
 
             <div className="xl:flex items-center gap-4 hidden">
@@ -152,6 +128,16 @@ export default function Navbar() {
             </div>
               
             <div className="flex flex-1 items-center justify-end gap-2 ml-4">
+
+              <div className="flex xl:hidden pr-5">
+                <SidebarProvider className='' >
+                  <NavSidebar />
+                  <CustomTrigger state={false}/>
+                  <SidebarInset className=''>
+                  </SidebarInset>
+                </SidebarProvider>
+              </div>
+
               {isAuthenticated && <AdminMenu />}
               {isAuthenticated ? (
                 <div>
