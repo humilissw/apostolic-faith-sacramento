@@ -6,7 +6,7 @@ High-level overview of the Apostolic Faith Sacramento backend project and develo
 
 A FastAPI backend for the Apostolic Faith Sacramento church application, serving members, managing church services, and handling media uploads.
 
-**Current Branch**: `feature/media-page-functionality` (video/media functionality)
+**Current Branch**: `main` (production-ready, deployed to Vercel)
 
 ## Architecture
 
@@ -15,7 +15,7 @@ A FastAPI backend for the Apostolic Faith Sacramento church application, serving
 - **Database**: MySQL with asyncmy driver
 - **ORM**: SQLModel (Pydantic + SQLAlchemy)
 - **Auth**: JWT tokens + password hashing (bcrypt)
-- **Package Management**: Poetry + uv
+- **Package Management**: Poetry
 - **Containerization**: Docker
 - **Migrations**: Alembic
 - **Testing**: pytest
@@ -28,27 +28,51 @@ be/
 ├── app/
 │   ├── api/
 │   │   ├── routes/          # Endpoint definitions
-│   │   │   ├── private.py   # Local-only routes
-│   │   │   ├── login.py     # Authentication endpoints
-│   │   │   ├── users.py     # User CRUD
-│   │   │   ├── items.py     # Item management
-│   │   │   ├── members.py   # Member profiles
-│   │   │   ├── church_services.py  # Service records
-│   │   │   ├── video_uploads.py    # Video upload tracking
-│   │   │   ├── media.py     # Media file management
-│   │   │   └── announcements.py    # Announcements
+│   │   │   ├── announcements.py     # Church announcements
+│   │   │   ├── church_services.py   # Service records
+│   │   │   ├── client_credentials.py  # OAuth2 client management
+│   │   │   ├── feature_flags.py     # Feature flag endpoints
+│   │   │   ├── google.py            # Google OAuth integration
+│   │   │   ├── health.py            # Health check
+│   │   │   ├── integrations.py      # Third-party integrations
+│   │   │   ├── items.py             # Generic item management
+│   │   │   ├── login.py             # Authentication endpoints
+│   │   │   ├── media.py             # Media file management
+│   │   │   ├── members.py           # Member profiles
+│   │   │   ├── payments.py          # Donations and payments (Stripe)
+│   │   │   ├── private.py           # Local-only routes
+│   │   │   ├── scheduler.py         # Church scheduler endpoints
+│   │   │   ├── user_scopes.py       # User permission scopes
+│   │   │   ├── users.py             # User CRUD
+│   │   │   └── video_uploads.py     # Video upload tracking
 │   │   ├── deps.py          # Dependency injection (SessionDep, CurrentUser)
 │   │   └── main.py          # API router aggregation
 │   ├── core/
-│   │   ├── db.py            # Database session management
-│   │   ├── security.py      # Password hashing, JWT
-│   │   └── logging.py       # Logging configuration
+│   │   ├── db.py              # Database session management
+│   │   ├── logging.py         # Logging configuration
+│   │   ├── rate_limiter.py    # Rate limiting middleware
+│   │   ├── result.py          # Unified result pattern
+│   │   ├── scopes.py          # Permission scope definitions
+│   │   └── security.py        # Password hashing, JWT
 │   ├── crud.py              # Database CRUD operations
 │   ├── models.py            # SQLModel definitions
 │   ├── services/            # Business logic layer
-│   │   └── media_service.py
-│   ├── repositories/        # Data access layer (optional)
-│   │   └── media_repo.py
+│   │   ├── auth_service.py
+│   │   ├── church_meeting_service.py
+│   │   ├── feature_flag_service.py
+│   │   ├── integration_service.py
+│   │   ├── media_service.py
+│   │   ├── payment_service.py
+│   │   └── scheduler_service.py
+│   ├── repositories/        # Data access layer
+│   │   ├── assignment_repo.py
+│   │   ├── feature_flag_repo.py
+│   │   ├── integration_repo.py
+│   │   ├── media_repo.py
+│   │   ├── payment_repo.py
+│   │   ├── user_repo.py
+│   │   ├── user_scope_repo.py
+│   │   └── video_upload_repo.py
 │   ├── requests/            # Pydantic request models
 │   ├── responses/           # Pydantic response models
 │   ├── alembic/versions/    # Database migrations
@@ -401,13 +425,14 @@ Required in production: `../../infrastructure/certs/cert.pem` and `key.pem`
 
 ## Recent Development
 
-**Branch**: `feature/media-page-functionality`
+**Branch**: `main`
 
-Recent commits:
-- Add video upload functionality
-- Fix async/await session issues
-- Add media tables to database
-- Improve error handling
+Migrations applied:
+- `e2412789c190_initialize_models.py` — Initial schema
+- `f573b6cd8e2e_create_initial_tables.py` — Core tables
+- `fc2afb5a5fea_generate_for_church_work.py` — Church service tables
+- `f9e7782c04b6_create_init_migration_with_media_.py` — Media tables
+- Various migrations — cascade deletes, nullable fields, feature flags, integrations, payments, client credentials, user scopes, assignments
 
 ## Next Steps for New Agents
 

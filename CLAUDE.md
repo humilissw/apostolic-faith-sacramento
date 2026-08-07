@@ -108,11 +108,11 @@ docker-compose test
 ### Frontend
 ```bash
 cd src/fe
-pnpm install
-pnpm dev          # run dev server
-pnpm build        # static export
-pnpm test         # run tests
-pnpm lint         # lint code
+bun install
+bun dev          # run dev server
+bun run build    # static export
+bun test         # run tests
+bun lint         # lint code
 ```
 
 ### Mobile
@@ -133,7 +133,7 @@ poetry run pytest
 
 # Frontend
 cd src/fe
-pnpm test
+bun test
 
 # Full stack
 docker-compose test
