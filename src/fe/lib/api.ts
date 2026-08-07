@@ -943,9 +943,7 @@ export interface EventsResponse {
 
 export async function fetchEvents(): Promise<EventsResponse> {
   const res = await fetchWithAuth(`${API_BASE}${API_V1}/events/`);
-  console.log("Res ", res);
   if (!res.ok) {
-    console.log("did i error")
     throw new Error("Failed to fetch events");
   }
   return res.json();
@@ -965,8 +963,11 @@ export async function createEvent(data: EventCreateInput): Promise<Event> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
+  console.log("AM i in here");
   if (!res.ok) {
+    console.log("Failing?");
     const body = await res.text();
+    console.log("Body:", body);
     throw new Error(body || "Failed to create event");
   }
   return res.json();

@@ -20,18 +20,18 @@ class EventRepository:
         """
         self.session = session
 
-    async def create(self, event_create: EventCreate) -> Event:
+    async def create(self, event_in: EventCreate) -> Event:
         """
         Create a new event entry.
 
         Args:
-            event_create: EventCreate object containing event data
+            event_in: EventCreate object containing event data
 
         Returns:
             Event: Created event object
         """
         db_obj = Event.model_validate(
-            event_create,
+            event_in,
         )
         self.session.add(db_obj)
         await self.session.commit()

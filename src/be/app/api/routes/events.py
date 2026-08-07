@@ -79,7 +79,7 @@ async def read_event_by_id(event_id: str, session: SessionDep) -> Any:
     dependencies=[require_scope("api:all")],
 )
 async def create_event_endpoint(
-    *, session: SessionDep, current_user: CurrentUser, event_in: EventCreate
+    *, session: SessionDep, event_in: EventCreate
 ) -> Any:
     """
     Create new event entry.
@@ -87,10 +87,11 @@ async def create_event_endpoint(
     Adds a new event entry to the database.
     """
     repository = EventRepository(session=session)
-    event = await repository.create(event_in=event_in, owner_id=current_user.id)
+    event = await repository.create(event_in=event_in)
     return EventPublic(
         id=event.id,
         title=event.title,
+        date=event.date,
         description=event.description,
         start_time=event.start_time,
         end_time=event.end_time,

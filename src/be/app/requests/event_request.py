@@ -5,8 +5,6 @@ from pydantic import BaseModel, Field
 
 class EventCreate(BaseModel):
     """Event creation request schema."""
-
-    event_id: str = Field(max_length=36)
     title: str = Field(max_length=200)
     description: str | None = Field(default=None, max_length=4000)
     date: datetime.datetime
@@ -15,7 +13,6 @@ class EventCreate(BaseModel):
 
 class EventUpdate(BaseModel):
     """Event update request schema (all fields optional)."""
-
     title: str | None = Field(default=None, max_length=200) 
     description: str | None = Field(default=None, max_length=4000)
     date: datetime.datetime | None = None

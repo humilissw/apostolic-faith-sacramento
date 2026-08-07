@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from 'react';
 import Calendar from "@/components/calendar";
 import TestCalendar from "@/components/test-calendar";
+import { EventDialog } from "@/components/add-event";
 
 import {
   fetchEvents,
@@ -25,6 +26,8 @@ export default function Events() {
     const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+    const [dialogOpen, setDialogOpen] = useState(false);
 
     function handleCalendarButton () {
         setCalendarButton(true);
@@ -51,7 +54,6 @@ export default function Events() {
             if (!cancelled) {
               setEvents(res[0].data);
             }
-            console.log("Events: ", res[0].data);
           } catch (err) {
             if (!cancelled)
               setError(err instanceof Error ? err.message : "Failed to load");
@@ -85,17 +87,29 @@ export default function Events() {
             {eventsButton && 
             <div className="flex flex-col justify-center items-center">
                 <div className='ustify-center items-center w-sm py-15 sm:gap-15 sm:justify-center sm:py-20'>
-                    <Button size="sm">Add Event</Button>
+                    <EventDialog 
+                        key={editingEvent?.id ?? "create"}
+                        open={dialogOpen}
+                        onOpenChange={setDialogOpen}
+                        event={editingEvent}
+                        onSuccess={() => {
+                        fetchEvents().then((data) => setEvents(data.data));
+                        }}/>
                 </div>
                 <div className='grid grid-cols-2 gap-y-20 px-65 justify-items-center'>
-                    {events.map((data: Event, index) =>
+                    {events.length === 0 && !loading && <p>No events found.</p>}
+                    {loading && <p>Loading events...</p>}
+                    {error && <p>Error loading events: {error}</p>}
+
+                    {events.length > 0 && !loading && !error &&
+                    events.map((data: Event, index) =>
                         <div className='flex flex-col md:flex-row '
                         key={index}>
                             <Image
                             src="/tempEventsPhoto.png"
                             width={300}
                             height={300}
-                            alt="Beige background with photo of cross"
+                            alt="Simple Events Background Photo"
                             className='w-90 h-30 md:h-60'
                             />
                             <div className='flex flex-col pl-5 font-medium font-noto-sans'>
