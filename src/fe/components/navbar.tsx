@@ -30,6 +30,18 @@ import { useState } from "react";
 import { AdminMenu } from "./admin-drawer-menu";
 import { ProfileDropdown } from "./profile-dropdown";
 
+import { NavSidebar } from "@/components/nav-sidebar"
+import {
+  SidebarHeader,
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar"
+
+import CustomTrigger from "@/components/sidebar-trigger"
+
+import Hamburger from 'hamburger-react';
+
 const publicNav = [
   { title: "Home", url: "/", icon: Home },
   { title: "Our Beliefs", url: "/doctrines/", icon: BookOpen },
@@ -112,7 +124,16 @@ export default function Navbar() {
             <AFCLogo width={120} height={145} />
           </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex justify-center items-center xl:hidden">
+              <SidebarProvider className='' >
+              <NavSidebar />
+              <CustomTrigger state={false}/>
+              <SidebarInset className=''>
+              </SidebarInset>
+            </SidebarProvider>
+          </div>
+
+            <div className="xl:flex items-center gap-4 hidden">
               {navItems.map((group) =>
                 group.map((item) => (
                   <NavItemLink

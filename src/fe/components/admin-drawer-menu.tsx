@@ -150,7 +150,7 @@ export function AdminMenu() {
             <XIcon color="gray"/>
           </button>
         </DrawerHeader>
-            <div>
+            <div className="flex-1 overflow-y-auto">
                 {drawerItems.map((group) =>
                 group.map((item) => (
                   <DrawerItemLink
