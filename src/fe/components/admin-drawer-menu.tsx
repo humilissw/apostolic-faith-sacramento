@@ -81,11 +81,6 @@ export function AdminMenu() {
       const [open, setOpen] = useState(false);
     
       // Call all hooks at top level (unconditional)
-      const enableHome = useFeatureFlag("enable_home");
-      const enableDoctrines = useFeatureFlag("enable_doctrines");
-      const enableMedia = useFeatureFlag("enable_media");
-      const enableDonate = useFeatureFlag("enable_donate");
-      const enableContact = useFeatureFlag("enable_contact");
       const enableVideoUploads = useFeatureFlag("enable_video_uploads");
       const enableSchedulerCalendar = useFeatureFlag("enable_scheduler_calendar");
       const enableSchedulerAdmin = useFeatureFlag("enable_scheduler_admin");
