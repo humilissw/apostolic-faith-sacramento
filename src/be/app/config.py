@@ -23,6 +23,7 @@ class Settings(BaseSettings):
         env_ignore_empty=False,
         arbitrary_types_allowed=True,
     )
+    ARCHIVED_MEDIA: str 
     API_V1_STR: str = "/api/v1"
     EMAIL_TEST_USER: str
     EMAILS_FROM_EMAIL: str
@@ -79,6 +80,7 @@ class Settings(BaseSettings):
     # Third-party integration encryption
     INTEGRATION_ENCRYPTION_KEY: str = ""
     DEPLOY_QA_HOST: str = ""
+    
 
     @computed_field  # type: ignore[prop-decorator]
     @property

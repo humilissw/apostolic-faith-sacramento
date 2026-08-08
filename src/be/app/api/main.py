@@ -19,6 +19,7 @@ from app.api.routes import (
     users,
     utils,
     video_uploads,
+    archived_media
 )
 
 api_router = APIRouter()
@@ -39,6 +40,7 @@ api_router.include_router(user_scopes.router)
 api_router.include_router(client_credentials.router)
 api_router.include_router(scheduler.router)
 api_router.include_router(feature_flags.router)
+api_router.include_router(archived_media.router)
 
 
 api_router.include_router(private.router)

@@ -592,6 +592,7 @@ export async function fetchAllVideoUploads(): Promise<{ data: VideoUploadAdmin[]
     throw new Error("Failed to fetch video uploads");
   }
   const body = await res.json();
+  console.log(body)
   return body;
 }
 
@@ -904,4 +905,22 @@ export async function preSeedFeatureFlags(): Promise<FeatureFlagsResponse> {
     throw new Error(body || "Failed to pre-seed feature flags");
   }
   return res.json();
+}
+
+// --- Archived Media API functions ---
+
+export interface ArchivedMediaResponse {
+  id: string;
+  file_location: string;
+  created_on: string;
+  updated_on: string | null;
+}
+
+export async function fetchAllArchivedMedia(): Promise<{ data: ArchivedMediaResponse[]; count: number }> {
+  const res = await fetchWithAuth(`${API_BASE}${API_V1}/archived-media/`);
+  if (!res.ok) {
+    throw new Error("Failed to fetch archived media");
+  }
+  const body = await res.json();
+  return body;
 }
