@@ -27,26 +27,38 @@ const data = {
         {
           title: "Home",
           url: "/",
+          target: "_self",
+          rel: undefined,
         },
         {
           title: "Our Beliefs",
           url: "/doctrines/",
+          target: "_self",
+          rel: undefined,
         },
         {
           title: "Sermons",
           url: "https://www.youtube.com/@ApostolicFaithSacramento/streams",
+          target: "_blank",
+          rel: "noopener noreferrer",
         },
         {
           title: "Media",
           url: "/media/",
+          target: "_self",
+          rel: undefined,
         },
         {
           title: "Donate",
           url: "/donate/",
+          target: "_self",
+          rel: undefined,
         },
         {
           title: "Contact Us",
           url: "/contact/",
+          target: "_self",
+          rel: undefined,
         },
       ],
     },
@@ -55,11 +67,11 @@ const data = {
 
 export function NavSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar className="" side="right" {...props}>
+    <Sidebar side="right" {...props}>
       <SidebarHeader className="items-end">
         <CustomTrigger state={true}/>
       </SidebarHeader>
-      <SidebarContent className="">
+      <SidebarContent className="px-5">
         {/* We create a SidebarGroup for each parent. */}
         {data.navMain.map((item) => (
           <SidebarGroup key={item.title}>
@@ -67,8 +79,10 @@ export function NavSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <SidebarMenu>
                 {item.items.map((item) => (
                   <SidebarMenuItem className="pb-10" key={item.title}>
-                    <SidebarMenuButton className="text-3xl" asChild /*isActive={item.isActive}*/>
-                      <a href={item.url}>{item.title}</a>
+                    <SidebarMenuButton className="text-3xl" asChild >
+                      <a href={item.url} target={item.target} rel={item.rel}>
+                        {item.title}
+                      </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
