@@ -110,9 +110,9 @@ export function AdminMenu() {
         if (enableMyScheduler && (auth.hasScope("scheduler:admin") || auth.hasScope("member:limited"))) {
           schedulerItems.push({ title: "My Scheduler", url: "/my-scheduler/", icon: Calendar });
         }
-         if (schedulerItems.length > 0) {
-           drawerItems.push(schedulerItems);
-         }
+        if (schedulerItems.length > 0) {
+          drawerItems.push(schedulerItems);
+        }
       }
     
       if (isAuthenticated && auth.hasScope("superuser")) {
@@ -129,8 +129,8 @@ export function AdminMenu() {
         if (enableFlagsAdmin) {
           adminItems.push({ title: "Feature Flags", url: "/flags-admin/", icon: ToggleRight });
         }
-         if (adminItems.length > 0) {
-           drawerItems.push(adminItems);
+        if (adminItems.length > 0) {
+          drawerItems.push(adminItems);
         }
       }
   return (
