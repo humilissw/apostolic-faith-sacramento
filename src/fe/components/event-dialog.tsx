@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { createEvent, updateEvent, type Event } from "@/lib/api"
 import { toast } from "sonner"
+import { Plus } from 'lucide-react';
 
 interface EventDialogProps {
   open: boolean;
@@ -39,12 +40,10 @@ export function EventDialog({
     const [error, setError] = useState<string | null>(null);
 
     const handleSave = async () => {
-        console.log("what about here");
         const trimmedTitle = eventTitle.trim();
         const trimmedDescription = eventDescription.trim();
-        console.log("trimmedTitle: ", trimmedTitle, "trimmedDescription: ", trimmedDescription, "eventDate: ", eventDate);
         if (!trimmedTitle || !trimmedDescription || !eventDate || !eventStartTime || !eventEndTime) {
-            console.log("One or more fields are empty");
+            setError("One or more fields are empty");
             return;
         }
         const start = new Date(`${eventDate}T${eventStartTime}:00`);
@@ -53,7 +52,7 @@ export function EventDialog({
         setSaving(true);
         setError(null);
         try {
-        console.log("what about here 2");
+
         const payload = {
             title: trimmedTitle,
             description: trimmedDescription,
@@ -61,31 +60,29 @@ export function EventDialog({
             start_time: start.toISOString(),
             end_time: end.toISOString(),
         };
-        console.log("Why am i not here")
-        console.log("payload: ", payload);
         if (!event) {
             await createEvent(payload);
             toast.success("Event created");
+            setEventTitle("");
+            setEventDescription("");
+            setEventDate("");
+            setEventStartTime("");
+            setEventEndTime("");
         } else {
             await updateEvent(event.id, payload);
             toast.success("Event updated");
         }
-        console.log("donw here")
         onOpenChange(false);
         onSuccess();
         } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to save");
-        console.log("Error: ", err);
         } finally {
         setSaving(false);
         }
     };
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <form>
-        <DialogTrigger asChild>
-          <Button variant="outline">Create Event</Button>
-        </DialogTrigger>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Add Event</DialogTitle>
@@ -96,11 +93,11 @@ export function EventDialog({
           <FieldGroup>
             <Field>
               <Label htmlFor="title-1">Event Title</Label>
-              <Input id="title-1" name="title" value={eventTitle} onChange={(e) => setEventTitle(e.target.value)} />
+              <Input id="title-1" name="title" value={eventTitle} onChange={(e) => setEventTitle(e.target.value)} required/>
             </Field>
             <Field>
               <Label htmlFor="description-1">Description</Label>
-              <Input id="description-1" name="description" value={eventDescription} onChange={(e) => setEventDescription(e.target.value)} />
+              <Input id="description-1" name="description" value={eventDescription} onChange={(e) => setEventDescription(e.target.value)} required/>
             </Field>
             <Field>
               <Label htmlFor="date-1">Date</Label>
@@ -115,23 +112,26 @@ export function EventDialog({
             </Field>
             <Field>
               <Label htmlFor="start-time-1">Start Time</Label>
-              <Input id="start-time-1" name="start_time" type="time" value={eventStartTime} onChange={(e) => {console.log("Start time: ", e.target.value); setEventStartTime(e.target.value)}} />
+              <Input id="start-time-1" name="start_time" type="time" value={eventStartTime} onChange={(e) => {setEventStartTime(e.target.value)}} required/>
             </Field>
             <Field>
               <Label htmlFor="end-time-1">End Time</Label>
-              <Input id="end-time-1" name="end_time" type="time" value={eventEndTime} onChange={(e) => setEventEndTime(e.target.value)} />
+              <Input id="end-time-1" name="end_time" type="time" value={eventEndTime} onChange={(e) => setEventEndTime(e.target.value)} required/>
             </Field>
           </FieldGroup>
           <DialogFooter>
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button 
+            <DialogClose asChild>
+              <Button 
                 type="submit"
-                onClick={() => {console.log("HERE!! eventTitle: ", eventTitle, "eventDescription: ", eventDescription, "eventDate: ", eventDate, "eventStartTime: ", eventStartTime, "eventEndTime: ", eventEndTime); handleSave()}}
-            >
+                disabled={!eventTitle || !eventDescription || !eventDate || !eventStartTime || !eventEndTime || saving}
+                onClick={handleSave}
+              >
                 Save changes
-            </Button>
+              </Button>
+            </DialogClose>
           </DialogFooter>
         </DialogContent>
       </form>

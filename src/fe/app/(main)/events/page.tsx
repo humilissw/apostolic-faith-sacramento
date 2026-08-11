@@ -69,7 +69,7 @@ export default function Events() {
 
   return (
     <div>
-        <div className="flex justify-center items-center h-50 bg-[url('../public/choir-edit.jpg')] bg-cover bg-center md:h-100 lg:h-100">
+        <div className="flex justify-center items-center h-50 bg-[url('../public/events.jpeg')] bg-cover bg-[position:center_70%] md:h-100 lg:h-100">
             <h1 className="text-white text-5xl md:text-7xl lg:text-8xl text-shadow-lg font-noto-sans p-3 rounded-xl">
                 Events
             </h1>
@@ -83,7 +83,7 @@ export default function Events() {
             </div>
 
             {eventsButton && 
-            <div className='grid grid-cols-2 gap-y-20 px-65 justify-items-center'>
+            <div className='grid grid-cols-2 gap-y-20 gap-x-30 px-65 '>
                 {events.map((data: Event, index) => 
                     <div className='flex flex-col md:flex-row '
                     key={index}>

@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.requests.event_request import EventCreate, EventUpdate
 from app.responses.event_response import EventPublic, EventsPublic
 from app.models import Event
+from datetime import datetime, timezone
 
 
 class EventRepository:
@@ -30,8 +31,14 @@ class EventRepository:
         Returns:
             Event: Created event object
         """
-        db_obj = Event.model_validate(
-            event_in,
+        db_obj = Event(
+            title=event_in.title,
+            description=event_in.description,
+            date=event_in.date,
+            start_time=event_in.start_time,
+            end_time=event_in.end_time,
+            created_on=datetime.now(timezone.utc),
+            updated_on=datetime.now(timezone.utc),
         )
         self.session.add(db_obj)
         await self.session.commit()

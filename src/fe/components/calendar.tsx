@@ -1,8 +1,6 @@
 'use client';
 
-import AFCLogo from "@/components/afc-logo";
-import Link from "next/link";
-import { startOfMonth, format, endOfMonth, eachDayOfInterval, getDay, isSameDay } from  "date-fns"
+import { startOfMonth, format, endOfMonth, eachDayOfInterval, getDay, isSameDay } from "date-fns"
 import { useEffect, useState } from "react";
 
 const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];

@@ -68,7 +68,6 @@ async def read_event_by_id(event_id: str, session: SessionDep) -> Any:
         end_time=event.end_time,
         created_on=event.created_on,
         updated_on=event.updated_on,
-        #uploaded_on=event.uploaded_on,
     )
 
 
@@ -97,7 +96,6 @@ async def create_event_endpoint(
         end_time=event.end_time,
         created_on=event.created_on,
         updated_on=event.updated_on,
-        #uploaded_on=event.uploaded_on,
     )
 
 
@@ -109,14 +107,13 @@ async def create_event_endpoint(
 async def update_event_endpoint(
     *,
     session: SessionDep,
-    current_user: CurrentUser,
     event_id: str,
     event_in: EventUpdate,
 ) -> Any:
     """
     Update an event entry.
 
-    Updates an existing event entry by ID. Requires ownership.
+    Updates an existing event entry by ID.
     """
     repository = EventRepository(session=session)
     event = await repository.get_by_id(event_id=event_id)
@@ -124,11 +121,6 @@ async def update_event_endpoint(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Event not found",
-        )
-    if current_user.id != event.owner_id and not current_user.is_superuser:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to update this event",
         )
 
     event = await repository.update(db_event=event, event_in=event_in)
@@ -140,8 +132,6 @@ async def update_event_endpoint(
         end_time=event.end_time,
         created_on=event.created_on,
         updated_on=event.updated_on,
-        #uploaded_on=event.uploaded_on,
-
     )
 
 
@@ -151,12 +141,12 @@ async def update_event_endpoint(
     dependencies=[require_scope("api:all")],
 )
 async def delete_event_endpoint(
-    event_id: str, session: SessionDep, current_user: CurrentUser
+    event_id: str, session: SessionDep
 ) -> Any:
     """
     Delete an event entry.
 
-    Deletes an event entry by ID. Requires ownership.
+    Deletes an event entry by ID. 
     """
     repository = EventRepository(session=session)
     event = await repository.get_by_id(event_id=event_id)
@@ -164,11 +154,6 @@ async def delete_event_endpoint(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Event not found",
-        )
-    if current_user.id != event.owner_id and not current_user.is_superuser:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to delete this event",
         )
 
     await repository.delete(db_event=event)
