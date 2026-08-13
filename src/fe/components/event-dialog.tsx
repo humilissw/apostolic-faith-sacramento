@@ -16,6 +16,7 @@ import { useState } from "react"
 import { createEvent, updateEvent, type Event } from "@/lib/api"
 import { toast } from "sonner"
 import { Plus } from 'lucide-react';
+import { fromZonedTime } from 'date-fns-tz';
 
 interface EventDialogProps {
   open: boolean;
@@ -31,28 +32,49 @@ export function EventDialog({
   onSuccess,
 }: EventDialogProps) {
 
-    const [eventTitle, setEventTitle] = useState("");
-    const [eventDescription, setEventDescription] = useState("");
-    const [eventDate, setEventDate] = useState("");
-    const [eventStartTime, setEventStartTime] = useState("");
-    const [eventEndTime, setEventEndTime] = useState("");
+    const [eventTitle, setEventTitle] = useState(event?.title ?? "");
+    const [eventDescription, setEventDescription] = useState(event?.description ?? "");
+    const [eventDate, setEventDate] = useState(event?.date ?? "");
+    const [eventStartTime, setEventStartTime] = useState(event?.start_time ? toTimeInputValue(event.start_time) : "");
+    const [eventEndTime, setEventEndTime] = useState(event?.end_time ? toTimeInputValue(event.end_time) : "");
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    function toTimeInputValue(isoString: string): string {
+        const date = new Date(isoString);
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        return `${hours}:${minutes}`;
+    }
+
     const handleSave = async () => {
+        console.log("Saving event with values:", {
+            title: eventTitle,
+            description: eventDescription,
+            date: eventDate,
+            start_time: eventStartTime,
+            end_time: eventEndTime,
+        });
         const trimmedTitle = eventTitle.trim();
         const trimmedDescription = eventDescription.trim();
         if (!trimmedTitle || !trimmedDescription || !eventDate || !eventStartTime || !eventEndTime) {
             setError("One or more fields are empty");
+            console.log("One or more fields are empty");
             return;
         }
-        const start = new Date(`${eventDate}T${eventStartTime}:00`);
-        const end = new Date(`${eventDate}T${eventEndTime}:00`);
+        const start = fromZonedTime(`${eventDate}T${eventStartTime}:00`);
+        const end = fromZonedTime(`${eventDate}T${eventEndTime}:00`);
         const date = new Date(eventDate);
         setSaving(true);
         setError(null);
         try {
-
+          console.log("2 Saving event with values:", {
+            title: trimmedTitle,
+            description: eventDescription,
+            date: date.toISOString(),
+            start_time: start.toISOString(),
+            end_time: end.toISOString(),
+        });
         const payload = {
             title: trimmedTitle,
             description: trimmedDescription,
@@ -60,7 +82,9 @@ export function EventDialog({
             start_time: start.toISOString(),
             end_time: end.toISOString(),
         };
+        console.log(" I dont think i get here")
         if (!event) {
+          console.log("In here?")
             await createEvent(payload);
             toast.success("Event created");
             setEventTitle("");
@@ -69,12 +93,14 @@ export function EventDialog({
             setEventStartTime("");
             setEventEndTime("");
         } else {
+          console.log("Updating event with payload:", payload);
             await updateEvent(event.id, payload);
             toast.success("Event updated");
         }
         onOpenChange(false);
         onSuccess();
         } catch (err) {
+        console.log("Error occurred while saving event:", err);
         setError(err instanceof Error ? err.message : "Failed to save");
         } finally {
         setSaving(false);
@@ -85,9 +111,9 @@ export function EventDialog({
       <form>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Add Event</DialogTitle>
+            <DialogTitle>{event ? "Edit Event" : "Add Event"}</DialogTitle>
             <DialogDescription>
-              Fill in the details for the new event.
+              Fill in the details for the event.
             </DialogDescription>
           </DialogHeader>
           <FieldGroup>
@@ -97,7 +123,7 @@ export function EventDialog({
             </Field>
             <Field>
               <Label htmlFor="description-1">Description</Label>
-              <Input id="description-1" name="description" value={eventDescription} onChange={(e) => setEventDescription(e.target.value)} required/>
+              <textarea className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-20" id="description-1" name="description" value={eventDescription} onChange={(e) => setEventDescription(e.target.value)} required/>
             </Field>
             <Field>
               <Label htmlFor="date-1">Date</Label>

@@ -62,9 +62,9 @@ export default function Events() {
     try {
       await deleteEvent(pendingDeleteId);
       setEvents((prev) => prev.filter((u) => u.id !== pendingDeleteId));
-      toast.success("Video upload deleted");
+      toast.success("Event deleted");
     } catch {
-      toast.error("Failed to delete video upload");
+      toast.error("Failed to delete event");
     } finally {
       setDeletingId(null);
       setPendingDeleteId(null);
@@ -129,7 +129,7 @@ export default function Events() {
                     <Button className="bg-zinc-900 text-white" variant="outline" onClick={handleCreate}>Create Event<Plus className="w-4 h-4" /></Button>
                     {dialogOpen && (
                       <EventDialog 
-                        key={editingEvent?.id ?? "create"}
+                        //key={editingEvent?.id ?? "create"}
                         open={dialogOpen}
                         onOpenChange={setDialogOpen}
                         event={editingEvent}
@@ -159,7 +159,7 @@ export default function Events() {
                                     <div className='flex flex-col pl-5 font-medium font-noto-sans'>
                                         <h1 className='text-3xl'>{data.title}</h1>
                                         <h1 className='text-black/40 font-normal'>{new Date(data.date).toLocaleDateString('en-US', { day: "2-digit", month: "short"})}</h1>
-                                        <h1 className='text-black/40 font-normal'>{new Date(data.start_time).toLocaleTimeString('en-US', { hour: "2-digit", minute: "2-digit", hour12: true })} - {new Date(data.end_time).toLocaleTimeString('en-US', { hour: "2-digit", minute: "2-digit" })}</h1>
+                                        <h1 className='text-black/40 font-normal'>{new Date(data.start_time).toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles', hour: "2-digit", minute: "2-digit", hour12: true })} - {new Date(data.end_time).toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles', hour: "2-digit", minute: "2-digit" })}</h1>
                                     </div>
                                 </div>
                             </Link>
@@ -179,9 +179,9 @@ export default function Events() {
                 <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Delete video upload</AlertDialogTitle>
+                      <AlertDialogTitle>Delete event</AlertDialogTitle>
                       <AlertDialogDescription>
-                    This action cannot be undone. The video upload will be permanently removed.
+                        This action cannot be undone. The event will be permanently removed.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
