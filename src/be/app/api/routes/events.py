@@ -128,6 +128,7 @@ async def update_event_endpoint(
         id=event.id,
         title=event.title,
         description=event.description,
+        date=event.date,
         start_time=event.start_time,
         end_time=event.end_time,
         created_on=event.created_on,
