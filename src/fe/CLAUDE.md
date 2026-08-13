@@ -15,14 +15,14 @@ bun install
 bun dev
 
 # Build (static export)
-pnpm build
+bun run build
 
 # Test
-pnpm test
-pnpm test:watch
+bun test
+bun test:watch
 
 # Lint
-pnpm lint
+bun lint
 ```
 
 ## Key Files
@@ -142,7 +142,7 @@ const { data, isLoading } = useApi("/api/...");
 - **Testing**: Jest + @testing-library/react
 - **Linting**: ESLint + eslint-config-next
 - **Build Output**: Static export to `out/`
-- **Package Manager**: pnpm
+- **Package Manager**: bun
 
 ## Environment
 
@@ -156,23 +156,23 @@ const { data, isLoading } = useApi("/api/...");
 Build output goes to `out/` directory. Deployed from `homepage` field in package.json (`localhost/out/`).
 
 ```bash
-pnpm build   # generates static files in out/
+bun run build   # generates static files in out/
 ```
 
 ## Testing
 
 ```bash
 # Run all tests
-pnpm test
+bun test
 
 # Watch mode
-pnpm test:watch
+bun test:watch
 
 # CI mode
-pnpm test:ci
+bun test:ci
 
 # Update snapshots
-pnpm snapshot-update
+bun run snapshot-update
 ```
 
 Test files in `__tests__/` alongside components. Jest config in `jest.config.js` + `jest.setup.js`.
@@ -185,8 +185,8 @@ Components added via components.json (shadcn/ui config). Style: "new-york", Luci
 # Add a component
 npx shadcn@latest add button
 
-# Add with pnpm
-pnpm dlx shadcn@latest add button
+# Add with bun
+bunx shadcn@latest add button
 ```
 
 ## Gotchas

@@ -23,7 +23,7 @@ class Settings(BaseSettings):
         env_ignore_empty=False,
         arbitrary_types_allowed=True,
     )
-    API_V1_STR: str
+    API_V1_STR: str = "/api/v1"
     EMAIL_TEST_USER: str
     EMAILS_FROM_EMAIL: str
     EMAILS_FROM_NAME: str
@@ -38,6 +38,8 @@ class Settings(BaseSettings):
     FRONTEND_HOST: str
     ENVIRONMENT: str
     PROJECT_NAME: str
+    PROJECT_DESCRIPTION: str = "Sample API"
+    VERSION: str = "1.0.0"
     STACK_NAME: str
     BACKEND_CORS_ORIGINS: str
     SECRET_KEY: str
@@ -76,6 +78,7 @@ class Settings(BaseSettings):
     STRIPE_CURRENCY: str = "usd"
     # Third-party integration encryption
     INTEGRATION_ENCRYPTION_KEY: str = ""
+    DEPLOY_QA_HOST: str = ""
 
     @computed_field  # type: ignore[prop-decorator]
     @property

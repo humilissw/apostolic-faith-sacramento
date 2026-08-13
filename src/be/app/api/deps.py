@@ -1,4 +1,4 @@
-from typing import Annotated, Callable, Generator
+from typing import Annotated, Any, Callable
 
 import jwt
 from fastapi import Depends, HTTPException, Request, status
@@ -74,7 +74,7 @@ TokenDep = Annotated[str, Depends(reusable_oauth2)]
 SessionDep = Annotated[AsyncSession, Depends(get_db_session)]
 
 
-def get_sync_db_session() -> Generator[Session]:
+def get_sync_db_session() -> Any:
     """Synchronous database session for tests."""
     session = SyncSessionLocal()
     try:

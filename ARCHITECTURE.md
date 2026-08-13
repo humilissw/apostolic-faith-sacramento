@@ -24,7 +24,7 @@ See [erDiagram.mmd](./erDiagram.mmd) for the entity-relationship diagram of core
 - **Styling**: Tailwind CSS v4
 - **Components**: HeroUI + shadcn/ui (Radix UI primitives)
 - **Build**: Static export to `out/`
-- **Package Manager**: pnpm
+- **Package Manager**: bun
 
 ### Infrastructure
 - **SSL**: Self-signed or mkcert certificates in `infrastructure/certs/`

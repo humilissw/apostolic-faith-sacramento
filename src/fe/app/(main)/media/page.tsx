@@ -142,7 +142,7 @@ export default function Media() {
                           {v.speaker_name || "Unknown"}
                         </h1>
                         <h1 className="text-black/40 font-normal">
-                          {new Date(v.created_on).toLocaleDateString("en-US")}
+                          {new Date(v.media_association_date).toLocaleDateString("en-US")}
                         </h1>
                       </div>
                     </div>

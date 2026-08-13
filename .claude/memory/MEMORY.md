@@ -11,6 +11,7 @@ This file serves as an index to all memory files in the .claude/memory directory
 - [Coding Conventions](memory/feedback/coding-conventions.md) — Preferred coding patterns and what to avoid
 - [Testing Practices](memory/feedback/testing.md) — Testing guidelines and what to avoid
 - [Video Uploads Fetch Pattern](memory/feedback/video-uploads-fetch.md) — Must use fetchWithAuth, not bare fetch
+- [Mobile Architecture](memory/feedback/mobile-architecture.md) — Expo SDK 56 + React Native. No web-only deps (shadcn/ui, lucide-react, react-native-webview, react-native-svg)
 
 ## References
 
