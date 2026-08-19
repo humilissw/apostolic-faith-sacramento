@@ -24,6 +24,22 @@ import {
 } from "lucide-react";
 
 import AFCLogo from "@/components/afc-logo";
+import { AnimatedSheet } from "./animated-sheet";
+import { useState } from "react";
+import { AdminMenu } from "./admin-drawer-menu";
+import { ProfileDropdown } from "./profile-dropdown";
+
+import { NavSidebar } from "@/components/nav-sidebar"
+import {
+  SidebarHeader,
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar"
+
+import CustomTrigger from "@/components/sidebar-trigger"
+
+import Hamburger from 'hamburger-react';
 
 const publicNav = [
   { title: "Home", url: "/", icon: Home },
@@ -42,7 +58,7 @@ interface NavItem {
 }
 
 function NavItemLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
-  const className = `flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
+  const className = `flex justify-center items-center rounded-md h-8 w-30 text-sm transition-colors ${
     isActive
       ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
       : "text-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
@@ -50,12 +66,10 @@ function NavItemLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
 
   return item.external ? (
     <a href={item.url} target="_blank" rel="noopener noreferrer" className={className}>
-      <item.icon className="h-4 w-4" />
       {item.title}
     </a>
   ) : (
     <Link href={item.url} className={className}>
-      <item.icon className="h-4 w-4" />
       {item.title}
     </Link>
   );
@@ -64,6 +78,7 @@ function NavItemLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
 export default function Navbar() {
   const auth = useAuth();
   const pathname = usePathname();
+  const [open, setOpen] = useState(false);
 
   // Call all hooks at top level (unconditional)
   const enableHome = useFeatureFlag("enable_home");
@@ -147,15 +162,12 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="bg-white border-b">
-      <div className="max-w-7xl mx-auto px-4 py-3">
-        <div className="flex flex-col gap-3">
-          <div className="flex justify-center">
+    <nav className="flex items-center bg-white border-b py-4 px-8">
+          <div className="flex flex-col gap-3 flex-1">
             <AFCLogo width={120} height={145} />
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex flex-wrap gap-1">
+            <div className="xl:flex items-center gap-4 hidden">
               {navItems.map((group) =>
                 group.map((item) => (
                   <NavItemLink
@@ -173,15 +185,22 @@ export default function Navbar() {
               )}
             </div>
 
-            <div className="flex items-center gap-2 ml-4">
+            <div className="flex flex-1 items-center justify-end gap-2 ml-4">
+
+              <div className="flex xl:hidden pr-5">
+                <SidebarProvider className='' >
+                  <NavSidebar />
+                  <CustomTrigger state={false}/>
+                  <SidebarInset className=''>
+                  </SidebarInset>
+                </SidebarProvider>
+              </div>
+
+              {isAuthenticated && <AdminMenu />}
               {isAuthenticated ? (
-                <Button
-                  className="font-noto-sans bg-black text-white hover:bg-gray-700"
-                  size="sm"
-                  onClick={() => auth.logout()}
-                >
-                  Logout
-                </Button>
+                <div>
+                  <ProfileDropdown />
+                </div>
               ) : (
                 <Link href="/login/">
                   <Button
@@ -193,21 +212,7 @@ export default function Navbar() {
                 </Link>
               )}
             </div>
-          </div>
 
-          {isAuthenticated && (
-            <>
-              <Separator className="my-1" />
-              <div className="flex items-center gap-3 pt-1 pb-2">
-                <User className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">
-                  {isAuthenticated ? "Signed in" : "Guest"}
-                </span>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
     </nav>
   );
 }
