@@ -20,6 +20,7 @@ import {
   Settings,
   ToggleRight,
   User,
+  Key,
 } from "lucide-react";
 
 import AFCLogo from "@/components/afc-logo";
@@ -78,6 +79,7 @@ export default function Navbar() {
   const enableVideoUploadsAdmin = useFeatureFlag("enable_video_uploads_admin");
   const enableIntegrations = useFeatureFlag("enable_integrations");
   const enableFlagsAdmin = useFeatureFlag("enable_flags_admin");
+  const enableAdminPasswordReset = useFeatureFlag("enable_admin_password_reset");
 
   const isAuthenticated = auth.isAuthenticated;
 
@@ -135,6 +137,9 @@ export default function Navbar() {
     }
     if (enableFlagsAdmin) {
       adminItems.push({ title: "Feature Flags", url: "/flags-admin/", icon: ToggleRight });
+    }
+    if (enableAdminPasswordReset) {
+      adminItems.push({ title: "Password Reset", url: "/admin-password-reset/", icon: Key });
     }
     if (adminItems.length > 0) {
       navItems.push(adminItems);

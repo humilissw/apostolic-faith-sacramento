@@ -106,7 +106,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-
-print("---------------------")
-print("From config: " + str(settings.SQLALCHEMY_DATABASE_URI))
-print("---------------------")

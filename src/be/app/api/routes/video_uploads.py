@@ -2,15 +2,15 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException, status
 
-from app.api.deps import CurrentUser, SessionDep
+from app.api.deps import CurrentUser, SessionDep, require_scope
 from app.models import Message
 from app.repositories.video_upload_repo import VideoUploadRepository
 from app.requests.video_upload_request import VideoUploadCreate, VideoUploadUpdate
 from app.responses.video_upload_response import (
     VideoUploadPublic,
-    VideoUploadPublicWithUrl,
     VideoUploadsPublic,
 )
+from app.services.video_upload_management_service import VideoUploadManagementService
 
 router = APIRouter(prefix="/video-uploads", tags=["video-uploads"])
 
@@ -30,74 +30,47 @@ async def readiness_check() -> str:
 @router.get(
     "/",
     response_model=VideoUploadsPublic,
-    # dependencies=[require_any_scope(["video_uploads:read", "video_uploads:manage"])],
+    dependencies=[require_scope("video_uploads:read")],
 )
 async def read_video_uploads(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
     """
     Retrieve all video uploads.
 
     Returns a list of all video uploads with pagination.
+    Requires video_uploads:read scope (or superuser).
     """
-    repository = VideoUploadRepository(session=session)
-    video_uploads, total_count = await repository.get_all(skip=skip, limit=limit)
-
-    # Add download URLs (placeholder - should be implemented based on storage)
-    video_upload_data = [
-        VideoUploadPublicWithUrl(
-            id=v.id,
-            upload_location=v.upload_location,
-            upload_name=v.upload_name,
-            description=v.description,
-            reference_text=v.reference_text,
-            speaker_name=v.speaker_name,
-            media_association_date=v.media_association_date,
-            created_on=v.created_on,
-            updated_on=v.updated_on,
-            download_url=v.upload_location,
-        )
-        for v in video_uploads
-    ]
-
+    svc = VideoUploadManagementService(session)
+    video_upload_data, total_count = await svc.get_all_video_uploads(skip=skip, limit=limit)
     return VideoUploadsPublic(data=video_upload_data, count=total_count)
 
 
 @router.get(
     "/{video_upload_id}",
     response_model=VideoUploadPublic,
-    # dependencies=[require_any_scope(["video_uploads:read", "video_uploads:manage"])],
+    dependencies=[require_scope("video_uploads:read")],
 )
 async def read_video_upload_by_id(video_upload_id: str, session: SessionDep) -> Any:
     """
     Get video upload by ID.
 
     Returns a single video upload entry by its ID.
+    Requires video_uploads:read scope (or superuser).
     """
-    repository = VideoUploadRepository(session=session)
-    video_upload = await repository.get_by_id(video_upload_id=video_upload_id)
+    svc = VideoUploadManagementService(session)
+    video_upload = await svc.get_video_upload_by_id(video_upload_id=video_upload_id)
     if not video_upload:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Video upload not found",
         )
-
-    return VideoUploadPublic(
-        id=video_upload.id,
-        upload_location=video_upload.upload_location,
-        upload_name=video_upload.upload_name,
-        description=video_upload.description,
-        reference_text=video_upload.reference_text,
-        speaker_name=video_upload.speaker_name,
-        media_association_date=video_upload.media_association_date,
-        created_on=video_upload.created_on,
-        updated_on=video_upload.updated_on,
-    )
+    return video_upload
 
 
 @router.post(
     "/",
     response_model=VideoUploadPublic,
     status_code=status.HTTP_201_CREATED,
-    # dependencies=[require_any_scope(["video_uploads:write", "video_uploads:manage"])],
+    dependencies=[require_scope("video_uploads:manage")],
 )
 async def create_video_upload_endpoint(
     *,
@@ -109,7 +82,7 @@ async def create_video_upload_endpoint(
     Create new video upload entry.
 
     Adds a new video upload entry to the database.
-    Requires authentication.
+    Requires video_uploads:manage scope (or superuser).
     """
     repository = VideoUploadRepository(session=session)
     video_upload = await repository.create(
@@ -131,7 +104,7 @@ async def create_video_upload_endpoint(
 @router.patch(
     "/{video_upload_id}",
     response_model=VideoUploadPublic,
-    # dependencies=[require_any_scope(["video_uploads:write", "video_uploads:manage"])],
+    dependencies=[require_scope("video_uploads:manage")],
 )
 async def update_video_upload_endpoint(
     *,
@@ -143,41 +116,29 @@ async def update_video_upload_endpoint(
     """
     Update a video upload entry.
 
-    Updates an existing video upload entry by ID. Requires ownership.
+    Updates an existing video upload entry by ID. Requires ownership or superuser.
+    Requires video_uploads:manage scope (or superuser).
     """
-    repository = VideoUploadRepository(session=session)
-    video_upload = await repository.get_by_id(video_upload_id=video_upload_id)
-    if not video_upload:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Video upload not found",
-        )
-    if current_user.id != video_upload.owner_id and not current_user.is_superuser:
+    svc = VideoUploadManagementService(session)
+    try:
+        result = await svc.update_video_upload(video_upload_id, current_user, video_upload_in)
+        if not result:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Video upload not found",
+            )
+        return result
+    except PermissionError as e:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to update this video upload",
+            detail=str(e),
         )
-
-    video_upload = await repository.update(
-        db_video_upload=video_upload, video_upload_in=video_upload_in
-    )
-    return VideoUploadPublic(
-        id=video_upload.id,
-        upload_location=video_upload.upload_location,
-        description=video_upload.description,
-        reference_text=video_upload.reference_text,
-        speaker_name=video_upload.speaker_name,
-        media_association_date=video_upload.media_association_date,
-        upload_name=video_upload.upload_name,
-        created_on=video_upload.created_on,
-        updated_on=video_upload.updated_on,
-    )
 
 
 @router.delete(
     "/{video_upload_id}",
     response_model=Message,
-    # dependencies=[require_any_scope(["video_uploads:delete", "video_uploads:manage"])],
+    dependencies=[require_scope("video_uploads:manage")],
 )
 async def delete_video_upload_endpoint(
     video_upload_id: str, session: SessionDep, current_user: CurrentUser
@@ -185,20 +146,20 @@ async def delete_video_upload_endpoint(
     """
     Delete a video upload entry.
 
-    Deletes a video upload entry by ID. Requires ownership.
+    Deletes a video upload entry by ID. Requires ownership or superuser.
+    Requires video_uploads:manage scope (or superuser).
     """
-    repository = VideoUploadRepository(session=session)
-    video_upload = await repository.get_by_id(video_upload_id=video_upload_id)
-    if not video_upload:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Video upload not found",
-        )
-    if current_user.id != video_upload.owner_id and not current_user.is_superuser:
+    svc = VideoUploadManagementService(session)
+    try:
+        result = await svc.delete_video_upload(video_upload_id, current_user)
+        if not result:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Video upload not found",
+            )
+        return result
+    except PermissionError as e:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to delete this video upload",
+            detail=str(e),
         )
-
-    await repository.delete(db_video_upload=video_upload)
-    return Message(message="Video upload deleted successfully")

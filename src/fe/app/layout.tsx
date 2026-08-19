@@ -8,8 +8,8 @@ export const metadata: Metadata = {
   other: {
     "content-security-policy": [
       "default-src 'self';",
-      "script-src 'self' 'unsafe-inline' https://*.stripe.com https://*.stripe.network;",
-      "style-src 'self' 'unsafe-inline' https://*.stripe.com;",
+      "script-src 'self' https://*.stripe.com https://*.stripe.network; ",
+      "style-src 'self' https://*.stripe.com; ",
       "img-src 'self' data:;",
       "font-src 'self';",
       "connect-src 'self';",

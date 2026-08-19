@@ -36,10 +36,10 @@ describe('GoogleCallbackPage', () => {
     window.history.pushState({}, '', '/')
     // Mock /auth/me to return success when cookie is present
     global.fetch = jest.fn(() =>
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve({ email: 'test@test.com', is_superuser: false }),
-      }),
+      Promise.resolve(new Response(
+        JSON.stringify({ email: 'test@test.com', is_superuser: false }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      )),
     )
   })
 
@@ -70,7 +70,7 @@ describe('GoogleCallbackPage', () => {
 
   it('shows error and redirects when /auth/me fails', async () => {
     global.fetch = jest.fn(() =>
-      Promise.resolve({ ok: false, status: 401, text: () => Promise.resolve('') }),
+      Promise.resolve(new Response('', { status: 401 })),
     )
 
     window.history.pushState({}, '', '/google-callback')

@@ -19,7 +19,7 @@ async def payment_user(client, db_session) -> str:
     email = f"payment_test_{uuid.uuid4().hex[:8]}@test.com"
     user = await create_user(
         session=db_session,
-        user_create=UserCreate(email=email, password="testpass123"),
+        user_create=UserCreate(email=email, password="TestPass123!"),
     )
     return user.id
 

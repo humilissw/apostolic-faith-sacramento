@@ -18,11 +18,14 @@ def _get_service(session) -> FeatureFlagService:
     return FeatureFlagService(FeatureFlagRepository(session))
 
 
-@router.get("/", response_model=FeatureFlagsPublic)
+@router.get(
+    "/", response_model=FeatureFlagsPublic, dependencies=[Depends(get_current_active_superuser)]
+)
 async def list_feature_flags(
     session: SessionDep,
+    current_user: CurrentUser,
 ) -> FeatureFlagsPublic:
-    """List all feature flags (public, no auth required)."""
+    """List all feature flags (superuser only)."""
     service = _get_service(session)
     items, total = await service.get_all()
     return FeatureFlagsPublic(

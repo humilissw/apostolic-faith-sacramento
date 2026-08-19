@@ -207,3 +207,7 @@ infrastructure/db/public_app/
 # Documentation builds
 docs/_build/
 src/be/3.11.14/
+
+# Deployment scripts (contain secrets, do not commit)
+deploy_to_prod.sh
+.env.prod

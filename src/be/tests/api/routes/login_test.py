@@ -8,8 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from app.config import settings
 from app.crud import create_user
-from app.models import RefreshToken, User, UserCreate
-from app.utils import generate_password_reset_token
+from app.models import PasswordResetToken, RefreshToken, User, UserCreate
+from app.repositories.user_repo import UserRepository
 from tests.utils.user import user_authentication_headers
 from tests.utils.utils import random_email, random_lower_string
 
@@ -262,28 +262,26 @@ async def test_revoke_token(login_client, login_tokens, login_superuser_token_he
 
 
 @pytest.mark.asyncio
-async def test_recovery_password(login_client, login_normal_user_token_headers) -> None:
+async def test_recovery_password(login_client, login_db_session) -> None:
     with (
         patch("app.config.settings.SMTP_HOST", "smtp.example.com"),
         patch("app.services.auth_service.send_email", return_value=None),
     ):
         email = "test@example.com"
         r = await login_client.post(
-            f"{settings.API_V1_STR}/password-recovery/{email}",
-            headers=login_normal_user_token_headers,
+            f"{settings.API_V1_STR}/password-recovery",
+            json={"email": email},
         )
         assert r.status_code == 200
         assert r.json() == {"message": "Password recovery email sent"}
 
 
 @pytest.mark.asyncio
-async def test_recovery_password_user_not_exits(
-    login_client, login_normal_user_token_headers
-) -> None:
+async def test_recovery_password_user_not_exits(login_client, login_db_session) -> None:
     email = "jVgQr@example.com"
     r = await login_client.post(
-        f"{settings.API_V1_STR}/password-recovery/{email}",
-        headers=login_normal_user_token_headers,
+        f"{settings.API_V1_STR}/password-recovery",
+        json={"email": email},
     )
     assert r.status_code == 200
     assert r.json() == {"message": "Password recovery email sent"}
@@ -291,9 +289,11 @@ async def test_recovery_password_user_not_exits(
 
 @pytest.mark.asyncio
 async def test_reset_password(login_client, login_db_session) -> None:
+    from app.repositories.user_repo import UserRepository
+
     email = random_email()
-    password = random_lower_string()
-    new_password = random_lower_string()
+    password = "TestPass123!"
+    new_password = "NewSecure456!"
 
     user_create = UserCreate(
         email=email,
@@ -303,19 +303,37 @@ async def test_reset_password(login_client, login_db_session) -> None:
         is_superuser=False,
     )
     await create_user(session=login_db_session, user_create=user_create)
-    token = generate_password_reset_token(email=email)
-    headers = await user_authentication_headers(client=login_client, email=email, password=password)
-    data = {"new_password": new_password, "token": token}
+
+    # Find the user to get their ID
+    repo = UserRepository(session=login_db_session)
+    user = await repo.get_by_email(email=email)
+
+    # Generate a server-side token (not JWT-based like before)
+    from datetime import datetime, timedelta, timezone
+    import secrets
+
+    reset_token = secrets.token_urlsafe(32)
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+    db_token = PasswordResetToken(
+        user_id=user.id,
+        token=reset_token,
+        expires_at=expires_at,
+    )
+
+    login_db_session.add(db_token)
+    await login_db_session.commit()
+
+    data = {"new_password": new_password, "token": reset_token}
 
     r = await login_client.post(
         f"{settings.API_V1_STR}/reset-password/",
-        headers=headers,
         json=data,
     )
 
     assert r.status_code == 200
     assert r.json() == {"message": "Password updated successfully"}
 
+    # Verify the new password works for login
     auth_headers = await user_authentication_headers(
         client=login_client, email=email, password=new_password
     )
@@ -329,18 +347,157 @@ async def test_reset_password(login_client, login_db_session) -> None:
 
 
 @pytest.mark.asyncio
-async def test_reset_password_invalid_token(login_client, login_superuser_token_headers) -> None:
-    data = {"new_password": "changethis", "token": "invalid"}
+async def test_reset_password_invalid_token(login_client) -> None:
+    # Use a valid-complexity password so we get token validation error, not complexity error
+    data = {"new_password": "ValidPass123!", "token": "invalid"}
     r = await login_client.post(
         f"{settings.API_V1_STR}/reset-password/",
-        headers=login_superuser_token_headers,
         json=data,
     )
+
     response = r.json()
 
     assert "detail" in response
     assert r.status_code == 400
-    assert response["detail"] == "Invalid token"
+    assert "Invalid or expired reset token" in response["detail"]
+
+
+@pytest.mark.asyncio
+async def test_reset_password_token_single_use(login_client, login_db_session) -> None:
+    """Test that a reset token can only be used once."""
+
+    email = random_email()
+    password = random_lower_string()
+    new_password = "NewPass123!"
+    another_new_password = "AnotherPass456!"
+
+    user_create = UserCreate(
+        email=email,
+        full_name="Test User",
+        password=password,
+        is_active=True,
+        is_superuser=False,
+    )
+    await create_user(session=login_db_session, user_create=user_create)
+
+    # Find the user to get their ID
+    repo = UserRepository(login_db_session)
+    user = await repo.get_by_email(email=email)
+
+    # Generate a server-side token
+    import secrets
+    from datetime import datetime, timedelta, timezone
+
+    reset_token = secrets.token_urlsafe(32)
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+    db_token = PasswordResetToken(
+        user_id=user.id,
+        token=reset_token,
+        expires_at=expires_at,
+    )
+
+    login_db_session.add(db_token)
+    await login_db_session.commit()
+
+    # First use should succeed
+    data1 = {"new_password": new_password, "token": reset_token}
+    r1 = await login_client.post(
+        f"{settings.API_V1_STR}/reset-password/",
+        json=data1,
+    )
+    assert r1.status_code == 200
+
+    # Second use should fail (token already invalidated)
+    data2 = {"new_password": another_new_password, "token": reset_token}
+    r2 = await login_client.post(
+        f"{settings.API_V1_STR}/reset-password/",
+        json=data2,
+    )
+    assert r2.status_code == 400
+    assert "Invalid or expired reset token" in r2.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_reset_password_invalidates_all_user_tokens(login_client, login_db_session) -> None:
+    """Test that a successful password reset invalidates all other tokens for the user."""
+
+    email = random_email()
+    password = random_lower_string()
+    new_password = "NewPass123!"
+
+    user_create = UserCreate(
+        email=email,
+        full_name="Test User",
+        password=password,
+        is_active=True,
+        is_superuser=False,
+    )
+    await create_user(session=login_db_session, user_create=user_create)
+
+    import secrets
+    from datetime import datetime, timedelta, timezone
+
+    # Find the user to get their ID
+    repo = UserRepository(login_db_session)
+    user = await repo.get_by_email(email=email)
+
+    # Create two tokens for the same user
+    token1 = secrets.token_urlsafe(32)
+    token2 = secrets.token_urlsafe(32)
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+
+    db_token1 = PasswordResetToken(user_id=user.id, token=token1, expires_at=expires_at)
+    db_token2 = PasswordResetToken(user_id=user.id, token=token2, expires_at=expires_at)
+
+    login_db_session.add(db_token1)
+    login_db_session.add(db_token2)
+    await login_db_session.commit()
+
+    # Use first token - should succeed and invalidate the second
+    data1 = {"new_password": new_password, "token": token1}
+    r1 = await login_client.post(
+        f"{settings.API_V1_STR}/reset-password/",
+        json=data1,
+    )
+    assert r1.status_code == 200
+
+    # Second token should now be invalid
+    data2 = {"new_password": "AnotherPass456!", "token": token2}
+    r2 = await login_client.post(
+        f"{settings.API_V1_STR}/reset-password/",
+        json=data2,
+    )
+    assert r2.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_recovery_password_no_auth_required(login_client) -> None:
+    """Test that password recovery endpoint doesn't require authentication."""
+    with (
+        patch("app.config.settings.SMTP_HOST", "smtp.example.com"),
+        patch("app.services.auth_service.send_email", return_value=None),
+    ):
+        # No auth headers - should still work
+        r = await login_client.post(
+            f"{settings.API_V1_STR}/password-recovery",
+            json={"email": "test@example.com"},
+        )
+        assert r.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_recovery_password_body_not_path(login_client) -> None:
+    """Test that the recovery endpoint uses POST body, not URL path."""
+    with (
+        patch("app.config.settings.SMTP_HOST", "smtp.example.com"),
+        patch("app.services.auth_service.send_email", return_value=None),
+    ):
+        # Old style (URL path) should no longer work as expected
+        r = await login_client.post(
+            f"{settings.API_V1_STR}/password-recovery/test@example.com",
+        )
+        # Should get a 405 Method Not Allowed or similar, not a successful recovery
+        assert r.status_code != 200 or "Password recovery" not in str(r.json())
 
 
 @pytest.mark.asyncio

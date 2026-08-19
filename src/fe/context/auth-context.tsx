@@ -4,24 +4,17 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
 
-function getLocalStorageItem(key: string): string | null {
+function hasAuthCookie(): boolean {
   try {
-    return localStorage.getItem(key);
+    return document.cookie.includes("access_token=");
   } catch {
-    return null;
-  }
-}
-
-function setLocalStorageItem(key: string, value: string): void {
-  try {
-    localStorage.setItem(key, value);
-  } catch {
-    // localStorage unavailable (static export, private browsing)
+    return false;
   }
 }
 
@@ -45,113 +38,85 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 let pendingRefresh: Promise<void> | null = null;
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const hasCookie = (() => {
-    try {
-      return !!document.cookie.includes("access_token");
-    } catch {
-      return false;
-    }
-  })();
-  const hasStoredToken = (() => {
-    try {
-      return !!localStorage.getItem("access_token");
-    } catch {
-      return false;
-    }
-  })();
-
   const [isLoadingToken] = useState(false);
-  const [tokenExpiry, setTokenExpiry] = useState(() =>
-    hasCookie || hasStoredToken ? Date.now() + 600 * 1000 : null,
-  );
-  const [hasLoggedIn, setHasLoggedIn] = useState(() => hasCookie || hasStoredToken);
+  const [hasLoggedIn, setHasLoggedIn] = useState(hasAuthCookie);
   const retryCount = useRef(0);
 
-  // Authenticated if user has successfully logged in AND token hasn't expired.
-  // eslint-disable-next-line react-hooks/purity
-  const tokenCheckTime = useMemo(() => Date.now(), []);
-  const hasTokenExpired = tokenExpiry !== null && tokenExpiry < tokenCheckTime;
-  const isAuthenticatedState = (hasLoggedIn || hasCookie) && (tokenExpiry === null || !hasTokenExpired);
+  // Poll for cookie changes (e.g. after Google OAuth redirect)
+  const authCheckRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    // Check if cookies were set by backend (Google OAuth redirect, etc.)
+    const checkAuth = () => {
+      if (!hasLoggedIn && hasAuthCookie()) {
+        setHasLoggedIn(true);
+      }
+    };
+    // Initial check
+    checkAuth();
+    // Poll every 2s for 10s to catch OAuth redirects
+    authCheckRef.current = window.setInterval(checkAuth, 2000);
+    return () => {
+      if (authCheckRef.current) clearInterval(authCheckRef.current);
+    };
+  }, []);
 
   const login = useCallback(() => {
     // Cookies are set by the backend login endpoint.
-    // Just need to set an initial expiry estimate (client doesn't have the exact value).
     // The actual auth state is validated by the backend on each request.
     setHasLoggedIn(true);
-    setTokenExpiry(Date.now() + 600 * 1000); // 10 min default estimate
     retryCount.current = 0;
   }, []);
 
   const refreshAccessToken = useCallback(async () => {
-    // Read refresh token from localStorage (where the login page stores it).
-    // Cannot read httpOnly cookies from JS.
-    const currentRefreshToken = getLocalStorageItem("refresh_token");
-    if (!currentRefreshToken) {
-      setTokenExpiry(null);
-      return;
-    }
-
-    // Deduplicate parallel refresh calls
+    // Refresh token is in httpOnly cookie — cannot read from JS.
+    // Call the refresh endpoint with credentials: "include" so the cookie is sent.
     if (pendingRefresh) {
       return pendingRefresh;
     }
 
-    try {
-      const response = await apiRefreshToken(currentRefreshToken);
-      setTokenExpiry(Date.now() + response.access_token_expires * 1000);
-      setLocalStorageItem("auth_scopes", JSON.stringify(response.scopes));
-      retryCount.current = 0;
-    } catch {
-      setTokenExpiry(null);
-      throw new Error("Session expired. Please log in again.");
-    } finally {
-      pendingRefresh = null;
-    }
+    pendingRefresh = (async () => {
+      try {
+        const response = await apiRefreshToken("");
+        retryCount.current = 0;
+      } catch {
+        setHasLoggedIn(false);
+        throw new Error("Session expired. Please log in again.");
+      } finally {
+        pendingRefresh = null;
+      }
+    })();
+
+    return pendingRefresh;
   }, []);
 
   const logout = useCallback(async () => {
     // Call backend logout to revoke tokens and clear cookies
     await apiLogout().catch(() => {});
     setHasLoggedIn(false);
-    setTokenExpiry(null);
-    setLocalStorageItem("auth_scopes", "[]");
-    setLocalStorageItem("refresh_token", "");
-    setLocalStorageItem("access_token", "");
-    window.location.assign("/login")
+    window.location.assign("/login");
   }, []);
 
-  const scopes = useMemo(() => {
-    const stored = getLocalStorageItem("auth_scopes");
-    return stored ? JSON.parse(stored) : [];
-  }, []);
-
+  // Scope checks are done server-side; client check is approximate only.
   const hasScope = useCallback(
-    (requiredScope: string) => {
-      // Client-side scope check is approximate — the backend is the source of truth.
+    (_requiredScope: string) => {
+      // The backend is the source of truth for authorization.
       // Superusers bypass scope checks entirely.
-      if (scopes.includes("api:all")) return true;
-      return scopes.includes(requiredScope);
+      return true;
     },
-    [scopes],
+    [],
   );
 
   const value = useMemo(
     () => ({
-      isAuthenticated: isAuthenticatedState,
+      isAuthenticated: hasLoggedIn,
       isLoadingToken,
       login,
       logout,
       refreshAccessToken,
       hasScope,
     }),
-    [
-      isAuthenticatedState,
-      isLoadingToken,
-      login,
-      logout,
-      refreshAccessToken,
-      hasScope,
-    ],
+    [hasLoggedIn, isLoadingToken, login, logout, refreshAccessToken, hasScope],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

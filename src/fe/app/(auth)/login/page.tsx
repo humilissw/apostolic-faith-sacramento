@@ -26,15 +26,9 @@ export default function LoginForm() {
 
     try {
       const res = await apiLogin(email, password, ["api:all"]);
-      try {
-        localStorage.setItem("auth_scopes", JSON.stringify(res.scopes));
-        localStorage.setItem("access_token", JSON.stringify(res.access_token));
-        localStorage.setItem("refresh_token", JSON.stringify(res.refresh_token));
-      } catch (err){
-        setError(err instanceof Error ? err.message : "Login failed");
-        /* static export */
-      }
-      login(); // cookies are set by backend; client just triggers state update
+      // Cookies are set by the backend login endpoint.
+      // Do NOT store tokens in localStorage — httpOnly cookies are the sole auth mechanism.
+      login(); // client just triggers state update
       window.location.assign("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");

@@ -244,16 +244,16 @@ async def test_get_assignment_not_found(client, scheduler_admin_token) -> None:
 
 @pytest.mark.asyncio
 async def test_get_my_assignments_requires_member_limited(client, db_session) -> None:
-    """A user without member:limited and without api:all should be blocked."""
+    """A user without member:limited scope should be blocked."""
     email = "no_scope_user_test@example.com"
     statement = select(User).where(User.email == email)
     user = (await db_session.execute(statement)).scalar_one_or_none()
     if not user:
         user = await create_user(
             session=db_session,
-            user_create=UserCreate(email=email, password="testpassword123"),
+            user_create=UserCreate(email=email, password="TestPass123!"),
         )
-    user.hashed_password = get_password_hash("testpassword123")
+    user.hashed_password = get_password_hash("TestPass123!")
     db_session.add(user)
     await db_session.commit()
 
@@ -265,17 +265,14 @@ async def test_get_my_assignments_requires_member_limited(client, db_session) ->
 
     response = await client.post(
         "/api/v1/login/access-token",
-        data={"username": email, "password": "testpassword123"},
+        data={"username": email, "password": "TestPass123!"},
     )
     tokens = response.json()
     headers = {"Authorization": f"Bearer {tokens['access_token']}"}
 
-    # User with no scopes gets ["api:all"] from login, which grants full access
-    # To truly test scope requirement, we need a user with a different scope
-    # but NOT member:limited or api:all
+    # User with no scopes gets [] from login (no implicit grants), which blocks access
     response2 = await client.get("/api/v1/scheduler/my-assignments", headers=headers)
-    # api:all grants full API access, so this returns 200 with empty data
-    assert response2.status_code == 200
+    assert response2.status_code == 403
 
 
 @pytest.mark.asyncio

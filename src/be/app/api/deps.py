@@ -106,12 +106,17 @@ async def get_current_user(
     token_to_use = cookie_token or token
 
     try:
+        # Decode with aud/iss when configured, accept without for backwards compat.
+        decode_kwargs: dict = {}
+        if settings.JWT_AUDIENCE:
+            decode_kwargs["audience"] = settings.JWT_AUDIENCE
+        if settings.JWT_ISSUER:
+            decode_kwargs["issuer"] = settings.JWT_ISSUER
         payload = jwt.decode(
             token_to_use,
             security.PUBLIC_KEY,
             algorithms=[security.ALGORITHM],
-            audience=settings.JWT_AUDIENCE,
-            issuer=settings.JWT_ISSUER,
+            **decode_kwargs,
         )
         token_data = TokenPayload(**payload)
     except (InvalidTokenError, ValidationError):
@@ -167,12 +172,16 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 async def get_current_active_superuser(current_user: CurrentUser, token: TokenDep) -> User:
     """Check token scopes for superuser, not the is_superuser flag."""
     try:
+        decode_kwargs: dict = {}
+        if settings.JWT_AUDIENCE:
+            decode_kwargs["audience"] = settings.JWT_AUDIENCE
+        if settings.JWT_ISSUER:
+            decode_kwargs["issuer"] = settings.JWT_ISSUER
         payload = jwt.decode(
             token,
             security.PUBLIC_KEY,
             algorithms=[security.ALGORITHM],
-            audience=settings.JWT_AUDIENCE,
-            issuer=settings.JWT_ISSUER,
+            **decode_kwargs,
         )
         token_data = TokenPayload(**payload)
         if "superuser" not in (token_data.scopes or []):
@@ -201,12 +210,17 @@ async def get_current_user_with_scopes(
         token_to_use = cookie_token or token
 
     try:
+        # Decode with aud/iss when configured, accept without for backwards compat.
+        decode_kwargs: dict = {}
+        if settings.JWT_AUDIENCE:
+            decode_kwargs["audience"] = settings.JWT_AUDIENCE
+        if settings.JWT_ISSUER:
+            decode_kwargs["issuer"] = settings.JWT_ISSUER
         payload = jwt.decode(
             token_to_use,
             security.PUBLIC_KEY,
             algorithms=[security.ALGORITHM],
-            audience=settings.JWT_AUDIENCE,
-            issuer=settings.JWT_ISSUER,
+            **decode_kwargs,
         )
         token_data = TokenPayload(**payload)
     except (InvalidTokenError, ValidationError):
@@ -230,30 +244,28 @@ async def get_current_user_with_scopes(
 
 
 async def _get_user_scopes(session: AsyncSession, user: User) -> list[str]:
-    """Get effective scopes for a user, matching login logic.
+    """Get effective scopes for a user from the database.
 
-    Login grants api:all to all authenticated users. So if the user has
-    any scope, they effectively get api:all (same as login). If no scopes,
-    they also get api:all as a fallback.
+    Returns only the scopes actually assigned to the user in DB.
+    No implicit grants — authorization is enforced by scope checks on each endpoint.
     """
     from app.repositories.user_scope_repo import UserScopeRepository
 
     repo = UserScopeRepository(session)
     db_scopes = await repo.get_scopes(user.id)
-    if not db_scopes:
-        # Align with login logic: users with no DB scopes get api:all
-        return ["api:all"]
-    if "superuser" in db_scopes or "api:all" in db_scopes:
-        return ["api:all"]
-    # Login grants api:all to all authenticated users (any scope → api:all)
-    return ["api:all"]
+    return list(db_scopes) if db_scopes else []
 
 
 async def get_current_active_superuser_bypass(
     session: SessionDep,
     request: Request,
 ) -> User:
-    """Authenticate user and return them, without requiring superuser status."""
+    """Authenticate user and return them, without requiring superuser status.
+
+    DEPRECATED: Use `CurrentUser` directly instead. This exists only for backward
+    compatibility with existing route definitions — prefer the simpler
+    `CurrentUser = Annotated[User, Depends(get_current_user)]` pattern.
+    """
     cookie_token = await get_token_from_cookie(request)
     auth_header = request.headers.get("authorization", "")
     header_token = None
@@ -261,12 +273,17 @@ async def get_current_active_superuser_bypass(
         header_token = auth_header[7:]
     token_to_use = cookie_token or header_token
     try:
+        # Decode with aud/iss when configured, accept without for backwards compat.
+        decode_kwargs: dict = {}
+        if settings.JWT_AUDIENCE:
+            decode_kwargs["audience"] = settings.JWT_AUDIENCE
+        if settings.JWT_ISSUER:
+            decode_kwargs["issuer"] = settings.JWT_ISSUER
         payload = jwt.decode(
             token_to_use,
             security.PUBLIC_KEY,
             algorithms=[security.ALGORITHM],
-            audience=settings.JWT_AUDIENCE,
-            issuer=settings.JWT_ISSUER,
+            **decode_kwargs,
         )
         token_data = TokenPayload(**payload)
     except (InvalidTokenError, ValidationError):
@@ -291,13 +308,14 @@ def require_scope(required_scope: str) -> Callable:
     """Return a dependency that checks if the user has the required scope.
 
     Users with "superuser" scope bypass all scope checks.
+    No implicit grants — users must have exactly the required scope or be superusers.
     """
 
     async def scope_checker(
         user_scopes: Annotated[tuple[User, list[str]], Depends(get_current_user_with_scopes)],
     ) -> User:
         user, scopes = user_scopes
-        if "superuser" in scopes or "api:all" in scopes:
+        if "superuser" in scopes:
             return user
         if required_scope not in scopes:
             raise HTTPException(

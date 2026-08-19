@@ -1,13 +1,16 @@
 # ---- Build stage ----
-FROM oven/bun:1-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY package.json bun.lockb ./
-RUN bun install --frozen-lockfile
+COPY package.json bun.lock ./
+RUN npm install -g bun 2>/dev/null || true
+RUN corepack enable && bun install --frozen-lockfile 2>/dev/null || npm ci
+RUN rm -rf node_modules/.cache
 
 COPY . .
-RUN bun run build
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN npx next build
 
 # ---- Production stage ----
 FROM nginx:alpine

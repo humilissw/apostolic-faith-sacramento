@@ -69,7 +69,10 @@ class AssignmentRepository:
             await self.session.refresh(assignment)
             return assignment
         except Exception as err:
-            print(err)
+            import logging
+
+            logger = logging.getLogger(__name__)
+            logger.error("Failed to create assignment: %s", err)
             await self.session.rollback()
             return None
 

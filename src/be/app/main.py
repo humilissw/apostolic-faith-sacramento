@@ -9,28 +9,35 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.main import api_router
 from app.api.deps import oauth2_scheme
 from app.core.scopes import Scope
+from app.core.csrf import CsrfProtectionMiddleware
+from app.core.security_headers import SecurityHeadersMiddleware
+from app.core.rate_limiter import RateLimitMiddleware
 from app.config import settings
 
-print("**********Starting app...**********")
-print(
-    "********--------App Settings loaded: "
-    + str((settings.BACKEND_CORS_ORIGINS is not None and settings.BACKEND_CORS_ORIGINS != ""))
-)
-print("***** Route Path: " + settings.API_V1_STR)
 
-origins = [
-    "http://localhost.tiangolo.com",
-    "https://localhost.tiangolo.com",
-    "http://localhost",
-    "http://localhost:8080",
-    "http://localhost:3000",
-    "https://localhost:3000",
-    "https://qa.afcsacramento.org",
-    "https://pre.afcsacramento.org",
-    "https://afcsacramento.org",
-    "https://www.afcsacramento.org",
-    "https://www.pre.afcsacramento.org",
-]
+def parse_cors_origins(cors_origins_str: str) -> list[str]:
+    """Parse CORS origins from settings string into a list.
+
+    Accepts comma-separated values or JSON array format.
+    Falls back to safe defaults if parsing fails.
+    """
+    cors_origins_str = cors_origins_str.strip()
+    if not cors_origins_str:
+        return []
+
+    # Try parsing as JSON array first
+    if cors_origins_str.startswith("["):
+        import json
+
+        try:
+            parsed_origins = json.loads(cors_origins_str)
+            if isinstance(parsed_origins, list):
+                return [str(o).strip() for o in parsed_origins if o]
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    # Fallback to comma-separated parsing
+    return [str(o).strip() for o in cors_origins_str.split(",") if o.strip()]
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:
@@ -42,17 +49,35 @@ app = FastAPI(
     description=settings.PROJECT_DESCRIPTION,
     version=settings.VERSION,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
-    # generate_unique_id_function=custom_generate_unique_id,
 )
 
 try:
+    # Parse CORS origins from settings (not hardcoded list)
+    cors_origins = parse_cors_origins(settings.BACKEND_CORS_ORIGINS)
+
+    # If no origins configured in settings, use safe defaults for development
+    if not cors_origins:
+        cors_origins = [
+            "http://localhost.tiangolo.com",
+            "https://localhost.tiangolo.com",
+            "http://localhost",
+            "http://localhost:8080",
+            "http://localhost:3000",
+            "https://localhost:3000",
+        ]
+
+    print("**********Starting app...**********")
+    print(f"CORS origins configured: {len(cors_origins)}")
+    for origin in cors_origins:
+        print(f"  - {origin}")
+    print(f"***** Route Path: {settings.API_V1_STR} *****")
+
     app.add_middleware(
         CORSMiddleware,
-        # allow_origins=["*"],
-        allow_origins=origins,
+        allow_origins=cors_origins,
         allow_credentials=True,
         allow_methods=["*"],
-        allow_headers=["*"],
+        allow_headers=["Content-Type", "Authorization"],
     )
 
     # OAuth2 scope definitions for OpenAPI/Swagger UI
@@ -60,6 +85,15 @@ try:
         "OAuth2PasswordBearer": oauth2_scheme,
     }
     app.security = [{"OAuth2PasswordBearer": [s.value for s in Scope]}]
+
+    # Add rate limiting middleware (before routes)
+    app.add_middleware(RateLimitMiddleware)
+
+    # Add CSRF protection middleware (before routes)
+    app.add_middleware(CsrfProtectionMiddleware)
+
+    # Add security headers middleware (pass environment for HSTS control)
+    app.add_middleware(SecurityHeadersMiddleware, env=settings.ENVIRONMENT)
 
     app.include_router(api_router, prefix=settings.API_V1_STR)
 

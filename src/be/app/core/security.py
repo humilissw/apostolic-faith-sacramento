@@ -61,7 +61,6 @@ def create_access_token(subject: str, expires_delta: timedelta) -> str:
         verify_access_token(encoded_jwt)
         return str(encoded_jwt)
     except Exception as err:
-        print(err)
         raise err
 
 

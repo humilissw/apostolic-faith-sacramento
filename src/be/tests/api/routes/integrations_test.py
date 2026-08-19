@@ -61,32 +61,39 @@ async def test_get_status_public(client) -> None:
 
 @pytest.mark.asyncio
 async def test_list_integrations_requires_scope(client, db_session) -> None:
-    """All authenticated users get api:all from login, so any user can list integrations."""
-    # The login grants api:all to ALL authenticated users.
-    # So the scope check passes for everyone. Use integrations_admin_token
-    # to confirm the endpoint works with the intended scope.
+    """All authenticated users with integrations:admin scope can list integrations."""
     email = "any_scope_test@example.com"
     statement = select(User).where(User.email == email)
     user = (await db_session.execute(statement)).scalar_one_or_none()
     if not user:
         user = await create_user(
             session=db_session,
-            user_create=UserCreate(email=email, password="testpassword123"),
+            user_create=UserCreate(email=email, password="TestPass123!"),
         )
-    user.hashed_password = get_password_hash("testpassword123")
+    user.hashed_password = get_password_hash("TestPass123!")
     db_session.add(user)
     await db_session.commit()
 
+    # Grant integrations:admin scope so the test can access integrations endpoints
+    has_scope = await db_session.execute(
+        select(UserScope).where(
+            UserScope.user_id == user.id, UserScope.scope == "integrations:admin"
+        )
+    )
+    if not has_scope.scalar_one_or_none():
+        db_session.add(UserScope(user_id=user.id, scope="integrations:admin"))
+        await db_session.commit()
+
     response = await client.post(
         f"{settings.API_V1_STR}/login/access-token",
-        data={"username": email, "password": "testpassword123"},
+        data={"username": email, "password": "TestPass123!"},
     )
     tokens = response.json()
     response = await client.get(
         "/api/v1/integrations/",
         headers={"Authorization": f"Bearer {tokens['access_token']}"},
     )
-    # api:all is granted to all authenticated users via login, so 200 is expected
+    # With integrations:admin scope granted, access should be allowed
     assert response.status_code == 200
 
 

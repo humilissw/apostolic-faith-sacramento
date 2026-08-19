@@ -1,11 +1,13 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Annotated, Any
+
+import logging
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, Field
-from sqlalchemy import select, update
+from sqlalchemy import select, update as sa_update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import (
@@ -14,15 +16,18 @@ from app.api.deps import (
     get_current_active_superuser,
     get_current_user,
 )
-from app.core import security
-from app.core.scopes import Scope
 from app.config import settings
 from app.core.db import get_db_session
-from app.core.security import verify_password
+from app.core.security import (
+    generate_code_challenge,
+    generate_code_verifier,
+    verify_access_token,
+    verify_password,
+)
 from app.models import (
-    AuthorizationCode,
     Message,
     NewPassword,
+    PasswordRecoveryRequest,
     RefreshToken,
     RevokeTokenRequest,
     Token,
@@ -33,22 +38,11 @@ from app.models import (
     UserPublic,
 )
 from app.repositories.user_repo import UserRepository
-from app.repositories.user_scope_repo import UserScopeRepository
 from app.services.auth_service import AuthService
+from app.services.auth_token_service import AuthTokenService
+from app.services.oauth2_flow_service import OAuth2FlowService
 
-
-def _cookie_kwargs(request: Request) -> dict[str, Any]:
-    """Compute cookie kwargs that work across HTTP and HTTPS for cross-origin requests."""
-    scheme = request.url.scheme
-    secure = scheme == "https"
-    samesite = "none" if secure else "lax"
-    return {
-        "httponly": True,
-        "secure": secure,
-        "samesite": samesite,
-        "path": settings.COOKIE_PATH,
-        "domain": settings.COOKIE_DOMAIN,
-    }
+logger = logging.getLogger(__name__)
 
 
 router = APIRouter(tags=["login"])
@@ -101,20 +95,26 @@ class ImplicitTokenResponse(BaseModel):
     scope: str = ""
 
 
+# --------------------------------------------------------------------------- #
+#  PKCE challenge                                                             #
+# --------------------------------------------------------------------------- #
+
+
 @router.post("/login/pkce-challenge")
 async def pkce_challenge() -> dict:
-    """Generate a PKCE code_verifier and code_challenge pair.
-
-    Clients should store the code_verifier and send the code_challenge
-    during the authorization request, then use the verifier during token exchange.
-    """
-    verifier = security.generate_code_verifier()
-    challenge = security.generate_code_challenge(verifier)
+    """Generate a PKCE code_verifier and code_challenge pair."""
+    verifier = generate_code_verifier()
+    challenge = generate_code_challenge(verifier)
     return {
         "code_verifier": verifier,
         "code_challenge": challenge,
         "code_challenge_method": "S256",
     }
+
+
+# --------------------------------------------------------------------------- #
+#  Password grant (email/password login)                                      #
+# --------------------------------------------------------------------------- #
 
 
 @router.post("/login/access-token", response_model=Token)
@@ -125,84 +125,52 @@ async def login_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     session: AsyncSession = Depends(get_db_session),
 ) -> Token:
-    """
-    OAuth2 compatible token login via password grant.
-    Sets httpOnly cookies for access_token and refresh_token.
-    Returns tokens in JSON body for client-side navigation.
-    Rate limited to prevent brute-force attacks.
-    """
-    # Rate limit check (5 requests per 15 minutes per IP)
+    """OAuth2 password grant — returns tokens in JSON body and httpOnly cookies."""
     ip = request.client.host if request.client else "unknown"
+
+    # Rate limit
     from app.core.rate_limiter import check_rate_limit
 
     if not check_rate_limit(f"login:{ip}", 5, 15 * 60):
-        raise HTTPException(
-            status_code=429,
-            detail="Rate limit exceeded. Please try again later.",
-        )
+        raise HTTPException(status_code=429, detail="Rate limit exceeded. Please try again later.")
 
-    repository = UserRepository(session=session)
-    user = await repository.get_by_email(email=form_data.username)
+    # Authenticate user via repository (separate from token lifecycle)
+    user_repo = UserRepository(session=session)
+    user = await user_repo.get_by_email(form_data.username)
     if user is None:
+        logger.warning(
+            "Failed login attempt for non-existent email: %s | ip=%s", form_data.username, ip
+        )
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     if not verify_password(form_data.password, user.hashed_password):
+        logger.warning("Failed login attempt for email: %s | ip=%s", form_data.username, ip)
         raise HTTPException(status_code=400, detail="Incorrect email or password")
-    elif not user.is_active:
+    if not user.is_active:
+        logger.info("Login attempt by inactive user: %s | ip=%s", form_data.username, ip)
         raise HTTPException(status_code=400, detail="Inactive user")
 
-    # Resolve scopes from DB: superuser scope grants all, otherwise use assigned scopes
-    # Users with no assigned scopes get api:all (implicit trust for authenticated users)
-    scope_repo = UserScopeRepository(session)
-    assigned = await scope_repo.get_scopes(user.id)
-    if "superuser" in assigned:
-        token_scopes = [s.value for s in Scope]
-    else:
-        token_scopes = list(set(assigned) | {"api:all"}) if assigned else ["api:all"]
-
-    access_token, access_expires = security.create_access_token_with_claims(
-        user.email,
-        timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
-        scopes=token_scopes,
-    )
-    refresh_token, refresh_expires = security.create_refresh_token_with_expiry(
-        timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+    # Delegate token creation + cookie setting to service
+    token_svc = AuthTokenService(session=session)
+    tokens = await token_svc.create_tokens_for_user(user)
+    AuthTokenService.attach_auth_cookies(
+        response, tokens["access_token"], tokens["refresh_token"], request
     )
 
-    # Store refresh token in database
-    db_refresh = RefreshToken(
-        user_id=user.id,
-        token=refresh_token,
-        expires_at=refresh_expires,
-    )
-    session.add(db_refresh)
-    await session.commit()
-
-    # Set httpOnly cookies for browser-based auth
-    access_expire_minutes = int(settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    refresh_expire_days = int(settings.REFRESH_TOKEN_EXPIRE_DAYS)
-    c = _cookie_kwargs(request)
-
-    response.set_cookie(
-        key=settings.ACCESS_TOKEN_COOKIE_NAME,
-        value=access_token,
-        max_age=60 * access_expire_minutes,
-        **c,
-    )
-    response.set_cookie(
-        key=settings.REFRESH_TOKEN_COOKIE_NAME,
-        value=refresh_token,
-        max_age=60 * 60 * 24 * refresh_expire_days,
-        **c,
-    )
+    logger.info("Successful login: %s | ip=%s", form_data.username, ip)
 
     return Token(
-        access_token=access_token,
-        refresh_token=refresh_token,
+        access_token=tokens["access_token"],
+        refresh_token=tokens["refresh_token"],
         token_type="bearer",
-        access_token_expires=access_expires,
-        refresh_token_expires=int((refresh_expires - datetime.now(timezone.utc)).total_seconds()),
-        scopes=token_scopes,
+        access_token_expires=tokens["access_expires"],
+        refresh_token_expires=tokens["refresh_expires"],
+        scopes=tokens["scopes"],
     )
+
+
+# --------------------------------------------------------------------------- #
+#  Token refresh                                                              #
+# --------------------------------------------------------------------------- #
 
 
 @router.post("/login/refresh-token", response_model=UpdateTokenResponse)
@@ -212,100 +180,25 @@ async def refresh_token(
     session: AsyncSession = Depends(get_db_session),
     response: Response = Response(),
 ) -> UpdateTokenResponse:
-    """
-    Exchange a valid refresh token for a new access token.
-    The old refresh token is revoked after use (single-use refresh tokens).
-    Sets updated httpOnly cookies.
-    """
-    result = await session.execute(
-        select(RefreshToken).where(
-            RefreshToken.token == body.refresh_token,  # type: ignore[arg-type]
-            RefreshToken.revoked != True,  # type: ignore[arg-type]
-        )
-    )
-    stored = result.scalar_one_or_none()
+    """Exchange a valid refresh token for a new access token (single-use rotation)."""
+    token_svc = AuthTokenService(session=session)
+    tokens = await token_svc.refresh_access_token(body.refresh_token)
 
-    if stored is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired refresh token",
-        )
-
-    # Check if token is expired
-    expires = stored.expires_at
-    if expires.tzinfo is None:
-        expires = expires.replace(tzinfo=timezone.utc)
-    if expires < datetime.now(timezone.utc):
-        stored.revoked = True
-        await session.commit()
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Refresh token has expired",
-        )
-
-    # Get the user
-    user = await session.get(User, stored.user_id)
-    if user is None or not user.is_active:
-        stored.revoked = True
-        await session.commit()
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found or inactive",
-        )
-
-    # Revoke the old refresh token (single-use)
-    stored.revoked = True
-    await session.commit()
-
-    # Issue new access token (superuser scope grants all, otherwise use assigned scopes)
-    # Users with no assigned scopes get api:all (implicit trust for authenticated users)
-    scope_repo = UserScopeRepository(session)
-    assigned = await scope_repo.get_scopes(user.id)
-    if "superuser" in assigned:
-        new_scopes = [s.value for s in Scope]
-    else:
-        new_scopes = list(set(assigned) | {"api:all"}) if assigned else ["api:all"]
-    new_access_token, new_expires = security.create_access_token_with_claims(
-        user.email,
-        timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
-        scopes=new_scopes,
-    )
-
-    # Issue new refresh token
-    new_refresh_token, new_refresh_expires = security.create_refresh_token_with_expiry(
-        timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
-    )
-    new_stored = RefreshToken(
-        user_id=user.id,
-        token=new_refresh_token,
-        expires_at=new_refresh_expires,
-    )
-    session.add(new_stored)
-    await session.commit()
-
-    # Update httpOnly cookies with new token values
-    access_expire_minutes = int(settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    refresh_expire_days = int(settings.REFRESH_TOKEN_EXPIRE_DAYS)
-    c = _cookie_kwargs(request)
-    response.set_cookie(
-        key=settings.ACCESS_TOKEN_COOKIE_NAME,
-        value=new_access_token,
-        max_age=60 * access_expire_minutes,
-        **c,
-    )
-    response.set_cookie(
-        key=settings.REFRESH_TOKEN_COOKIE_NAME,
-        value=new_refresh_token,
-        max_age=60 * 60 * 24 * refresh_expire_days,
-        **c,
+    AuthTokenService.attach_auth_cookies(
+        response, tokens["access_token"], tokens["refresh_token"], request
     )
 
     return UpdateTokenResponse(
-        access_token=new_access_token,
+        access_token=tokens["access_token"],
         token_type="bearer",
-        access_token_expires=new_expires,
-        scopes=new_scopes,
+        access_token_expires=tokens["access_expires"],
+        scopes=tokens["scopes"],
     )
+
+
+# --------------------------------------------------------------------------- #
+#  Token revoke                                                               #
+# --------------------------------------------------------------------------- #
 
 
 @router.post("/login/revoke-token")
@@ -314,11 +207,7 @@ async def revoke_token(
     body: RevokeTokenRequest = Body(...),
     current_user: User = Depends(get_current_user),
 ) -> Message:
-    """
-    Revoke a token (either access or refresh).
-    For refresh tokens: marks them as revoked in the database.
-    For access tokens (JWT): revokes all refresh tokens for this user.
-    """
+    """Revoke a refresh token or all tokens for the current user."""
     # Check if it's a refresh token belonging to this user
     result = await session.execute(
         select(RefreshToken).where(
@@ -335,10 +224,10 @@ async def revoke_token(
 
     # Try to treat it as an access token - revoke all tokens for this user
     try:
-        payload = security.verify_access_token(body.token)
+        payload = verify_access_token(body.token)
         if payload and payload.get("sub") == current_user.email:
             await session.execute(
-                update(RefreshToken)
+                sa_update(RefreshToken)
                 .where(RefreshToken.user_id == current_user.id)  # type: ignore[arg-type]
                 .where(RefreshToken.revoked != True)  # type: ignore[arg-type]
                 .values(revoked=True)
@@ -346,10 +235,14 @@ async def revoke_token(
             await session.commit()
             return Message(message="All tokens revoked")
     except Exception:
-        # Token was not a valid access token either; fall through to generic response
         pass
 
     return Message(message="Token revoked")
+
+
+# --------------------------------------------------------------------------- #
+#  Client credentials flow                                                    #
+# --------------------------------------------------------------------------- #
 
 
 @router.post("/login/client-credentials", response_model=Token)
@@ -359,9 +252,7 @@ async def client_credentials_login(
     response: Response = Response(),
 ) -> Token:
     """OAuth2 client credentials flow for service-to-service auth."""
-    from app.models import ClientCredentials
-
-    # Extract credentials from header or form data
+    # Extract credentials from header or form data (HTTP concern only)
     client_id = request.headers.get("x-client-id")
     client_secret = request.headers.get("x-client-secret")
     if not client_id:
@@ -386,70 +277,20 @@ async def client_credentials_login(
             detail="Missing client credentials",
         )
 
-    result = await session.execute(
-        select(ClientCredentials).where(
-            ClientCredentials.client_id == client_id,  # type: ignore[arg-type]
-            ClientCredentials.is_active == True,  # type: ignore[arg-type]
-        )
-    )
-    client = result.scalar_one_or_none()
-
+    # Delegate authentication and token creation to service
+    flow_svc = OAuth2FlowService(session)
+    client, token_scopes = await flow_svc.authenticate_client(client_id, client_secret)
     if client is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid client credentials",
         )
 
-    if not security.verify_password(client_secret, client.client_secret_hash):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid client credentials",
-        )
-
-    token_scopes = client.scopes.split(",") if client.scopes else []
-
-    access_token, access_expires = security.create_access_token_with_claims(
-        client_id,
-        timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
-        scopes=token_scopes,
-    )
-    refresh_token_str, refresh_expires = security.create_refresh_token_with_expiry(
-        timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+    access_token, access_expires, refresh_token_str, refresh_expires = (
+        await flow_svc.create_client_tokens(client_id, token_scopes)
     )
 
-    # For client credentials, store refresh token keyed on client_id
-    result = await session.execute(
-        select(RefreshToken).where(
-            RefreshToken.user_id == "client:" + client_id  # type: ignore[arg-type]
-        )
-    )
-    existing = result.scalar_one_or_none()
-    if existing:
-        existing.token = refresh_token_str
-        existing.expires_at = refresh_expires
-        existing.revoked = False
-    else:
-        db_refresh = RefreshToken(
-            user_id="client:" + client_id,
-            token=refresh_token_str,
-            expires_at=refresh_expires,
-        )
-        session.add(db_refresh)
-    await session.commit()
-
-    c = _cookie_kwargs(request)
-    response.set_cookie(
-        key=settings.ACCESS_TOKEN_COOKIE_NAME,
-        value=access_token,
-        max_age=60 * int(settings.ACCESS_TOKEN_EXPIRE_MINUTES),
-        **c,
-    )
-    response.set_cookie(
-        key=settings.REFRESH_TOKEN_COOKIE_NAME,
-        value=refresh_token_str,
-        max_age=60 * 60 * 24 * int(settings.REFRESH_TOKEN_EXPIRE_DAYS),
-        **c,
-    )
+    AuthTokenService.attach_auth_cookies(response, access_token, refresh_token_str, request)
 
     return Token(
         access_token=access_token,
@@ -461,50 +302,28 @@ async def client_credentials_login(
     )
 
 
+# --------------------------------------------------------------------------- #
+#  Authorization code flow                                                    #
+# --------------------------------------------------------------------------- #
+
+
 @router.post("/login/authorize", response_model=AuthorizationCodeResponse)
 async def authorization_code(
     body: AuthorizationCodeChallenge,
     session: AsyncSession = Depends(get_db_session),
 ) -> AuthorizationCodeResponse:
-    """OAuth2 authorization code flow - step 1: obtain an authorization code.
-
-    Client calls /login/pkce-challenge to get code_verifier/code_challenge.
-    Then calls /login/authorize with client_id + code_challenge to get a code.
-    Then calls /login/auth-code with code + code_verifier to get tokens.
-    """
-    from app.models import ClientCredentials
-
-    result = await session.execute(
-        select(ClientCredentials).where(
-            ClientCredentials.client_id == body.client_id,  # type: ignore[arg-type]
-            ClientCredentials.is_active == True,  # type: ignore[arg-type]
-        )  # type: ignore[arg-type]
-    )
-    client = result.scalar_one_or_none()
-
-    if client is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid client credentials",
-        )
-
-    # Store authorization code (opaque random code, not the full JWT)
-    import secrets
-
-    auth_code = secrets.token_urlsafe(32)
-
-    db_code = AuthorizationCode(
-        code=auth_code,
+    """OAuth2 authorization code flow - step 1: obtain an authorization code."""
+    flow_svc = OAuth2FlowService(session)
+    auth_code, error = await flow_svc.create_authorization_code(
         client_id=body.client_id,
         code_challenge=body.code_challenge,
         redirect_uri=body.redirect_uri,
-        expires_at=datetime.now(timezone.utc) + timedelta(minutes=10),
     )
-    session.add(db_code)
-    await session.commit()
+    if error:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=error)
 
     return AuthorizationCodeResponse(
-        access_token=auth_code,
+        access_token=auth_code,  # type: ignore[arg-type]
         token_type="code",
         expires_in=600,
     )
@@ -517,128 +336,29 @@ async def authorization_code_token(
     response: Response = Response(),
 ) -> Token:
     """OAuth2 authorization code flow - step 2: exchange code for tokens (PKCE)."""
-    from app.models import ClientCredentials
+    flow_svc = OAuth2FlowService(session)
 
-    # Find stored authorization code
-    result = await session.execute(
-        select(AuthorizationCode).where(
-            AuthorizationCode.code == body.code  # type: ignore[arg-type]
-        )
+    access_token, refresh_expires_sec, error = await flow_svc.exchange_authorization_code(
+        client_id=body.client_id,
+        code=body.code,
+        code_verifier=body.code_verifier,
     )
-    stored = result.scalar_one_or_none()
-
-    if stored is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid authorization code",
-        )
-    if stored.used:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Authorization code already used",
-        )
-    expires = stored.expires_at
-    if expires.tzinfo is None:
-        expires = expires.replace(tzinfo=timezone.utc)
-    if expires < datetime.now(timezone.utc):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Authorization code has expired",
-        )
-
-    # Verify client_id matches
-    result = await session.execute(
-        select(ClientCredentials).where(
-            ClientCredentials.client_id == body.client_id,  # type: ignore[arg-type]
-            ClientCredentials.is_active == True,  # type: ignore[arg-type]
-        )  # type: ignore[arg-type]
-    )
-    client = result.scalar_one_or_none()
-
-    if client is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid client credentials",
-        )
-
-    # Verify client_id matches the stored code
-    if stored.client_id != body.client_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Authorization code client_id mismatch",
-        )
-
-    # Verify PKCE code_verifier
-    expected_challenge = security.generate_code_challenge(body.code_verifier)
-    if stored.code_challenge != expected_challenge:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="PKCE code_challenge mismatch",
-        )
-
-    # Issue tokens using client scopes
-    scopes_raw = client.scopes  # type: ignore[attr-defined]
-    token_scopes = scopes_raw.split(",") if scopes_raw else ["client"]
-
-    access_token, access_expires = security.create_access_token_with_claims(
-        body.client_id,
-        timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
-        scopes=token_scopes,
-    )
-    refresh_token_str, refresh_expires = security.create_refresh_token_with_expiry(
-        timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
-    )
-
-    # Mark code as used
-    stored.used = True
-    await session.commit()
-
-    # Store refresh token keyed on client_id
-    result = await session.execute(
-        select(RefreshToken).where(
-            RefreshToken.user_id == "client:" + body.client_id  # type: ignore[arg-type]
-        )
-    )
-    existing = result.scalar_one_or_none()
-    if existing:
-        existing.token = refresh_token_str
-        existing.expires_at = refresh_expires
-        existing.revoked = False
-    else:
-        db_refresh = RefreshToken(
-            user_id="client:" + body.client_id,
-            token=refresh_token_str,
-            expires_at=refresh_expires,
-        )
-        session.add(db_refresh)
-    await session.commit()
-
-    cookie_secure = settings.COOKIE_SECURE
-    response.set_cookie(
-        key=settings.ACCESS_TOKEN_COOKIE_NAME,
-        value=access_token,
-        httponly=True,
-        secure=cookie_secure,
-        samesite="lax",
-        max_age=60 * int(settings.ACCESS_TOKEN_EXPIRE_MINUTES),
-    )
-    response.set_cookie(
-        key=settings.REFRESH_TOKEN_COOKIE_NAME,
-        value=refresh_token_str,
-        httponly=True,
-        secure=cookie_secure,
-        samesite="lax",
-        max_age=60 * 60 * 24 * int(settings.REFRESH_TOKEN_EXPIRE_DAYS),
-    )
+    if error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
 
     return Token(
-        access_token=access_token,
-        refresh_token=refresh_token_str,
+        access_token=access_token,  # type: ignore[arg-type]
+        refresh_token="",  # Refresh token stored in DB keyed on client_id
         token_type="bearer",
-        access_token_expires=access_expires,
-        refresh_token_expires=int((refresh_expires - datetime.now(timezone.utc)).total_seconds()),
-        scopes=token_scopes,
+        access_token_expires=refresh_expires_sec or 0,
+        refresh_token_expires=refresh_expires_sec or 0,
+        scopes=[],
     )
+
+
+# --------------------------------------------------------------------------- #
+#  Implicit grant                                                             #
+# --------------------------------------------------------------------------- #
 
 
 @router.post("/login/implicit-token", response_model=ImplicitTokenResponse)
@@ -646,46 +366,26 @@ async def implicit_token(
     body: ImplicitTokenRequest,
     session: AsyncSession = Depends(get_db_session),
 ) -> ImplicitTokenResponse:
-    """OAuth2 implicit grant for SPAs - returns access token directly.
+    """OAuth2 implicit grant for SPAs - returns access token directly."""
+    flow_svc = OAuth2FlowService(session)
 
-    For use with single-page applications where a refresh token cannot be stored securely.
-    Uses PKCE for enhanced security (RFC 9239).
-    """
-    from app.models import ClientCredentials
-
-    result = await session.execute(
-        select(ClientCredentials).where(
-            ClientCredentials.client_id == body.client_id,  # type: ignore[arg-type]
-            ClientCredentials.is_active == True,  # type: ignore[arg-type]
-        )  # type: ignore[arg-type]
+    access_token, expires_in_sec, error = await flow_svc.issue_implicit_token(
+        client_id=body.client_id,
+        code_verifier=body.code_verifier,
     )
-    client = result.scalar_one_or_none()
-
-    if client is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid client credentials",
-        )
-
-    # For implicit grant, prioritize spa:all scope
-    token_scopes = ["spa:all"]
-    if client.scopes:
-        client_scopes = client.scopes.split(",")
-        # Include client scopes that overlap with known scopes
-        known = {s.value for s in Scope}
-        token_scopes = [s for s in client_scopes if s in known] or ["spa:all"]
-
-    access_token, access_expires = security.create_access_token_with_claims(
-        body.client_id,
-        timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
-        scopes=token_scopes,
-    )
+    if error:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=error)
 
     return ImplicitTokenResponse(
-        access_token=access_token,
+        access_token=access_token,  # type: ignore[arg-type]
         token_type="bearer",
-        expires_in=access_expires,
+        expires_in=expires_in_sec or 0,
     )
+
+
+# --------------------------------------------------------------------------- #
+#  Logout                                                                     #
+# --------------------------------------------------------------------------- #
 
 
 @router.post("/login/logout")
@@ -693,37 +393,22 @@ async def logout(
     session: SessionDep, current_user: CurrentUser, response: Response, request: Request
 ) -> Message:
     """Revoke all tokens and clear auth cookies."""
-    # Revoke all refresh tokens for this user
-    await session.execute(
-        update(RefreshToken)
-        .where(RefreshToken.user_id == current_user.id)  # type: ignore[arg-type]
-        .where(RefreshToken.revoked != True)  # type: ignore[arg-type]
-        .values(revoked=True)
-    )
-    await session.commit()
-
-    # Clear auth cookies
-    c = _cookie_kwargs(request)
-    response.set_cookie(
-        key=settings.ACCESS_TOKEN_COOKIE_NAME,
-        value="",
-        max_age=0,
-        **c,
-    )
-    response.set_cookie(
-        key=settings.REFRESH_TOKEN_COOKIE_NAME,
-        value="",
-        max_age=0,
-        **c,
-    )
+    token_svc = AuthTokenService(session=session)
+    await token_svc.revoke_all_user_tokens(current_user.id)
+    AuthTokenService.clear_auth_cookies(response, request)
     return Message(message="Logged out")
+
+
+# --------------------------------------------------------------------------- #
+#  User info                                                                  #
+# --------------------------------------------------------------------------- #
 
 
 @router.get("/auth/me")
 async def me(current_user: CurrentUser, session: SessionDep) -> UserPublic:
     """Return current user info without is_superuser."""
-    scope_repo = UserScopeRepository(session)
-    scopes = await scope_repo.get_scopes(current_user.id)
+    token_svc = AuthTokenService(session=session)
+    scopes = await token_svc.resolve_user_scopes(current_user.id)
     return UserPublic(
         email=current_user.email,
         is_active=current_user.is_active,
@@ -734,14 +419,23 @@ async def me(current_user: CurrentUser, session: SessionDep) -> UserPublic:
     )
 
 
-@router.post("/login/token-scopes")
+# --------------------------------------------------------------------------- #
+#  Token inspection                                                           #
+# --------------------------------------------------------------------------- #
+
+
+@router.post(
+    "/login/token-scopes",
+    dependencies=[Depends(get_current_active_superuser)],
+)
 async def token_scopes(
     session: SessionDep,
+    current_user: CurrentUser,
     token: str = Body(..., embed=True),
 ) -> TokenScopes:
     """Decode a JWT access token and return its embedded scopes and claims."""
     try:
-        payload = security.verify_access_token(
+        payload = verify_access_token(
             token, audience=settings.JWT_AUDIENCE, issuer=settings.JWT_ISSUER
         )
     except Exception:
@@ -750,7 +444,6 @@ async def token_scopes(
             detail="Invalid or expired token",
         )
     scopes = payload.get("scopes") or []
-    # Resolve email from DB to confirm user still exists
     user_email: str = payload.get("sub", "")  # type: ignore[assignment]
     if user_email:
         stmt = select(User).where(User.email == user_email)  # type: ignore[arg-type]
@@ -770,53 +463,49 @@ async def token_scopes(
 
 @router.post("/login/test-token", response_model=UserPublic)
 def test_token(current_user: CurrentUser) -> Any:
-    """
-    Test access token
-    """
+    """Test access token."""
     return current_user
 
 
-@router.post("/password-recovery/{email}")
-async def recover_password(email: str, session: SessionDep, request: Request) -> Message:
-    """
-    Password Recovery
-    Rate limited to prevent email spamming.
-    """
-    # Rate limit check (3 requests per hour per IP)
+# --------------------------------------------------------------------------- #
+#  Password recovery                                                          #
+# --------------------------------------------------------------------------- #
+
+
+@router.post("/password-recovery")
+async def recover_password(
+    body: PasswordRecoveryRequest, session: SessionDep, request: Request
+) -> Message:
+    """Send a password reset email (prevents enumeration)."""
     ip = request.client.host if request.client else "unknown"
     from app.core.rate_limiter import check_rate_limit
 
     if not check_rate_limit(f"recovery:{ip}", 3, 60 * 60):
-        raise HTTPException(
-            status_code=429,
-            detail="Rate limit exceeded. Please try again later.",
-        )
+        raise HTTPException(status_code=429, detail="Rate limit exceeded. Please try again later.")
 
     repository = UserRepository(session=session)
     auth_service = AuthService(user_repository=repository)
-
-    # Use the service to initiate password recovery
-    # The service handles the case where user doesn't exist gracefully
-    await auth_service.initiate_password_recovery(email=email)
+    await auth_service.initiate_password_recovery(email=body.email, session=session)
 
     return Message(message="Password recovery email sent")
 
 
 @router.post("/reset-password/")
-async def reset_password(session: SessionDep, body: NewPassword) -> Message:
-    """
-    Reset password
-    """
-    # Create user repository and service
+async def reset_password(session: SessionDep, body: NewPassword, request: Request) -> Message:
+    """Reset password using a single-use token from the recovery email."""
+    from app.core.rate_limiter import check_rate_limit
+
+    ip = request.client.host if request.client else "unknown"
+    if not check_rate_limit(f"reset:{ip}", 5, 60 * 60):
+        raise HTTPException(status_code=429, detail="Rate limit exceeded. Please try again later.")
+
     user_repository = UserRepository(session=session)
     auth_service = AuthService(user_repository=user_repository)
 
-    # Use the service to reset the password
     result = await auth_service.reset_password(
         token=body.token, new_password=body.new_password, session=session
     )
 
-    # Return the success message
     return Message(message=result["message"])
 
 
@@ -826,18 +515,22 @@ async def reset_password(session: SessionDep, body: NewPassword) -> Message:
     response_class=HTMLResponse,
 )
 async def recover_password_html_content(email: str, session: SessionDep) -> Any:
-    """
-    HTML Content for Password Recovery
-    """
-    # Create user repository and service
+    """Superuser-only endpoint for debugging email templates."""
+    import re
+
+    if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", email):
+        raise HTTPException(status_code=400, detail="Invalid email format")
+
     user_repository = UserRepository(session=session)
     auth_service = AuthService(user_repository=user_repository)
+    await auth_service.initiate_password_recovery(email=email, session=session)
 
-    # Use the service to initiate password recovery
-    await auth_service.initiate_password_recovery(email=email)
-
-    # Return HTML content
     return HTMLResponse(
         content="Password recovery email sent successfully",
         headers={"subject:": "Password Recovery"},
     )
+
+
+# --------------------------------------------------------------------------- #
+#  Module-level helpers                                                       #
+# --------------------------------------------------------------------------- #
