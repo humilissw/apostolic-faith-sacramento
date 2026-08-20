@@ -1,0 +1,5 @@
+phases:
+  bootstrap:
+    command: poetry install
+  test:
+    command: poetry run pytest --no-cov -x
