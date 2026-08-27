@@ -79,8 +79,16 @@ class VideoUploadRepository:
         count_result = await self.session.execute(count_statement)
         total_count = count_result.scalar()
 
-        # Get paginated results
-        statement = select(VideoUpload).offset(skip).limit(limit)
+        # Get paginated results, newest first (service date desc, created_on as tie-breaker)
+        statement = (
+            select(VideoUpload)
+            .order_by(
+                VideoUpload.media_association_date.desc(),  # type: ignore[attr-defined]
+                VideoUpload.created_on.desc(),  # type: ignore[attr-defined]
+            )
+            .offset(skip)
+            .limit(limit)
+        )
         result = await self.session.execute(statement)
         video_uploads = result.scalars().all()
 

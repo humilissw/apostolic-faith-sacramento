@@ -159,6 +159,16 @@ Build output goes to `out/` directory. Deployed from `homepage` field in package
 bun run build   # generates static files in out/
 ```
 
+## Docker
+
+The Dockerfile (`src/fe/Dockerfile`) is based on `oven/bun` and uses bun for everything — install and runtime (bun is the project default, pinned via the `packageManager` field in package.json). The container starts with `bun https`, which runs `next dev --experimental-https` (see package.json) using the self-signed certs in `security_keys/`, serving HTTPS on port 3000. There is no nginx; bun serves the app directly.
+
+```bash
+docker build -t afc-frontend src/fe
+# or via docker-compose (serves on localhost:3000)
+docker-compose up -d --build frontend
+```
+
 ## Testing
 
 ```bash

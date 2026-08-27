@@ -1,4 +1,5 @@
 from typing import Any
+from urllib.parse import quote_plus
 
 from pydantic import (
     MySQLDsn,
@@ -49,6 +50,8 @@ class Settings(BaseSettings):
     SMTP_TLS: str
     SMTP_SSL: str
     SMTP_PORT: str
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
     DOCKER_IMAGE_BACKEND: str
     DOCKER_IMAGE_FRONTEND: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
@@ -79,29 +82,27 @@ class Settings(BaseSettings):
     # Third-party integration encryption
     INTEGRATION_ENCRYPTION_KEY: str = ""
     DEPLOY_QA_HOST: str = ""
+    # Dev convenience: run `alembic upgrade head` on app startup (serialized across workers)
+    RUN_MIGRATIONS_ON_STARTUP: bool = False
 
     @computed_field  # type: ignore[prop-decorator]
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> MySQLDsn:
-        return MySQLDsn.build(
-            scheme="mysql+pymysql",
-            username=self.DB_USER,
-            password=self.DB_PASSWORD,
-            host=self.DB_SERVER,
-            port=self.DB_PORT,
-            path=self.DB_DB,
+        # Percent-encode credentials: docker --env-file keeps inline comments,
+        # so DB_PASSWORD may contain '#'/'@' etc. that break URL parsing.
+        user = quote_plus(self.DB_USER)
+        password = quote_plus(self.DB_PASSWORD)
+        return MySQLDsn(
+            f"mysql+pymysql://{user}:{password}@{self.DB_SERVER}:{self.DB_PORT}/{self.DB_DB}"
         )
 
     @computed_field  # type: ignore[prop-decorator]
     @property
     def SQLALCHEMY_ASYNC_DATABASE_URI(self) -> MySQLDsn:
-        return MySQLDsn.build(
-            scheme="mysql+asyncmy",
-            username=self.DB_USER,
-            password=self.DB_PASSWORD,
-            host=self.DB_SERVER,
-            port=self.DB_PORT,
-            path=self.DB_DB,
+        user = quote_plus(self.DB_USER)
+        password = quote_plus(self.DB_PASSWORD)
+        return MySQLDsn(
+            f"mysql+asyncmy://{user}:{password}@{self.DB_SERVER}:{self.DB_PORT}/{self.DB_DB}"
         )
 
 

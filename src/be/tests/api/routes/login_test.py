@@ -53,6 +53,20 @@ async def login_db_session() -> AsyncSession:
         await async_engine.dispose()
 
 
+@pytest.fixture(autouse=True)
+def _reset_rate_limiter():
+    """Reset the global in-memory rate limiter before each test.
+
+    The limiter is process-wide; tests that only use ``login_client`` (no
+    ``login_db_session``) would otherwise inherit prior tests' request counts
+    and hit 429s mid-file.
+    """
+    from app.core.rate_limiter import reset_rate_limit
+
+    reset_rate_limit()
+    yield
+
+
 @pytest.fixture(scope="function")
 async def login_client() -> httpx.AsyncClient:
     from app.main import app
@@ -526,3 +540,115 @@ async def test_token_scopes_invalid_token(login_client) -> None:
         json={"token": "invalid.token.here"},
     )
     assert r.status_code == 401
+
+
+# --------------------------------------------------------------------------- #
+#  Cookie-based auth (web app sends tokens only via httpOnly cookies)         #
+# --------------------------------------------------------------------------- #
+
+
+async def _ensure_superuser(login_client, session) -> None:
+    """Ensure the superuser exists with the 'superuser' scope row."""
+    from app.models import UserScope
+
+    stmt = select(User).where(User.email == settings.FIRST_SUPERUSER)
+    result = await session.execute(stmt)
+    user = result.scalar_one_or_none()
+    if not user:
+        user_in = UserCreate(
+            email=settings.FIRST_SUPERUSER,
+            password=settings.FIRST_SUPERUSER_PASSWORD,
+            is_active=True,
+            is_superuser=True,
+        )
+        user = await create_user(session=session, user_create=user_in)
+    has_scope = await session.execute(
+        select(UserScope).where(
+            UserScope.user_id == user.id,  # type: ignore[arg-type]
+            UserScope.scope == "superuser",  # type: ignore[arg-type]
+        )
+    )
+    if not has_scope.scalar_one_or_none():
+        session.add(UserScope(user_id=user.id, scope="superuser"))  # type: ignore[arg-type]
+        await session.commit()
+
+
+@pytest.mark.asyncio
+async def test_auth_me_cookie_only(login_client, login_db_session) -> None:
+    """A valid JWT in the httpOnly cookie must authenticate without an Authorization header.
+
+    Regression test: the web app stores tokens only in httpOnly cookies and never
+    sends a Bearer header. Previously the OAuth2PasswordBearer dependency raised
+    401 for such requests before the cookie fallback could run.
+    """
+    await _ensure_superuser(login_client, login_db_session)
+    r = await login_client.post(
+        f"{settings.API_V1_STR}/login/access-token",
+        data={
+            "username": settings.FIRST_SUPERUSER,
+            "password": settings.FIRST_SUPERUSER_PASSWORD,
+        },
+    )
+    assert r.status_code == 200
+
+    # No Authorization header — the httpx client jar carries the Set-Cookie values
+    r = await login_client.get(f"{settings.API_V1_STR}/auth/me")
+    assert r.status_code == 200
+    assert r.json()["email"] == settings.FIRST_SUPERUSER
+
+
+@pytest.mark.asyncio
+async def test_protected_route_without_any_token_returns_401(
+    login_client, login_db_session
+) -> None:
+    """No token in header or cookie → 401 'Not authenticated' (not 403)."""
+    r = await login_client.get(f"{settings.API_V1_STR}/auth/me")
+    assert r.status_code == 401
+    assert r.json()["detail"] == "Not authenticated"
+
+
+@pytest.mark.asyncio
+async def test_refresh_token_from_cookie(login_client, login_db_session) -> None:
+    """Web app flow: refresh via the httpOnly cookie with an empty body.
+
+    The browser cannot read its own httpOnly cookies, so the frontend posts an
+    empty refresh_token and the backend must fall back to the cookie.
+    """
+    await _ensure_superuser(login_client, login_db_session)
+    r = await login_client.post(
+        f"{settings.API_V1_STR}/login/access-token",
+        data={
+            "username": settings.FIRST_SUPERUSER,
+            "password": settings.FIRST_SUPERUSER_PASSWORD,
+        },
+    )
+    assert r.status_code == 200
+
+    r = await login_client.post(f"{settings.API_V1_STR}/login/refresh-token", json={})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["access_token"]
+    assert body["token_type"] == "bearer"
+
+
+@pytest.mark.asyncio
+async def test_superuser_endpoint_cookie_only(login_client, login_db_session) -> None:
+    """Superuser-scope endpoints must accept cookie-only auth.
+
+    Regression test: get_current_active_superuser previously decoded the raw
+    Authorization-header token, so a superuser authenticated via cookie was
+    rejected (403) on admin endpoints like /users/.
+    """
+    await _ensure_superuser(login_client, login_db_session)
+    r = await login_client.post(
+        f"{settings.API_V1_STR}/login/access-token",
+        data={
+            "username": settings.FIRST_SUPERUSER,
+            "password": settings.FIRST_SUPERUSER_PASSWORD,
+        },
+    )
+    assert r.status_code == 200
+
+    # No Authorization header — cookie only
+    r = await login_client.get(f"{settings.API_V1_STR}/users/")
+    assert r.status_code == 200

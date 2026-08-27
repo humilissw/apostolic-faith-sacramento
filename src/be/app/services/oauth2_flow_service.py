@@ -127,8 +127,11 @@ class OAuth2FlowService:
         client_id: str,
         code: str,
         code_verifier: str,
-    ) -> tuple[str | None, int | None, str | None]:
-        """Exchange an authorization code for tokens."""
+    ) -> tuple[str | None, int | None, str | None, list[str]]:
+        """Exchange an authorization code for tokens.
+
+        Returns (access_token, refresh_expires_sec, error, token_scopes).
+        """
         # Find stored authorization code
         result = await self.session.execute(
             __import__("sqlalchemy")
@@ -138,14 +141,14 @@ class OAuth2FlowService:
         stored = result.scalar_one_or_none()
 
         if stored is None:
-            return None, None, "Invalid authorization code"
+            return None, None, "Invalid authorization code", []
         if stored.used:
-            return None, None, "Authorization code already used"
+            return None, None, "Authorization code already used", []
         expires = stored.expires_at
         if expires.tzinfo is None:
             expires = expires.replace(tzinfo=timezone.utc)
         if expires < datetime.now(timezone.utc):
-            return None, None, "Authorization code has expired"
+            return None, None, "Authorization code has expired", []
 
         # Verify client_id matches
         result = await self.session.execute(
@@ -159,15 +162,15 @@ class OAuth2FlowService:
         client = result.scalar_one_or_none()
 
         if client is None:
-            return None, None, "Invalid client credentials"
+            return None, None, "Invalid client credentials", []
 
         if stored.client_id != client_id:
-            return None, None, "Authorization code client_id mismatch"
+            return None, None, "Authorization code client_id mismatch", []
 
         # Verify PKCE code_verifier
         expected_challenge = generate_code_challenge(code_verifier)
         if stored.code_challenge != expected_challenge:
-            return None, None, "PKCE code_challenge mismatch"
+            return None, None, "PKCE code_challenge mismatch", []
 
         # Issue tokens using client scopes
         scopes_raw = client.scopes  # type: ignore[attr-defined]
@@ -204,6 +207,7 @@ class OAuth2FlowService:
             access_token,
             int((refresh_expires - datetime.now(timezone.utc)).total_seconds()),
             None,
+            token_scopes,
         )
 
     # ---- Implicit Grant Flow ----

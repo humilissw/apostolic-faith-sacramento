@@ -26,7 +26,7 @@ def upgrade() -> None:
         sa.Column("id", sa.String(length=36), primary_key=True),
         sa.Column("user_id", sa.String(length=36), nullable=False, index=True),
         sa.Column("token", sa.String(length=4000), nullable=False, unique=True, index=True),
-        sa.Column("invalidated", sa.Boolean(), nullable=False, server_default="false", index=True),
+        sa.Column("invalidated", sa.Boolean(), nullable=False, index=True),
         sa.Column("expires_at", sa.DateTime(), nullable=False, index=True),
         sa.Column("created_on", sa.DateTime(), nullable=False),
     )

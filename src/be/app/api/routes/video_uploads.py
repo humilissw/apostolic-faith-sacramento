@@ -30,14 +30,13 @@ async def readiness_check() -> str:
 @router.get(
     "/",
     response_model=VideoUploadsPublic,
-    dependencies=[require_scope("video_uploads:read")],
 )
 async def read_video_uploads(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
     """
     Retrieve all video uploads.
 
     Returns a list of all video uploads with pagination.
-    Requires video_uploads:read scope (or superuser).
+    Public endpoint — used by the public media page.
     """
     svc = VideoUploadManagementService(session)
     video_upload_data, total_count = await svc.get_all_video_uploads(skip=skip, limit=limit)
@@ -47,14 +46,13 @@ async def read_video_uploads(session: SessionDep, skip: int = 0, limit: int = 10
 @router.get(
     "/{video_upload_id}",
     response_model=VideoUploadPublic,
-    dependencies=[require_scope("video_uploads:read")],
 )
 async def read_video_upload_by_id(video_upload_id: str, session: SessionDep) -> Any:
     """
     Get video upload by ID.
 
     Returns a single video upload entry by its ID.
-    Requires video_uploads:read scope (or superuser).
+    Public endpoint — used by the public media page.
     """
     svc = VideoUploadManagementService(session)
     video_upload = await svc.get_video_upload_by_id(video_upload_id=video_upload_id)

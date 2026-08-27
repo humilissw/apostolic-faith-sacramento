@@ -84,7 +84,16 @@ async def admin_reset_superuser_token_headers(
             is_active=True,
             is_superuser=True,
         )
-        user = create_user(session=admin_reset_db_session, user_create=user_in)
+        user = await create_user(session=admin_reset_db_session, user_create=user_in)
+    else:
+        # Keep the stored hash in sync with .env (fresh DBs / rotated passwords)
+        from app.core.security import get_password_hash, verify_password
+
+        if not verify_password(settings.FIRST_SUPERUSER_PASSWORD, user.hashed_password):
+            user.hashed_password = get_password_hash(settings.FIRST_SUPERUSER_PASSWORD)
+            user.is_superuser = True
+            admin_reset_db_session.add(user)
+            await admin_reset_db_session.commit()
 
     response = await admin_reset_client.post(
         f"{settings.API_V1_STR}/login/access-token",

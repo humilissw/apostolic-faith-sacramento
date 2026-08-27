@@ -1,6 +1,8 @@
 from pathlib import Path
 import traceback
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.routing import APIRoute
@@ -13,6 +15,41 @@ from app.core.csrf import CsrfProtectionMiddleware
 from app.core.security_headers import SecurityHeadersMiddleware
 from app.core.rate_limiter import RateLimitMiddleware
 from app.config import settings
+
+
+def _run_migrations_on_startup() -> None:
+    """Run `alembic upgrade head` once on startup (dev convenience).
+
+    Serialized across uvicorn workers with an exclusive file lock, and retried
+    briefly in case the database container is still booting.
+    """
+    import fcntl
+    import time
+
+    from alembic import command
+    from alembic.config import Config as AlembicConfig
+
+    alembic_ini = Path(__file__).resolve().parents[1] / "alembic.ini"
+    lock_path = Path("/tmp/afc_alembic_startup.lock")
+
+    with lock_path.open("w") as lock_file:
+        fcntl.flock(lock_file, fcntl.LOCK_EX)
+        for attempt in range(1, 31):
+            try:
+                command.upgrade(AlembicConfig(str(alembic_ini)), "head")
+                break
+            except Exception as exc:  # noqa: BLE001 - dev convenience, log and give up
+                if attempt == 30:
+                    print(f"RUN_MIGRATIONS_ON_STARTUP failed after {attempt} attempts: {exc}")
+                else:
+                    time.sleep(2)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    if settings.RUN_MIGRATIONS_ON_STARTUP:
+        _run_migrations_on_startup()
+    yield
 
 
 def parse_cors_origins(cors_origins_str: str) -> list[str]:
@@ -49,6 +86,7 @@ app = FastAPI(
     description=settings.PROJECT_DESCRIPTION,
     version=settings.VERSION,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    lifespan=lifespan,
 )
 
 try:

@@ -180,9 +180,22 @@ async def refresh_token(
     session: AsyncSession = Depends(get_db_session),
     response: Response = Response(),
 ) -> UpdateTokenResponse:
-    """Exchange a valid refresh token for a new access token (single-use rotation)."""
+    """Exchange a valid refresh token for a new access token (single-use rotation).
+
+    The refresh token may arrive in the JSON body (API clients) or in the
+    httpOnly cookie (web app — it cannot read its own cookies).
+    """
+    refresh_token_value = body.refresh_token or request.cookies.get(
+        settings.REFRESH_TOKEN_COOKIE_NAME, ""
+    )
+    if not refresh_token_value:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No refresh token provided",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     token_svc = AuthTokenService(session=session)
-    tokens = await token_svc.refresh_access_token(body.refresh_token)
+    tokens = await token_svc.refresh_access_token(refresh_token_value)
 
     AuthTokenService.attach_auth_cookies(
         response, tokens["access_token"], tokens["refresh_token"], request
@@ -338,10 +351,12 @@ async def authorization_code_token(
     """OAuth2 authorization code flow - step 2: exchange code for tokens (PKCE)."""
     flow_svc = OAuth2FlowService(session)
 
-    access_token, refresh_expires_sec, error = await flow_svc.exchange_authorization_code(
-        client_id=body.client_id,
-        code=body.code,
-        code_verifier=body.code_verifier,
+    access_token, refresh_expires_sec, error, token_scopes = (
+        await flow_svc.exchange_authorization_code(
+            client_id=body.client_id,
+            code=body.code,
+            code_verifier=body.code_verifier,
+        )
     )
     if error:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
@@ -352,7 +367,7 @@ async def authorization_code_token(
         token_type="bearer",
         access_token_expires=refresh_expires_sec or 0,
         refresh_token_expires=refresh_expires_sec or 0,
-        scopes=[],
+        scopes=token_scopes,
     )
 
 
@@ -424,16 +439,15 @@ async def me(current_user: CurrentUser, session: SessionDep) -> UserPublic:
 # --------------------------------------------------------------------------- #
 
 
-@router.post(
-    "/login/token-scopes",
-    dependencies=[Depends(get_current_active_superuser)],
-)
+@router.post("/login/token-scopes", response_model=TokenScopes)
 async def token_scopes(
     session: SessionDep,
-    current_user: CurrentUser,
     token: str = Body(..., embed=True),
 ) -> TokenScopes:
-    """Decode a JWT access token and return its embedded scopes and claims."""
+    """Decode a JWT access token and return its embedded scopes and claims.
+
+    Auth is enforced by validating the presented token itself (401 if invalid).
+    """
     try:
         payload = verify_access_token(
             token, audience=settings.JWT_AUDIENCE, issuer=settings.JWT_ISSUER

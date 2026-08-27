@@ -10,18 +10,8 @@ import {
   useState,
 } from "react";
 
-function hasAuthCookie(): boolean {
-  try {
-    return document.cookie.includes("access_token=");
-  } catch {
-    return false;
-  }
-}
-
-import {
-  logout as apiLogout,
-  refreshToken as apiRefreshToken,
-} from "@/lib/api";
+import { fetchMe, logout as apiLogout, refreshToken as apiRefreshToken } from "@/lib/api";
+import type { MeResponse } from "@/lib/api";
 
 interface AuthContextValue {
   isAuthenticated: boolean;
@@ -34,53 +24,62 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-// Track ongoing refresh promises to avoid parallel refreshes
+// Track ongoing probes/refreshes to avoid parallel requests. The probe promise
+// is shared at module level so every component that mounts in the same tick
+// awaits one single /auth/me call.
+let pendingProbe: Promise<void> | null = null;
 let pendingRefresh: Promise<void> | null = null;
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [isLoadingToken] = useState(false);
-  const [hasLoggedIn, setHasLoggedIn] = useState(hasAuthCookie);
+  // The session lives in the BFF's signed cookie — nothing is readable from
+  // JS, so auth state can only be established by asking the server. Start
+  // "checking" (isLoadingToken=true) and resolve via GET /auth/me.
+  const [isChecking, setIsChecking] = useState(true);
+  const [hasLoggedIn, setHasLoggedIn] = useState(false);
+  const [user, setUser] = useState<MeResponse | null>(null);
   const retryCount = useRef(0);
 
-  // Poll for cookie changes (e.g. after Google OAuth redirect)
-  const authCheckRef = useRef<number | null>(null);
+  const probe = useCallback(async () => {
+    if (pendingProbe) return pendingProbe;
+    pendingProbe = (async () => {
+      try {
+        const me = await fetchMe();
+        setHasLoggedIn(me !== null);
+        setUser(me);
+        retryCount.current = 0;
+      } catch {
+        // Network failure — keep whatever state we had.
+      } finally {
+        setIsChecking(false);
+        pendingProbe = null;
+      }
+    })();
+    return pendingProbe;
+  }, []);
 
   useEffect(() => {
-    // Check if cookies were set by backend (Google OAuth redirect, etc.)
-    const checkAuth = () => {
-      if (!hasLoggedIn && hasAuthCookie()) {
-        setHasLoggedIn(true);
-      }
-    };
-    // Initial check
-    checkAuth();
-    // Poll every 2s for 10s to catch OAuth redirects
-    authCheckRef.current = window.setInterval(checkAuth, 2000);
-    return () => {
-      if (authCheckRef.current) clearInterval(authCheckRef.current);
-    };
-  }, []);
+    probe();
+  }, [probe]);
 
   const login = useCallback(() => {
-    // Cookies are set by the backend login endpoint.
-    // The actual auth state is validated by the backend on each request.
-    setHasLoggedIn(true);
+    // Called right after a successful login response (the session cookie is
+    // already set by then). Re-probe so isAuthenticated flips immediately.
     retryCount.current = 0;
-  }, []);
+    void probe();
+  }, [probe]);
 
   const refreshAccessToken = useCallback(async () => {
-    // Refresh token is in httpOnly cookie — cannot read from JS.
-    // Call the refresh endpoint with credentials: "include" so the cookie is sent.
     if (pendingRefresh) {
       return pendingRefresh;
     }
 
     pendingRefresh = (async () => {
       try {
-        const response = await apiRefreshToken("");
+        await apiRefreshToken("");
         retryCount.current = 0;
       } catch {
         setHasLoggedIn(false);
+        setUser(null);
         throw new Error("Session expired. Please log in again.");
       } finally {
         pendingRefresh = null;
@@ -91,32 +90,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    // Call backend logout to revoke tokens and clear cookies
     await apiLogout().catch(() => {});
     setHasLoggedIn(false);
+    setUser(null);
     window.location.assign("/login");
   }, []);
 
-  // Scope checks are done server-side; client check is approximate only.
+  // Scopes come from the /auth/me response (backend is the source of truth).
+  // Superusers bypass scope checks entirely.
   const hasScope = useCallback(
-    (_requiredScope: string) => {
-      // The backend is the source of truth for authorization.
-      // Superusers bypass scope checks entirely.
-      return true;
+    (requiredScope: string) => {
+      if (!user) return false;
+      const scopes = user.assigned_scopes ?? [];
+      return scopes.includes("superuser") || scopes.includes(requiredScope);
     },
-    [],
+    [user],
   );
 
   const value = useMemo(
     () => ({
       isAuthenticated: hasLoggedIn,
-      isLoadingToken,
+      isLoadingToken: isChecking,
       login,
       logout,
       refreshAccessToken,
       hasScope,
     }),
-    [hasLoggedIn, isLoadingToken, login, logout, refreshAccessToken, hasScope],
+    [hasLoggedIn, isChecking, login, logout, refreshAccessToken, hasScope],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

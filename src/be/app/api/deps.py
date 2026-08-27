@@ -29,20 +29,31 @@ async def get_token_from_cookie(request: Request) -> str | None:
     return str(token) if token else None  # type: ignore[no-any-return]
 
 
-reusable_oauth2 = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/login/access-token")
+reusable_oauth2 = OAuth2PasswordBearer(
+    tokenUrl=f"{settings.API_V1_STR}/login/access-token",
+    auto_error=False,
+)
 
-# Per-flow OAuth2 dependencies
+# Per-flow OAuth2 dependencies.
+# auto_error=False: the Authorization header is optional — the access token may
+# also arrive in the httpOnly cookie (primary mechanism for the web app). The
+# auth dependencies resolve the token from header or cookie and raise 401 only
+# when NEITHER source provides a token. Raising 401 here (FastAPI default) would
+# reject valid cookie-authenticated requests before they reach those handlers.
 reusable_oauth2_implicit = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/implicit-token",
     scheme_name="implicit_grant",
+    auto_error=False,
 )
 reusable_oauth2_auth_code = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/auth-code",
     scheme_name="authorization_code",
+    auto_error=False,
 )
 reusable_oauth2_client_creds = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/client-credentials",
     scheme_name="client_credentials",
+    auto_error=False,
 )
 
 # OAuth2 security scheme with all flows for OpenAPI/Swagger UI
@@ -70,7 +81,7 @@ oauth2_scheme = OAuth2(
     )
 )
 
-TokenDep = Annotated[str, Depends(reusable_oauth2)]
+TokenDep = Annotated[str | None, Depends(reusable_oauth2)]
 SessionDep = Annotated[AsyncSession, Depends(get_db_session)]
 
 
@@ -85,10 +96,10 @@ def get_sync_db_session() -> Any:
 
 SyncSessionDep = Annotated[Session, Depends(get_sync_db_session)]
 
-# Per-flow typed dependencies
-ImplicitTokenDep = Annotated[str, Depends(reusable_oauth2_implicit)]
-AuthCodeTokenDep = Annotated[str, Depends(reusable_oauth2_auth_code)]
-ClientCredsTokenDep = Annotated[str, Depends(reusable_oauth2_client_creds)]
+# Per-flow typed dependencies (str | None: header is optional, see above)
+ImplicitTokenDep = Annotated[str | None, Depends(reusable_oauth2_implicit)]
+AuthCodeTokenDep = Annotated[str | None, Depends(reusable_oauth2_auth_code)]
+ClientCredsTokenDep = Annotated[str | None, Depends(reusable_oauth2_client_creds)]
 
 
 async def get_current_user(
@@ -104,6 +115,13 @@ async def get_current_user(
     """
     cookie_token = await get_token_from_cookie(request)
     token_to_use = cookie_token or token
+    if not token_to_use:
+        # No token in header or cookie — unauthenticated (not a bad token).
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     try:
         # Decode with aud/iss when configured, accept without for backwards compat.
@@ -169,8 +187,27 @@ async def get_current_active_user(
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
-async def get_current_active_superuser(current_user: CurrentUser, token: TokenDep) -> User:
-    """Check token scopes for superuser, not the is_superuser flag."""
+async def get_current_active_superuser(
+    current_user: CurrentUser,
+    request: Request,
+) -> User:
+    """Check token scopes for superuser, not the is_superuser flag.
+
+    Resolves the presented token exactly like `get_current_user` does
+    (httpOnly cookie first, then Authorization header), so
+    cookie-authenticated clients are checked against their own token's
+    embedded scopes instead of being rejected.
+    """
+    cookie_token = await get_token_from_cookie(request)
+    auth_header = request.headers.get("authorization", "")
+    header_token = auth_header[7:] if auth_header.startswith("Bearer ") else None
+    token_to_use = cookie_token or header_token
+    if not token_to_use:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     try:
         decode_kwargs: dict = {}
         if settings.JWT_AUDIENCE:
@@ -178,7 +215,7 @@ async def get_current_active_superuser(current_user: CurrentUser, token: TokenDe
         if settings.JWT_ISSUER:
             decode_kwargs["issuer"] = settings.JWT_ISSUER
         payload = jwt.decode(
-            token,
+            token_to_use,
             security.PUBLIC_KEY,
             algorithms=[security.ALGORITHM],
             **decode_kwargs,
@@ -194,7 +231,7 @@ async def get_current_active_superuser(current_user: CurrentUser, token: TokenDe
 async def get_current_user_with_scopes(
     session: SessionDep,
     request: Request,
-    token: str = Depends(reusable_oauth2),
+    token: str | None = Depends(reusable_oauth2),
 ) -> tuple[User, list[str]]:
     """Validate JWT token and return (user, scopes) tuple."""
     # Authorization header takes priority when present (tests, API clients)
@@ -208,6 +245,12 @@ async def get_current_user_with_scopes(
         # Fall back to cookie token, then to oauth2 parameter
         cookie_token = await get_token_from_cookie(request)
         token_to_use = cookie_token or token
+    if not token_to_use:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     try:
         # Decode with aud/iss when configured, accept without for backwards compat.
@@ -272,6 +315,12 @@ async def get_current_active_superuser_bypass(
     if auth_header.startswith("Bearer "):
         header_token = auth_header[7:]
     token_to_use = cookie_token or header_token
+    if not token_to_use:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     try:
         # Decode with aud/iss when configured, accept without for backwards compat.
         decode_kwargs: dict = {}

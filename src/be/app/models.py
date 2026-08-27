@@ -225,7 +225,9 @@ class UpdateTokenResponse(SQLModel):
 
 
 class TokenRefresh(SQLModel):
-    refresh_token: str = Field(min_length=8, max_length=4000)
+    # Optional in the body: the web app sends the refresh token via its
+    # httpOnly cookie instead, so an empty/missing body value is valid.
+    refresh_token: str = Field(default="", max_length=4000)
 
 
 class RevokeTokenRequest(SQLModel):
@@ -256,6 +258,7 @@ class Media(SQLModel, table=True):  # type: ignore[call-arg]
     __tablename__ = "media"
     id: str = Field(default_factory=uuid.uuid4, primary_key=True, max_length=36)
     name: str = Field(max_length=200)
+    description: str | None = Field(default=None, max_length=4000)
     owner_id: str = Field(max_length=36, nullable=False)
     uploaded_on: datetime.datetime
     created_on: datetime.datetime

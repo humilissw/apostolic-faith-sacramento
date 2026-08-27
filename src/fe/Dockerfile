@@ -1,26 +1,17 @@
-# ---- Build stage ----
-FROM node:20-alpine AS builder
+# Bun is the default package manager for this project (see package.json
+# "packageManager" field). Pinned to the latest bun release.
+FROM oven/bun:1.3.14
 
 WORKDIR /app
 
-COPY package.json bun.lock ./
-RUN npm install -g bun 2>/dev/null || true
-RUN corepack enable && bun install --frozen-lockfile 2>/dev/null || npm ci
-RUN rm -rf node_modules/.cache
+COPY package.json bun.lockb ./
+RUN bun install --frozen-lockfile
 
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN npx next build
 
-# ---- Production stage ----
-FROM nginx:alpine
+# `bun https` runs `next dev --experimental-https` (see package.json) with the
+# self-signed certs in security_keys/, serving HTTPS on port 3000.
+EXPOSE 3000
 
-RUN rm /etc/nginx/conf.d/default.conf
-
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-COPY --from=builder /app/out /usr/share/nginx/html
-
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["bun", "https"]

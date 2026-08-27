@@ -11,10 +11,10 @@ import { IoMdClose } from "react-icons/io";
 interface TriggerProps {
     state: boolean;
 }
- 
+
 export default function CustomTrigger(props: TriggerProps) {
   const { toggleSidebar } = useSidebar()
-  
+
 
   return (
     <button onClick={toggleSidebar}>

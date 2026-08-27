@@ -97,7 +97,7 @@ async def create_subscription_endpoint(
             detail=f"Donation amount exceeds maximum allowed (${MAX_DONATION_CENTS // 100:,})",
         )
 
-    if not _amount_matches_config(session, payment_in.amount_cents):
+    if not await _check_amount_in_config(session, payment_in.amount_cents):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Donation amount must match a configured preset",
@@ -215,23 +215,8 @@ async def get_payment(
 # --------------------------------------------------------------------------- #
 
 
-def _amount_matches_config(session: SessionDep, amount_cents: int) -> bool:
-    """Check if amount matches a configured donation preset (or configs don't exist)."""
-
-    async def _check() -> bool:
-        result = await session.execute(select(DonationConfig))
-        configs = list(result.scalars().all())
-        if not configs:
-            return True  # No configs means any amount is allowed
-        return amount_cents in {c.amount_cents for c in configs}
-
-    import asyncio
-
-    return asyncio.get_event_loop().run_until_complete(_check())
-
-
 async def _check_amount_in_config(session: SessionDep, amount_cents: int) -> bool:
-    """Async version of _amount_matches_config for use in async route handlers."""
+    """Check if amount matches a configured donation preset (or configs don't exist)."""
     result = await session.execute(select(DonationConfig))
     configs = list(result.scalars().all())
     if not configs:

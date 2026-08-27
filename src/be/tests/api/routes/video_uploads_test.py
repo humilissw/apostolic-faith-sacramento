@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 
 import pytest
@@ -14,6 +14,42 @@ async def test_read_video_uploads_empty(
     content = response.json()
     assert content["count"] == 0
     assert content["data"] == []
+
+
+@pytest.mark.asyncio
+async def test_read_video_uploads_anonymous(client, db_session: AsyncSession) -> None:
+    """Public media page fetches this endpoint without a token — must stay public."""
+    response = await client.get("/api/v1/video-uploads/")
+    assert response.status_code == 200
+    content = response.json()
+    assert "data" in content
+    assert "count" in content
+
+
+@pytest.mark.asyncio
+async def test_read_video_upload_by_id_anonymous(
+    client, superuser_token_headers, db_session: AsyncSession
+) -> None:
+    """Fetching a single video upload by ID must work without a token."""
+    media_association_date = datetime.now(timezone.utc).isoformat()
+    create_response = await client.post(
+        "/api/v1/video-uploads/",
+        headers=superuser_token_headers,
+        json={
+            "upload_location": "s3://videos/bucket/path/to/public_video.mp4",
+            "upload_name": "public_video.mp4",
+            "media_association_date": media_association_date,
+            "speaker_name": "Public Speaker",
+            "reference_text": "Public Ref",
+            "description": "Public Description",
+        },
+    )
+    assert create_response.status_code == 201
+    video_upload_id = create_response.json()["id"]
+    response = await client.get(f"/api/v1/video-uploads/{video_upload_id}")
+    assert response.status_code == 200
+    content = response.json()
+    assert content["id"] == video_upload_id
 
 
 @pytest.mark.asyncio
@@ -90,6 +126,40 @@ async def test_read_video_uploads(
     video_names = [video["upload_name"] for video in content["data"]]
     assert "video1.mp4" in video_names
     assert "video2.mp4" in video_names
+
+
+@pytest.mark.asyncio
+async def test_read_video_uploads_sorted_by_date_desc(
+    client, superuser_token_headers, db_session: AsyncSession
+) -> None:
+    """Media page relies on newest service date first."""
+    base = datetime.now(timezone.utc)
+    dates = {
+        "oldest.mp4": (base - timedelta(days=14)).isoformat(),
+        "newest.mp4": base.isoformat(),
+        "middle.mp4": (base - timedelta(days=7)).isoformat(),
+    }
+    for upload_name, media_association_date in dates.items():
+        response = await client.post(
+            "/api/v1/video-uploads/",
+            headers=superuser_token_headers,
+            json={
+                "upload_location": f"s3://videos/bucket/path/to/{upload_name}",
+                "upload_name": upload_name,
+                "media_association_date": media_association_date,
+                "speaker_name": "Sort Speaker",
+                "reference_text": "Ref",
+                "description": "Description",
+            },
+        )
+        assert response.status_code == 201
+
+    response = await client.get("/api/v1/video-uploads/", headers=superuser_token_headers)
+    assert response.status_code == 200
+    content = response.json()
+    video_names = [video["upload_name"] for video in content["data"]]
+    assert video_names.index("newest.mp4") < video_names.index("middle.mp4")
+    assert video_names.index("middle.mp4") < video_names.index("oldest.mp4")
 
 
 @pytest.mark.asyncio

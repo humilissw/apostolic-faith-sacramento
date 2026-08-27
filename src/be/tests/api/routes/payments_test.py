@@ -68,7 +68,7 @@ def _make_webhook_mock(event_type, **kwargs):
     }
 
     def handler(*args, **kwargs):
-        body = args[1] if len(args) > 1 else kwargs.get("body", "")
+        body = args[0] if len(args) > 0 else kwargs.get("body", "")
         if isinstance(body, str):
             try:
                 evt = json.loads(body)
