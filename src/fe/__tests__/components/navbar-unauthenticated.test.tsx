@@ -42,12 +42,10 @@ describe('Navbar (unauthenticated)', () => {
 
   it('renders public nav links', () => {
     render(<Navbar />)
-    expect(screen.getByText('Home')).toBeInTheDocument()
-    expect(screen.getByText('Our Beliefs')).toBeInTheDocument()
-    expect(screen.getByText('Sermons')).toBeInTheDocument()
-    expect(screen.getByText('Media')).toBeInTheDocument()
-    expect(screen.getByText('Donate')).toBeInTheDocument()
-    expect(screen.getByText('Contact Us')).toBeInTheDocument()
+    // Links appear in both the desktop bar and the mobile sidebar (jsdom shows both)
+    for (const title of ['Home', 'Our Beliefs', 'Sermons', 'Media', 'Donate', 'Contact Us']) {
+      expect(screen.getAllByText(title).length).toBeGreaterThan(0)
+    }
   })
 
   it('does not render authenticated links', () => {

@@ -1,7 +1,7 @@
 /** @jest-environment jsdom */
 
 import '@testing-library/jest-dom'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import Navbar from '@/components/navbar'
 
 jest.mock('next/navigation', () => ({
@@ -31,37 +31,44 @@ describe('Navbar (authenticated)', () => {
 
   it('renders a Logout button when logged in', () => {
     render(<Navbar />)
-    expect(screen.getByRole('button', { name: /logout/i })).toBeInTheDocument()
+    // Profile dropdown trigger is visible; "Log out" item appears when opened
+    const trigger = screen.getByRole('button', { name: /user menu/i })
+    expect(trigger).toBeInTheDocument()
+    // Radix opens the menu on pointerdown (jsdom lacks event.button) — use the keyboard path
+    fireEvent.keyDown(trigger, { key: 'Enter' })
+    expect(screen.getByRole('menuitem', { name: /log out/i })).toBeInTheDocument()
   })
 
   it('does not render Login button when logged in', () => {
     render(<Navbar />)
-    expect(screen.queryByRole('button', { name: /login/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^login$/i })).not.toBeInTheDocument()
   })
 
   it('renders public nav links', () => {
     render(<Navbar />)
-    expect(screen.getByText('Home')).toBeInTheDocument()
-    expect(screen.getByText('Our Beliefs')).toBeInTheDocument()
-    expect(screen.getByText('Media')).toBeInTheDocument()
-    expect(screen.getByText('Donate')).toBeInTheDocument()
-    expect(screen.getByText('Contact Us')).toBeInTheDocument()
+    // Links appear in both the desktop bar and the mobile sidebar (jsdom shows both)
+    for (const title of ['Home', 'Our Beliefs', 'Media', 'Donate', 'Contact Us']) {
+      expect(screen.getAllByText(title).length).toBeGreaterThan(0)
+    }
   })
 
   it('renders authenticated links', () => {
     render(<Navbar />)
-    expect(screen.getByText('Video Uploads')).toBeInTheDocument()
+    expect(screen.getAllByText('Video Uploads').length).toBeGreaterThan(0)
   })
 
   it('renders scheduler links when user has scheduler:admin scope', () => {
     render(<Navbar />)
-    expect(screen.getByText('Scheduler Admin')).toBeInTheDocument()
-    expect(screen.getByText('Scheduler Calendar')).toBeInTheDocument()
-    expect(screen.getByText('My Scheduler')).toBeInTheDocument()
+    for (const title of ['Scheduler Admin', 'Scheduler Calendar', 'My Scheduler']) {
+      expect(screen.getAllByText(title).length).toBeGreaterThan(0)
+    }
   })
 
   it('renders user profile section when authenticated', () => {
     render(<Navbar />)
-    expect(screen.getByText(/signed in/i)).toBeInTheDocument()
+    // Profile dropdown is rendered for authenticated users (icon trigger + My Account label)
+    expect(screen.getByRole('button', { name: /user menu/i })).toBeInTheDocument()
+    fireEvent.keyDown(screen.getByRole('button', { name: /user menu/i }), { key: 'Enter' })
+    expect(screen.getByText(/my account/i)).toBeInTheDocument()
   })
 })

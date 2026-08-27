@@ -18,6 +18,7 @@ export function ProfileDropdown() {
         <DropdownMenu>
         <DropdownMenuTrigger asChild>
             <Button
+                aria-label="User menu"
                 variant="outline"
                 size="sm"
                 >

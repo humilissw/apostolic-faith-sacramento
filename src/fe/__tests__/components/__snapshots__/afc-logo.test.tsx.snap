@@ -3,6 +3,7 @@
 exports[`AFCLogo matches snapshot 1`] = `
 <div>
   <a
+    class="shrink-0"
     href="/"
   >
     <img
