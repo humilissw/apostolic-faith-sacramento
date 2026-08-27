@@ -79,7 +79,7 @@ export function AdminMenu() {
       const auth = useAuth();
       const pathname = usePathname();
       const [open, setOpen] = useState(false);
-    
+
       // Call all hooks at top level (unconditional)
       const enableVideoUploads = useFeatureFlag("enable_video_uploads");
       const enableSchedulerCalendar = useFeatureFlag("enable_scheduler_calendar");
@@ -89,17 +89,17 @@ export function AdminMenu() {
       const enableVideoUploadsAdmin = useFeatureFlag("enable_video_uploads_admin");
       const enableIntegrations = useFeatureFlag("enable_integrations");
       const enableFlagsAdmin = useFeatureFlag("enable_flags_admin");
-    
+
       const isAuthenticated = auth.isAuthenticated;
-    
+
       const drawerItems: DrawerItem[][] = [];
-    
+
       if (isAuthenticated && enableVideoUploads) {
         drawerItems.push([
           { title: "Video Uploads", url: "/video-uploads/", icon: Video },
         ]);
       }
-    
+
       if (isAuthenticated && enableSchedulerCalendar && (auth.hasScope("scheduler:admin") || auth.hasScope("member:limited"))) {
         const schedulerItems: DrawerItem[] = [
           { title: "Scheduler Calendar", url: "/scheduler-calendar/", icon: Calendar },
@@ -114,7 +114,7 @@ export function AdminMenu() {
           drawerItems.push(schedulerItems);
         }
       }
-    
+
       if (isAuthenticated && auth.hasScope("superuser")) {
         const adminItems: DrawerItem[] = [];
         if (enableUsersAdmin) {
@@ -161,8 +161,8 @@ export function AdminMenu() {
                   />
                 ))
               )}
-              <button 
-                className = "flex justify-start items-center rounded-md h-auto w-full text-sm p-4 transition-colors gap-2 border-t text-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" 
+              <button
+                className = "flex justify-start items-center rounded-md h-auto w-full text-sm p-4 transition-colors gap-2 border-t text-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 onClick={() => auth.logout()}
               >
                 <CircleUserRound className="w-4 h-4"/> Log out

@@ -5,6 +5,7 @@ from datetime import datetime
 class MediaPublic(BaseModel):
     id: str
     name: str
+    description: str | None = None
     uploaded_on: datetime
     created_on: datetime
     updated_on: datetime | None = None

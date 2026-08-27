@@ -2,18 +2,10 @@
 
 import DonationForm from "@/components/donation-form";
 import DonationHistory from "@/components/donation-history";
-
-function getCookie(name: string): string | null {
-  try {
-    const match = document.cookie.match("(^| )" + name + "=([^;]+)");
-    return match ? decodeURIComponent(match[2]) : null;
-  } catch {
-    return null;
-  }
-}
+import { useAuth } from "@/context/auth-context";
 
 export default function DonatePage() {
-  const isAuthenticated = getCookie("access_token") !== null;
+  const { isAuthenticated, isLoadingToken } = useAuth();
 
   return (
     <div className="container mx-auto py-12">
@@ -21,12 +13,12 @@ export default function DonatePage() {
         Support Apostolic Faith Church
       </h1>
       <p className="text-center text-zinc-600 mb-12 max-w-2xl mx-auto">
-        Your generous donations help us spread the Gospel and serve our community.
+        Your generous donations help us spread the Gospel and serve the community.
         Choose a one-time or monthly donation below.
       </p>
       <div className="grid md:grid-cols-2 gap-8">
         <DonationForm />
-        {isAuthenticated && <DonationHistory />}
+        {!isLoadingToken && isAuthenticated && <DonationHistory />}
       </div>
     </div>
   );

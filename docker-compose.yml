@@ -12,16 +12,70 @@ services:
     depends_on:
       - database
     environment:
-      - DB_SERVER=mariadb
+      - DB_SERVER=database
       - DB_PORT=3306
       - ENVIRONMENT=local
+      # Dev convenience: run `alembic upgrade head` on startup (serialized across workers)
+      - RUN_MIGRATIONS_ON_STARTUP=true
+      # Deliver mail to the local mailcatcher for testing (plaintext SMTP, no TLS)
+      - SMTP_HOST=mailcatcher
+      - SMTP_PORT=1025
+      - SMTP_TLS=False
+      - SMTP_SSL=False
+
+  # Plain-HTTP mirror of the backend health endpoint for tooling that can't
+  # do TLS (e.g. `hermes verify --port 8001`). The app itself stays HTTPS-only.
+  health-edge:
+    image: python:3.14-slim
+    working_dir: /app
+    volumes:
+      - ./infrastructure/health_edge.py:/app/health_edge.py:ro
+    command: ["python", "/app/health_edge.py"]
+    environment:
+      - BACKEND_HEALTH_URL=https://backend:8000/api/v1/health/
+    ports:
+      - "8001:8001"
+    depends_on:
+      - backend
+    networks:
+      - app
 
   frontend:
     build:
       context: src/fe
       dockerfile: Dockerfile
     ports:
-      - "3000:80"
+      - "3000:3000"
+    environment:
+      # SPA talks to the BFF (which proxies /api/v1/* to the backend and owns
+      # auth server-side). NEXT_PUBLIC_* is baked in at request time by the dev
+      # server; a real env var wins over any .env file.
+      - NEXT_PUBLIC_API_URL=https://localhost:8002/
+    depends_on:
+      - bff
+    networks:
+      - app
+
+  # Flask Backend-For-Frontend for the Next.js SPA. Serves HTTPS only on 8002
+  # (backend is 8000, health-edge is 8001). Owns auth server-side and forwards
+  # /api/v1/* to the backend. Point the SPA's NEXT_PUBLIC_API_URL at it.
+  bff:
+    build:
+      context: src/bff
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
+    environment:
+      - BACKEND_URL=https://backend:8000
+      # Self-signed dev backend cert (loopback inside the app network).
+      - BACKEND_VERIFY=false
+      - SPA_ORIGINS=https://localhost:3000
+      - SPA_URL=https://localhost:3000
+      - SESSION_COOKIE_SECURE=true
+      # Set a real SECRET_KEY in production (signs sessions + auth codes).
+      - SECRET_KEY=***
+    depends_on:
+      - backend
     networks:
       - app
 
@@ -29,10 +83,30 @@ services:
     image: mariadb:12.1-ubi
     env_file:
       - infrastructure/db/db.env
+    environment:
+      # Auto-create the app database on first init of a fresh volume
+      - MYSQL_DATABASE=afc_sac
     ports:
       - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
+    networks:
+      - app
+
+  adminer:
+    image: adminer
+    depends_on:
+      - database
+    ports:
+      - "5080:8080"
+    networks:
+      - app
+
+  mailcatcher:
+    image: schickling/mailcatcher
+    ports:
+      - "1080:1080"
+      - "1025:1025"
     networks:
       - app
 

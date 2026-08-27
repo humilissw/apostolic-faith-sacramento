@@ -4,6 +4,11 @@ import '@testing-library/jest-dom'
 import { render, screen, fireEvent } from '@testing-library/react'
 import DonationForm from '@/components/donation-form'
 
+const mockUseAuth = jest.fn()
+jest.mock('@/context/auth-context', () => ({
+  useAuth: (...args: unknown[]) => mockUseAuth(...args),
+}))
+
 jest.mock('@/lib/api', () => ({
   createPaymentIntent: jest.fn().mockResolvedValue({
     client_secret: 'pi_secret_xyz',
@@ -27,8 +32,10 @@ jest.mock('@stripe/stripe-js', () => ({
 }))
 
 describe('DonationForm', () => {
-  afterEach(() => {
+  beforeEach(() => {
     jest.clearAllMocks()
+    // Default: probe settled, not authenticated -> guest fields visible
+    mockUseAuth.mockReturnValue({ isAuthenticated: false, isLoadingToken: false })
   })
 
   it('renders with preset amounts', () => {
@@ -56,6 +63,13 @@ describe('DonationForm', () => {
     render(<DonationForm />)
     expect(screen.getByLabelText(/name/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
+  })
+
+  it('hides guest fields when authenticated', () => {
+    mockUseAuth.mockReturnValue({ isAuthenticated: true, isLoadingToken: false })
+    render(<DonationForm />)
+    expect(screen.queryByLabelText(/^name$/i)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/email/i)).not.toBeInTheDocument()
   })
 
   // it('shows success message after payment', async () => {

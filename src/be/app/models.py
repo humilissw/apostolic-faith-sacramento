@@ -41,6 +41,21 @@ class UserRegister(SQLModel):
     full_name: str | None = Field(default=None, max_length=255)
 
 
+# Password validation helper
+def validate_password_complexity(password: str) -> bool:
+    """Check that password meets complexity requirements.
+
+    Requires at least 8 characters with a mix of uppercase, lowercase, digits, and special chars.
+    """
+    if len(password) < 8:
+        return False
+    has_upper = any(c.isupper() for c in password)
+    has_lower = any(c.islower() for c in password)
+    has_digit = any(c.isdigit() for c in password)
+    has_special = any(not c.isalnum() for c in password)
+    return has_upper and has_lower and has_digit and has_special
+
+
 # Properties to receive via API on update, all are optional
 class UserUpdate(UserBase):
     email: EmailStr | None = Field(default=None, max_length=255)  # type: ignore
@@ -182,6 +197,13 @@ class NewPassword(SQLModel):
     new_password: str = Field(min_length=8, max_length=128)
 
 
+# Password reset request model (POST body, not URL path)
+class PasswordRecoveryRequest(BaseModel):
+    """Request to initiate password recovery. Email is in the body to avoid URL/log exposure."""
+
+    email: EmailStr = Field(max_length=255)
+
+
 # Refresh token storage model
 class RefreshToken(SQLModel, table=True):  # type: ignore[call-arg]
     __tablename__ = "refresh_tokens"
@@ -203,17 +225,40 @@ class UpdateTokenResponse(SQLModel):
 
 
 class TokenRefresh(SQLModel):
-    refresh_token: str = Field(min_length=8, max_length=4000)
+    # Optional in the body: the web app sends the refresh token via its
+    # httpOnly cookie instead, so an empty/missing body value is valid.
+    refresh_token: str = Field(default="", max_length=4000)
 
 
 class RevokeTokenRequest(SQLModel):
     token: str = Field(min_length=8, max_length=4000)
 
 
+# Password reset token storage model (server-side one-time-use tracking)
+class PasswordResetToken(SQLModel, table=True):  # type: ignore[call-arg]
+    """Stores password reset tokens for single-use enforcement and revocation.
+
+    Each token is a cryptographically secure random string stored alongside the
+    user_id it belongs to, its expiry time, and an invalidated flag. This prevents
+    replay attacks even if the email link is intercepted or forwarded.
+    """
+
+    __tablename__ = "password_reset_tokens"
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True, max_length=36)
+    user_id: str = Field(nullable=False, index=True)
+    token: str = Field(max_length=4000, nullable=False, unique=True, index=True)
+    invalidated: bool = Field(default=False, index=True)
+    expires_at: datetime.datetime = Field(nullable=False, index=True)
+    created_on: datetime.datetime = Field(
+        default=datetime.datetime.now(datetime.timezone.utc), nullable=False
+    )
+
+
 class Media(SQLModel, table=True):  # type: ignore[call-arg]
     __tablename__ = "media"
     id: str = Field(default_factory=uuid.uuid4, primary_key=True, max_length=36)
     name: str = Field(max_length=200)
+    description: str | None = Field(default=None, max_length=4000)
     owner_id: str = Field(max_length=36, nullable=False)
     uploaded_on: datetime.datetime
     created_on: datetime.datetime

@@ -1,7 +1,6 @@
 from typing import Any
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Response
-from sqlalchemy import delete
+from fastapi import APIRouter, Body, Depends, HTTPException, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import (
@@ -10,10 +9,7 @@ from app.api.deps import (
     get_current_active_superuser,
     require_scope,
 )
-from app.config import settings
-from app.core.security import verify_password, get_password_hash
 from app.models import (
-    Item,
     Message,
     UpdatePassword,
     User,
@@ -23,12 +19,15 @@ from app.models import (
     UsersPublic,
     UserUpdate,
     UserUpdateMe,
-    UserScope,
+    validate_password_complexity,
 )
 from app import crud
 from app.repositories.user_repo import UserRepository
 from app.repositories.user_scope_repo import UserScopeRepository
-from app.utils import generate_new_account_email, send_email
+from app.services.user_management_service import UserManagementService
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -66,35 +65,20 @@ async def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> An
 async def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
     """
     Create new user.
-    """
-    repository = UserRepository(session=session)
-    user = await repository.get_by_email(email=user_in.email)
-    if user:
-        raise HTTPException(
-            status_code=400,
-            detail="The user with this email already exists in the system.",
-        )
 
-    user = await repository.create(user_create=user_in)
-    if user_in.scopes:
-        scope_repo = UserScopeRepository(session)
-        await scope_repo.set_scopes(user.id, user_in.scopes)
-    if settings.emails_enabled and user_in.email:
-        email_data = generate_new_account_email(
-            email_to=user_in.email, username=user_in.email, password=user_in.password
-        )
-        send_email(
-            email_to=user_in.email,
-            subject=email_data.subject,
-            html_content=email_data.html_content,
-        )
-    return await _populate_scopes(session, user)
+    Password must meet complexity requirements. Admin-created users are exempt from
+    scope assignment.
+    """
+    svc = UserManagementService(session)
+    try:
+        return await svc.create_user(user_in)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.patch(
     "/me",
     response_model=UserPublic,
-    dependencies=[require_scope("api:all")],
 )
 async def update_user_me(
     *, session: SessionDep, user_in: UserUpdateMe, current_user: CurrentUser
@@ -102,24 +86,16 @@ async def update_user_me(
     """
     Update own user.
     """
-    repository = UserRepository(session=session)
-
-    if user_in.email:
-        existing_user = await repository.get_by_email(email=user_in.email)
-        if existing_user and existing_user.new_id != current_user.new_id:
-            raise HTTPException(status_code=409, detail="User with this email already exists")
-    user_data = user_in.model_dump(exclude_unset=True)
-    current_user.sqlmodel_update(user_data)
-    session.add(current_user)
-    await session.commit()
-    await session.refresh(current_user)
-    return current_user
+    svc = UserManagementService(session)
+    try:
+        return await svc.update_user_me(current_user, user_in)
+    except ValueError as e:
+        raise HTTPException(status_code=409, detail=str(e))
 
 
 @router.patch(
     "/me/password",
     response_model=Message,
-    dependencies=[require_scope("api:all")],
 )
 async def update_password_me(
     *, session: SessionDep, body: UpdatePassword, current_user: CurrentUser
@@ -127,23 +103,16 @@ async def update_password_me(
     """
     Update own password.
     """
-    if not verify_password(body.current_password, current_user.hashed_password):
-        raise HTTPException(status_code=400, detail="Incorrect password")
-    if body.current_password == body.new_password:
-        raise HTTPException(
-            status_code=400, detail="New password cannot be the same as the current one"
-        )
-    hashed_password = get_password_hash(body.new_password)
-    current_user.hashed_password = hashed_password
-    session.add(current_user)
-    await session.commit()
-    return Message(message="Password updated successfully")
+    svc = UserManagementService(session)
+    try:
+        return await svc.update_password_me(current_user, body)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.get(
     "/me",
     response_model=UserPublic,
-    dependencies=[require_scope("api:all")],
 )
 async def read_user_me(current_user: CurrentUser, session: SessionDep) -> Any:
     """
@@ -155,29 +124,49 @@ async def read_user_me(current_user: CurrentUser, session: SessionDep) -> Any:
 @router.delete(
     "/me",
     response_model=Message,
-    dependencies=[require_scope("api:all")],
 )
 async def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
     """
     Delete own user.
     """
-    if current_user.is_superuser:
-        raise HTTPException(
-            status_code=403, detail="Super users are not allowed to delete themselves"
-        )
-    user_id = str(current_user.id)
-    scopes_stmt = delete(UserScope).where(UserScope.user_id == user_id)  # type: ignore[arg-type]
-    await session.execute(scopes_stmt)
-    await session.delete(current_user)
-    await session.commit()
-    return Message(message="User deleted successfully")
+    svc = UserManagementService(session)
+    try:
+        return await svc.delete_user_me(current_user)
+    except ValueError as e:
+        raise HTTPException(status_code=403, detail=str(e))
 
 
 @router.post("/signup", response_model=UserPublic)
-async def register_user(session: SessionDep, user_in: UserRegister) -> Any:
+async def register_user(
+    *,
+    request: Request,
+    session: SessionDep,
+    user_in: UserRegister,
+) -> Any:
     """
     Create new user without the need to be logged in.
+
+    Rate limited to prevent account spamming (5 requests per 15 minutes per IP).
+    Password must meet complexity requirements.
     """
+    from app.core.rate_limiter import check_rate_limit
+
+    ip = request.client.host if request.client else "unknown"
+    if not check_rate_limit(f"signup:{ip}", 5, 15 * 60):
+        raise HTTPException(
+            status_code=429,
+            detail="Rate limit exceeded. Please try again later.",
+        )
+
+    if not validate_password_complexity(user_in.password):
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Password must be at least 8 characters and contain uppercase, "
+                "lowercase, digit, and special character."
+            ),
+        )
+
     user = await crud.get_user_by_email(session=session, email=user_in.email)
     if user:
         raise HTTPException(
@@ -233,21 +222,8 @@ async def remove_user_scopes(user_id: str, session: SessionDep, response: Respon
 )
 async def bulk_delete_users(session: SessionDep, user_ids: list[str] = Body(...)) -> Message:
     """Delete multiple users and their associated data."""
-    deleted = 0
-    for uid in user_ids:
-        user = await UserRepository(session).get_by_id(uid)
-        if user:
-            user_id_str = str(user.id)
-            items_stmt = delete(Item).where(Item.owner_id == user.id)  # type: ignore[arg-type]
-            await session.execute(items_stmt)
-            scopes_stmt = delete(UserScope).where(
-                UserScope.user_id == user_id_str  # type: ignore[arg-type]
-            )
-            await session.execute(scopes_stmt)
-            await session.delete(user)
-            deleted += 1
-    await session.commit()
-    return Message(message=f"Deleted {deleted} users")
+    svc = UserManagementService(session)
+    return await svc.bulk_delete_users(user_ids)
 
 
 @router.get(
@@ -266,7 +242,6 @@ async def get_all_users(session: SessionDep) -> Any:
 @router.get(
     "/{user_id}",
     response_model=UserPublic,
-    dependencies=[require_scope("api:all")],
 )
 async def read_user_by_id(user_id: str, session: SessionDep, current_user: CurrentUser) -> Any:
     """
@@ -300,20 +275,15 @@ async def update_user(
     """
     Update a user.
     """
-    repository = UserRepository(session=session)
-    db_user = await repository.get_by_id(user_id=user_id)
-    if not db_user:
-        raise HTTPException(
-            status_code=404,
-            detail="The user with this id does not exist in the system",
-        )
-    if user_in.email:
-        existing_user = await repository.get_by_email(email=user_in.email)
-        if existing_user and existing_user.id != user_id:
-            raise HTTPException(status_code=409, detail="User with this email already exists")
-
-    db_user = await repository.update(db_user=db_user, user_in=user_in)
-    return await _populate_scopes(session, db_user)
+    svc = UserManagementService(session)
+    try:
+        return await svc.update_user(user_id, user_in)
+    except ValueError as e:
+        if "email" in str(e).lower() and (
+            "exists" in str(e).lower() or "already" in str(e).lower()
+        ):
+            raise HTTPException(status_code=409, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 @router.delete("/{user_id}", dependencies=[Depends(get_current_active_superuser)])
@@ -321,21 +291,10 @@ async def delete_user(session: SessionDep, current_user: CurrentUser, user_id: s
     """
     Delete a user.
     """
-    repository = UserRepository(session=session)
-    user = await repository.get_by_id(user_id=user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    if user == current_user:
-        raise HTTPException(
-            status_code=403, detail="Super users are not allowed to delete themselves"
-        )
-    user_id_str = str(user.id)
-    items_stmt = delete(Item).where(Item.owner_id == user_id)  # type: ignore[arg-type]
-    await session.execute(items_stmt)  # type: ignore
-    scopes_stmt = delete(UserScope).where(
-        UserScope.user_id == user_id_str  # type: ignore[arg-type]
-    )
-    await session.execute(scopes_stmt)
-    await session.delete(user)
-    await session.commit()
-    return Message(message="User deleted successfully")
+    svc = UserManagementService(session)
+    try:
+        return await svc.delete_user(user_id, current_user)
+    except ValueError as e:
+        if "not found" in str(e).lower():
+            raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=403, detail=str(e))

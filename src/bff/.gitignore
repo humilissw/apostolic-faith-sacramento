@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+venv/
+.venv/
+env/
+
+# Poetry / tooling caches
+.poetry/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment / secrets — never commit
+.env
+.env.local
+.env.*.local
+
+# TLS material is gitignored at the repo root (cert.pem / key.pem). Generate a
+# self-signed localhost cert for local/Docker use before first run:
+#   cd src/bff/security_keys
+#   openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem \
+#     -sha256 -days 3650 -nodes -subj "/CN=localhost" \
+#     -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
+# (Docker builds read these from the filesystem, not git.)

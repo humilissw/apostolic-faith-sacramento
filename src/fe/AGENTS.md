@@ -237,6 +237,8 @@ bun start   # starts dev server (not for production)
 
 The `out/` directory contains the fully static site ready for deployment.
 
+Docker builds use bun as the package manager (pinned via the `packageManager` field in package.json) and run the container with `bun https` — the Next.js dev server with experimental HTTPS (certs in `security_keys/`) on port 3000. There is no nginx; bun serves the app directly.
+
 ## Common Gotchas
 
 ### Static Export Limitations
