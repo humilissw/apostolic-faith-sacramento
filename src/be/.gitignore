@@ -11,3 +11,6 @@ htmlcov
 
 !security_keys/*.pem
 !.env.ci
+
+*.prod
+*.bak
