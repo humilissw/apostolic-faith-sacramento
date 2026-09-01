@@ -106,7 +106,7 @@ export default function Media() {
                         {videos[0].speaker_name || "Unknown"}
                       </h1>
                       <h1 className="text-black/40 font-normal">
-                        {new Date(videos[0].created_on).toLocaleDateString("en-US")}
+                        {new Date(videos[0].media_association_date).toLocaleDateString("en-US")}
                       </h1>
                     </div>
                   </div>
@@ -142,7 +142,7 @@ export default function Media() {
                           {v.speaker_name || "Unknown"}
                         </h1>
                         <h1 className="text-black/40 font-normal">
-                          {new Date(v.created_on).toLocaleDateString("en-US")}
+                          {new Date(v.media_association_date).toLocaleDateString("en-US")}
                         </h1>
                       </div>
                     </div>

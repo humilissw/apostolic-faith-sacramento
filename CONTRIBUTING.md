@@ -15,7 +15,7 @@ Thank you for your interest in contributing to the Apostolic Faith Sacramento pr
 
    # Frontend
    cd ../fe
-   npm install
+   bun install
    ```
 3. **Read the Documentation**:
    - `CLAUDE.md` - Project overview and quick start

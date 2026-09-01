@@ -4,31 +4,14 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
 
-function getLocalStorageItem(key: string): string | null {
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-}
-
-function setLocalStorageItem(key: string, value: string): void {
-  try {
-    localStorage.setItem(key, value);
-  } catch {
-    // localStorage unavailable (static export, private browsing)
-  }
-}
-
-import {
-  logout as apiLogout,
-  refreshToken as apiRefreshToken,
-} from "@/lib/api";
+import { fetchMe, logout as apiLogout, refreshToken as apiRefreshToken } from "@/lib/api";
+import type { MeResponse } from "@/lib/api";
 
 interface AuthContextValue {
   isAuthenticated: boolean;
@@ -41,117 +24,99 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-// Track ongoing refresh promises to avoid parallel refreshes
+// Track ongoing probes/refreshes to avoid parallel requests. The probe promise
+// is shared at module level so every component that mounts in the same tick
+// awaits one single /auth/me call.
+let pendingProbe: Promise<void> | null = null;
 let pendingRefresh: Promise<void> | null = null;
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const hasCookie = (() => {
-    try {
-      return !!document.cookie.includes("access_token");
-    } catch {
-      return false;
-    }
-  })();
-  const hasStoredToken = (() => {
-    try {
-      return !!localStorage.getItem("access_token");
-    } catch {
-      return false;
-    }
-  })();
-
-  const [isLoadingToken] = useState(false);
-  const [tokenExpiry, setTokenExpiry] = useState(() =>
-    hasCookie || hasStoredToken ? Date.now() + 600 * 1000 : null,
-  );
-  const [hasLoggedIn, setHasLoggedIn] = useState(() => hasCookie || hasStoredToken);
+  // The session lives in the BFF's signed cookie — nothing is readable from
+  // JS, so auth state can only be established by asking the server. Start
+  // "checking" (isLoadingToken=true) and resolve via GET /auth/me.
+  const [isChecking, setIsChecking] = useState(true);
+  const [hasLoggedIn, setHasLoggedIn] = useState(false);
+  const [user, setUser] = useState<MeResponse | null>(null);
   const retryCount = useRef(0);
 
-  // Authenticated if user has successfully logged in AND token hasn't expired.
-  // eslint-disable-next-line react-hooks/purity
-  const tokenCheckTime = useMemo(() => Date.now(), []);
-  const hasTokenExpired = tokenExpiry !== null && tokenExpiry < tokenCheckTime;
-  const isAuthenticatedState = (hasLoggedIn || hasCookie) && (tokenExpiry === null || !hasTokenExpired);
-
-  const login = useCallback(() => {
-    // Cookies are set by the backend login endpoint.
-    // Just need to set an initial expiry estimate (client doesn't have the exact value).
-    // The actual auth state is validated by the backend on each request.
-    setHasLoggedIn(true);
-    setTokenExpiry(Date.now() + 600 * 1000); // 10 min default estimate
-    retryCount.current = 0;
+  const probe = useCallback(async () => {
+    if (pendingProbe) return pendingProbe;
+    pendingProbe = (async () => {
+      try {
+        const me = await fetchMe();
+        setHasLoggedIn(me !== null);
+        setUser(me);
+        retryCount.current = 0;
+      } catch {
+        // Network failure — keep whatever state we had.
+      } finally {
+        setIsChecking(false);
+        pendingProbe = null;
+      }
+    })();
+    return pendingProbe;
   }, []);
 
-  const refreshAccessToken = useCallback(async () => {
-    // Read refresh token from localStorage (where the login page stores it).
-    // Cannot read httpOnly cookies from JS.
-    const currentRefreshToken = getLocalStorageItem("refresh_token");
-    if (!currentRefreshToken) {
-      setTokenExpiry(null);
-      return;
-    }
+  useEffect(() => {
+    probe();
+  }, [probe]);
 
-    // Deduplicate parallel refresh calls
+  const login = useCallback(() => {
+    // Called right after a successful login response (the session cookie is
+    // already set by then). Re-probe so isAuthenticated flips immediately.
+    retryCount.current = 0;
+    void probe();
+  }, [probe]);
+
+  const refreshAccessToken = useCallback(async () => {
     if (pendingRefresh) {
       return pendingRefresh;
     }
 
-    try {
-      const response = await apiRefreshToken(currentRefreshToken);
-      setTokenExpiry(Date.now() + response.access_token_expires * 1000);
-      setLocalStorageItem("auth_scopes", JSON.stringify(response.scopes));
-      retryCount.current = 0;
-    } catch {
-      setTokenExpiry(null);
-      throw new Error("Session expired. Please log in again.");
-    } finally {
-      pendingRefresh = null;
-    }
+    pendingRefresh = (async () => {
+      try {
+        await apiRefreshToken("");
+        retryCount.current = 0;
+      } catch {
+        setHasLoggedIn(false);
+        setUser(null);
+        throw new Error("Session expired. Please log in again.");
+      } finally {
+        pendingRefresh = null;
+      }
+    })();
+
+    return pendingRefresh;
   }, []);
 
   const logout = useCallback(async () => {
-    // Call backend logout to revoke tokens and clear cookies
     await apiLogout().catch(() => {});
     setHasLoggedIn(false);
-    setTokenExpiry(null);
-    setLocalStorageItem("auth_scopes", "[]");
-    setLocalStorageItem("refresh_token", "");
-    setLocalStorageItem("access_token", "");
-    window.location.assign("/login")
+    setUser(null);
+    window.location.assign("/login");
   }, []);
 
-  const scopes = useMemo(() => {
-    const stored = getLocalStorageItem("auth_scopes");
-    return stored ? JSON.parse(stored) : [];
-  }, []);
-
+  // Scopes come from the /auth/me response (backend is the source of truth).
+  // Superusers bypass scope checks entirely.
   const hasScope = useCallback(
     (requiredScope: string) => {
-      // Client-side scope check is approximate — the backend is the source of truth.
-      // Superusers bypass scope checks entirely.
-      if (scopes.includes("api:all")) return true;
-      return scopes.includes(requiredScope);
+      if (!user) return false;
+      const scopes = user.assigned_scopes ?? [];
+      return scopes.includes("superuser") || scopes.includes(requiredScope);
     },
-    [scopes],
+    [user],
   );
 
   const value = useMemo(
     () => ({
-      isAuthenticated: isAuthenticatedState,
-      isLoadingToken,
+      isAuthenticated: hasLoggedIn,
+      isLoadingToken: isChecking,
       login,
       logout,
       refreshAccessToken,
       hasScope,
     }),
-    [
-      isAuthenticatedState,
-      isLoadingToken,
-      login,
-      logout,
-      refreshAccessToken,
-      hasScope,
-    ],
+    [hasLoggedIn, isChecking, login, logout, refreshAccessToken, hasScope],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

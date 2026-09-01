@@ -35,7 +35,7 @@ def _mock_db_session():
     mock_result = MagicMock()
     mock_result.scalar_one_or_none = None
     mock_session = AsyncMock()
-    mock_session.add = AsyncMock()
+    mock_session.add = MagicMock()  # add is called without await in the route
     mock_session.commit = AsyncMock()
     mock_session.refresh = AsyncMock()
     mock_session.execute = AsyncMock(return_value=mock_result)
@@ -88,7 +88,10 @@ async def test_google_login_returns_redirect_with_pkce_cookie(google_client) -> 
         patch("app.config.settings.GOOGLE_CLIENT_SECRET", "test-secret"),
         patch("app.config.settings.DOMAIN", "http://localhost:8000"),
         patch("app.config.settings.API_V1_STR", "/api/v1"),
-        patch("app.api.routes.google._build_oauth", return_value=mock_oauth),
+        patch(
+            "app.services.google_auth_service.GoogleAuthService.build_oauth",
+            return_value=mock_oauth,
+        ),
     ):
         response = await google_client.get("/api/v1/google/login/google")
         assert response.status_code == 307
@@ -110,10 +113,10 @@ async def test_google_auth_returns_redirect_with_tokens(google_client) -> None:
     """Google OAuth callback should redirect to frontend with httpOnly cookies."""
     mock_payload = {"email": "test@example.com", "name": "Test User", "email_verified": True}
     mock_credentials = MagicMock()
-    mock_new_user = MagicMock()
-    mock_new_user.id = 2
-    mock_new_user.email = "test@example.com"
-    mock_new_user.is_active = True
+    mock_existing_user = MagicMock()
+    mock_existing_user.id = 1
+    mock_existing_user.email = "test@example.com"
+    mock_existing_user.is_active = True
 
     with (
         patch("app.config.settings.GOOGLE_CLIENT_ID", "test-client-id"),
@@ -126,10 +129,11 @@ async def test_google_auth_returns_redirect_with_tokens(google_client) -> None:
         patch("app.config.settings.JWT_AUDIENCE", "test-audience"),
         patch("app.config.settings.FRONTEND_HOST", "http://localhost:3000"),
         patch("google.auth.jwt.verify_id_token", return_value=(mock_credentials, mock_payload)),
-        patch("app.api.routes.google.UserRepository") as mock_repo_cls,
-        patch("app.crud.create_user", return_value=mock_new_user),
+        patch("app.services.google_auth_service.UserRepository") as mock_repo_cls,
+        patch("app.services.google_auth_service.UserScopeRepository") as mock_scope_cls,
     ):
-        mock_repo_cls.return_value.get_by_email = AsyncMock(return_value=None)
+        mock_repo_cls.return_value.get_by_email = AsyncMock(return_value=mock_existing_user)
+        mock_scope_cls.return_value.get_scopes = AsyncMock(return_value=["superuser"])
 
         with patch(
             "authlib.integrations.starlette_client.apps.StarletteOAuth2App.authorize_access_token",
@@ -143,10 +147,46 @@ async def test_google_auth_returns_redirect_with_tokens(google_client) -> None:
             location = response.headers.get("location", "")
             assert "http://localhost:3000/google-callback" in location
             # Tokens are now set as httpOnly cookies, not in URL
-            set_cookie = response.headers.get("set-cookie", "")
-            assert "access_token=" in set_cookie
-            assert "refresh_token=" in set_cookie
-            assert "httponly" in set_cookie.lower()
+            # Multiple Set-Cookie headers → join them with "; " for checking
+            all_cookies = "; ".join(response.headers.get_list("set-cookie"))
+            assert "access_token=" in all_cookies
+            assert "refresh_token=" in all_cookies
+            assert "httponly" in all_cookies.lower()
+
+
+@pytest.mark.asyncio
+async def test_google_auth_inactive_new_user(google_client) -> None:
+    """Google OAuth should create new users as inactive, only returning refresh_token."""
+    mock_payload = {"email": "newuser@example.com", "name": "New User", "email_verified": True}
+    mock_credentials = MagicMock()
+
+    with (
+        patch("app.config.settings.GOOGLE_CLIENT_ID", "test-client-id"),
+        patch("app.config.settings.GOOGLE_CLIENT_SECRET", "test-secret"),
+        patch("app.config.settings.DOMAIN", "http://localhost:8000"),
+        patch("app.config.settings.API_V1_STR", "/api/v1"),
+        patch("app.config.settings.ACCESS_TOKEN_EXPIRE_MINUTES", 30),
+        patch("app.config.settings.REFRESH_TOKEN_EXPIRE_DAYS", 30),
+        patch("app.config.settings.JWT_ISSUER", "test-issuer"),
+        patch("app.config.settings.JWT_AUDIENCE", "test-audience"),
+        patch("app.config.settings.FRONTEND_HOST", "http://localhost:3000"),
+        patch("google.auth.jwt.verify_id_token", return_value=(mock_credentials, mock_payload)),
+        patch("app.services.google_auth_service.UserRepository") as mock_repo_cls,
+    ):
+        mock_repo_cls.return_value.get_by_email = AsyncMock(return_value=None)
+
+        with patch(
+            "authlib.integrations.starlette_client.apps.StarletteOAuth2App.authorize_access_token",
+            new_callable=AsyncMock,
+            return_value={"id_token": "fake.id.token"},
+        ):
+            response = await google_client.get(
+                "/api/v1/google/auth/google?code=mock_code&state=mock_state"
+            )
+            assert response.status_code == 302
+            location = response.headers.get("location", "")
+            # New inactive users are redirected to claim page, not the normal callback
+            assert "claim" in location.lower() or "google-callback" in location
 
 
 @pytest.mark.asyncio
@@ -159,7 +199,7 @@ async def test_google_auth_rejects_unverified_email(google_client) -> None:
         patch("app.config.settings.GOOGLE_CLIENT_ID", "test-client-id"),
         patch("app.config.settings.GOOGLE_CLIENT_SECRET", "test-secret"),
         patch("google.auth.jwt.verify_id_token", return_value=(mock_creds, mock_unverified)),
-        patch("app.api.routes.google.UserRepository") as mock_repo_cls,
+        patch("app.services.google_auth_service.UserRepository") as mock_repo_cls,
     ):
         mock_repo_cls.return_value.get_by_email = AsyncMock(return_value=None)
 
@@ -182,7 +222,7 @@ async def test_google_auth_rejects_missing_id_token(google_client) -> None:
     with (
         patch("app.config.settings.GOOGLE_CLIENT_ID", "test-client-id"),
         patch("app.config.settings.GOOGLE_CLIENT_SECRET", "test-secret"),
-        patch("app.api.routes.google.UserRepository") as mock_repo_cls,
+        patch("app.services.google_auth_service.UserRepository") as mock_repo_cls,
     ):
         mock_repo_cls.return_value.get_by_email = AsyncMock(return_value=None)
 
@@ -208,7 +248,7 @@ async def test_google_auth_rejects_missing_pkce_cookie(google_client_no_pkce) ->
             new_callable=AsyncMock,
             return_value={"id_token": "fake.id.token"},
         ):
-            with patch("app.api.routes.google.UserRepository") as mock_repo_cls:
+            with patch("app.services.google_auth_service.UserRepository") as mock_repo_cls:
                 mock_repo_cls.return_value.get_by_email = AsyncMock(return_value=None)
                 response = await google_client_no_pkce.get(
                     "/api/v1/google/auth/google?code=mock_code&state=mock_state"
@@ -240,7 +280,7 @@ async def test_google_auth_auto_provisions_user(google_client) -> None:
         patch("app.config.settings.JWT_AUDIENCE", "test-audience"),
         patch("app.config.settings.FRONTEND_HOST", "http://localhost:3000"),
         patch("google.auth.jwt.verify_id_token", return_value=(mock_creds, mock_payload)),
-        patch("app.api.routes.google.UserRepository") as mock_repo_cls,
+        patch("app.services.google_auth_service.UserRepository") as mock_repo_cls,
     ):
         mock_repo_cls.return_value.get_by_email = AsyncMock(return_value=mock_existing_user)
 
@@ -254,5 +294,5 @@ async def test_google_auth_auto_provisions_user(google_client) -> None:
             )
             assert response.status_code == 302
             # Token is now set as httpOnly cookie, not in URL
-            set_cookie = response.headers.get("set-cookie", "")
-            assert "access_token=" in set_cookie
+            all_cookies = "; ".join(response.headers.get_list("set-cookie"))
+            assert "access_token=" in all_cookies

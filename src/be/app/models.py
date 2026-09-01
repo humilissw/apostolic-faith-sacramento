@@ -1,7 +1,7 @@
 import datetime
-from enum import Enum
-from typing import Annotated, Optional
 import uuid
+from enum import Enum
+from typing import Annotated
 
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import Index as saIndex
@@ -41,6 +41,21 @@ class UserRegister(SQLModel):
     full_name: str | None = Field(default=None, max_length=255)
 
 
+# Password validation helper
+def validate_password_complexity(password: str) -> bool:
+    """Check that password meets complexity requirements.
+
+    Requires at least 8 characters with a mix of uppercase, lowercase, digits, and special chars.
+    """
+    if len(password) < 8:
+        return False
+    has_upper = any(c.isupper() for c in password)
+    has_lower = any(c.islower() for c in password)
+    has_digit = any(c.isdigit() for c in password)
+    has_special = any(not c.isalnum() for c in password)
+    return has_upper and has_lower and has_digit and has_special
+
+
 # Properties to receive via API on update, all are optional
 class UserUpdate(UserBase):
     email: EmailStr | None = Field(default=None, max_length=255)  # type: ignore
@@ -63,7 +78,7 @@ class User(UserBase, table=True):  # type: ignore[call-arg]
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), max_length=36, primary_key=True)
     hashed_password: str = Field(max_length=4000)
     created_on: datetime.datetime = Field(
-        default=datetime.datetime.now(datetime.timezone.utc), nullable=False
+        default=datetime.datetime.now(datetime.UTC), nullable=False
     )
     updated_on: datetime.datetime | None = Field(nullable=True, default=None)
     new_id: str = Field(default_factory=lambda: str(uuid.uuid4()), max_length=36, exclude=True)
@@ -79,7 +94,7 @@ class UserScope(SQLModel, table=True):  # type: ignore[call-arg]
     user_id: str = Field(foreign_key="users.id", max_length=36, nullable=False)
     scope: str = Field(max_length=50, nullable=False)
     created_on: datetime.datetime = Field(
-        default=datetime.datetime.now(datetime.timezone.utc), nullable=False
+        default=datetime.datetime.now(datetime.UTC), nullable=False
     )
 
 
@@ -121,7 +136,7 @@ class Item(ItemBase, table=True):  # type: ignore[call-arg]
         default_factory=lambda: str(uuid.uuid4()), max_length=36, nullable=False
     )
     created_on: datetime.datetime | None = Field(
-        default=datetime.datetime.now(datetime.timezone.utc), nullable=False
+        default=datetime.datetime.now(datetime.UTC), nullable=False
     )
     updated_on: datetime.datetime | None = Field(nullable=True, default=None)
     # owner: User | None = Relationship(back_populates="items")
@@ -182,6 +197,13 @@ class NewPassword(SQLModel):
     new_password: str = Field(min_length=8, max_length=128)
 
 
+# Password reset request model (POST body, not URL path)
+class PasswordRecoveryRequest(BaseModel):
+    """Request to initiate password recovery. Email is in the body to avoid URL/log exposure."""
+
+    email: EmailStr = Field(max_length=255)
+
+
 # Refresh token storage model
 class RefreshToken(SQLModel, table=True):  # type: ignore[call-arg]
     __tablename__ = "refresh_tokens"
@@ -191,7 +213,7 @@ class RefreshToken(SQLModel, table=True):  # type: ignore[call-arg]
     revoked: bool = Field(default=False)
     expires_at: datetime.datetime = Field(nullable=False)
     created_on: datetime.datetime = Field(
-        default=datetime.datetime.now(datetime.timezone.utc), nullable=False
+        default=datetime.datetime.now(datetime.UTC), nullable=False
     )
 
 
@@ -203,17 +225,40 @@ class UpdateTokenResponse(SQLModel):
 
 
 class TokenRefresh(SQLModel):
-    refresh_token: str = Field(min_length=8, max_length=4000)
+    # Optional in the body: the web app sends the refresh token via its
+    # httpOnly cookie instead, so an empty/missing body value is valid.
+    refresh_token: str = Field(default="", max_length=4000)
 
 
 class RevokeTokenRequest(SQLModel):
     token: str = Field(min_length=8, max_length=4000)
 
 
+# Password reset token storage model (server-side one-time-use tracking)
+class PasswordResetToken(SQLModel, table=True):  # type: ignore[call-arg]
+    """Stores password reset tokens for single-use enforcement and revocation.
+
+    Each token is a cryptographically secure random string stored alongside the
+    user_id it belongs to, its expiry time, and an invalidated flag. This prevents
+    replay attacks even if the email link is intercepted or forwarded.
+    """
+
+    __tablename__ = "password_reset_tokens"
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True, max_length=36)
+    user_id: str = Field(nullable=False, index=True)
+    token: str = Field(max_length=4000, nullable=False, unique=True, index=True)
+    invalidated: bool = Field(default=False, index=True)
+    expires_at: datetime.datetime = Field(nullable=False, index=True)
+    created_on: datetime.datetime = Field(
+        default=datetime.datetime.now(datetime.UTC), nullable=False
+    )
+
+
 class Media(SQLModel, table=True):  # type: ignore[call-arg]
     __tablename__ = "media"
     id: str = Field(default_factory=uuid.uuid4, primary_key=True, max_length=36)
     name: str = Field(max_length=200)
+    description: str | None = Field(default=None, max_length=4000)
     owner_id: str = Field(max_length=36, nullable=False)
     uploaded_on: datetime.datetime
     created_on: datetime.datetime
@@ -231,7 +276,7 @@ class Test(SQLModel, table=True):  # type: ignore[call-arg]
 class DefaultBase(SQLModel):
     id: str = Field(default_factory=uuid.uuid4, primary_key=True, max_length=36)
     created_on: datetime.datetime = Field(
-        default=datetime.datetime.now(datetime.timezone.utc), nullable=False
+        default=datetime.datetime.now(datetime.UTC), nullable=False
     )
     updated_on: datetime.datetime = Field(nullable=True)
 
@@ -258,8 +303,8 @@ class ChurchService(DefaultBase, table=True):  # type: ignore[call-arg]
     __tablename__ = "church_services"
     service_date: datetime.datetime = Field(nullable=False)
     speaker: str = Field(max_length=200, nullable=True)
-    service_title: Optional[str] = Field(max_length=200, nullable=True)
-    file_location: Optional[str] = Field(max_length=1000, nullable=True)
+    service_title: str | None = Field(max_length=200, nullable=True)
+    file_location: str | None = Field(max_length=1000, nullable=True)
     edited: bool = Field(nullable=False, default=False)
     uploaded: bool = Field(nullable=False, default=False)
 
@@ -332,7 +377,7 @@ class AuthorizationCode(SQLModel, table=True):  # type: ignore[call-arg]
     used: bool = Field(default=False)
     expires_at: datetime.datetime = Field(nullable=False)
     created_on: datetime.datetime = Field(
-        default=datetime.datetime.now(datetime.timezone.utc), nullable=False
+        default=datetime.datetime.now(datetime.UTC), nullable=False
     )
 
 
@@ -346,7 +391,7 @@ class ClientCredentials(SQLModel, table=True):  # type: ignore[call-arg]
     scopes: str = Field(max_length=1000)  # comma-separated scope values
     is_active: bool = Field(default=True)
     created_on: datetime.datetime = Field(
-        default=datetime.datetime.now(datetime.timezone.utc), nullable=False
+        default=datetime.datetime.now(datetime.UTC), nullable=False
     )
 
 
@@ -442,7 +487,7 @@ class IntegrationConfig(DefaultBase, table=True):  # type: ignore[call-arg]
     cred_encrypted_iv: str | None = Field(default=None, max_length=255)
     cred_encrypted_blob: str | None = Field(default=None, max_length=4000)
     updated_on: datetime.datetime | None = Field(  # type: ignore
-        default_factory=lambda: datetime.datetime.now(datetime.timezone.utc),
+        default_factory=lambda: datetime.datetime.now(datetime.UTC),
         nullable=True,
     )
 
@@ -566,8 +611,6 @@ class FeatureFlagBase(SQLModel):
 class FeatureFlagCreate(FeatureFlagBase):
     """Properties to receive via API on creation."""
 
-    pass
-
 
 class FeatureFlagUpdate(SQLModel):
     """Properties to receive via API on update (all optional)."""
@@ -582,7 +625,7 @@ class FeatureFlag(FeatureFlagBase, table=True):  # type: ignore[call-arg]
     __tablename__ = "feature_flags"
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True, max_length=36)
     created_on: datetime.datetime = Field(
-        default=datetime.datetime.now(datetime.timezone.utc), nullable=False
+        default=datetime.datetime.now(datetime.UTC), nullable=False
     )
     updated_on: datetime.datetime | None = Field(default=None, nullable=True)
 

@@ -15,14 +15,14 @@ bun install
 bun dev
 
 # Build (static export)
-pnpm build
+bun run build
 
 # Test
-pnpm test
-pnpm test:watch
+bun test
+bun test:watch
 
 # Lint
-pnpm lint
+bun lint
 ```
 
 ## Key Files
@@ -142,7 +142,7 @@ const { data, isLoading } = useApi("/api/...");
 - **Testing**: Jest + @testing-library/react
 - **Linting**: ESLint + eslint-config-next
 - **Build Output**: Static export to `out/`
-- **Package Manager**: pnpm
+- **Package Manager**: bun
 
 ## Environment
 
@@ -156,23 +156,33 @@ const { data, isLoading } = useApi("/api/...");
 Build output goes to `out/` directory. Deployed from `homepage` field in package.json (`localhost/out/`).
 
 ```bash
-pnpm build   # generates static files in out/
+bun run build   # generates static files in out/
+```
+
+## Docker
+
+The Dockerfile (`src/fe/Dockerfile`) is based on `oven/bun` and uses bun for everything — install and runtime (bun is the project default, pinned via the `packageManager` field in package.json). The container starts with `bun https`, which runs `next dev --experimental-https` (see package.json) using the self-signed certs in `security_keys/`, serving HTTPS on port 3000. There is no nginx; bun serves the app directly.
+
+```bash
+docker build -t afc-frontend src/fe
+# or via docker-compose (serves on localhost:3000)
+docker-compose up -d --build frontend
 ```
 
 ## Testing
 
 ```bash
 # Run all tests
-pnpm test
+bun test
 
 # Watch mode
-pnpm test:watch
+bun test:watch
 
 # CI mode
-pnpm test:ci
+bun test:ci
 
 # Update snapshots
-pnpm snapshot-update
+bun run snapshot-update
 ```
 
 Test files in `__tests__/` alongside components. Jest config in `jest.config.js` + `jest.setup.js`.
@@ -185,8 +195,8 @@ Components added via components.json (shadcn/ui config). Style: "new-york", Luci
 # Add a component
 npx shadcn@latest add button
 
-# Add with pnpm
-pnpm dlx shadcn@latest add button
+# Add with bun
+bunx shadcn@latest add button
 ```
 
 ## Gotchas

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/context/auth-context";
 import {
   createPaymentIntent,
   createSubscription,
@@ -31,6 +32,7 @@ interface DonationFormProps {
 }
 
 export default function DonationForm({ onSuccess, initialAmount }: DonationFormProps) {
+  const { isAuthenticated } = useAuth();
   const [amount, setAmount] = useState(initialAmount || 2500);
   const [frequency, setFrequency] = useState<"one_time" | "recurring">("one_time");
   const [donorName, setDonorName] = useState("");
@@ -38,14 +40,6 @@ export default function DonationForm({ onSuccess, initialAmount }: DonationFormP
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-
-  const [isAuthenticated] = useState(() => {
-    try {
-      return document.cookie.includes("access_token=");
-    } catch {
-      return false;
-    }
-  });
 
   const handleDonate = async () => {
     if (!STRIPE_PUBLIC_KEY) {

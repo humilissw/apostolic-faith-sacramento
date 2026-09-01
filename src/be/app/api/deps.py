@@ -1,4 +1,4 @@
-from typing import Annotated, Callable, Generator
+from typing import Annotated, Any, Callable
 
 import jwt
 from fastapi import Depends, HTTPException, Request, status
@@ -29,20 +29,31 @@ async def get_token_from_cookie(request: Request) -> str | None:
     return str(token) if token else None  # type: ignore[no-any-return]
 
 
-reusable_oauth2 = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/login/access-token")
+reusable_oauth2 = OAuth2PasswordBearer(
+    tokenUrl=f"{settings.API_V1_STR}/login/access-token",
+    auto_error=False,
+)
 
-# Per-flow OAuth2 dependencies
+# Per-flow OAuth2 dependencies.
+# auto_error=False: the Authorization header is optional — the access token may
+# also arrive in the httpOnly cookie (primary mechanism for the web app). The
+# auth dependencies resolve the token from header or cookie and raise 401 only
+# when NEITHER source provides a token. Raising 401 here (FastAPI default) would
+# reject valid cookie-authenticated requests before they reach those handlers.
 reusable_oauth2_implicit = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/implicit-token",
     scheme_name="implicit_grant",
+    auto_error=False,
 )
 reusable_oauth2_auth_code = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/auth-code",
     scheme_name="authorization_code",
+    auto_error=False,
 )
 reusable_oauth2_client_creds = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/client-credentials",
     scheme_name="client_credentials",
+    auto_error=False,
 )
 
 # OAuth2 security scheme with all flows for OpenAPI/Swagger UI
@@ -70,11 +81,11 @@ oauth2_scheme = OAuth2(
     )
 )
 
-TokenDep = Annotated[str, Depends(reusable_oauth2)]
+TokenDep = Annotated[str | None, Depends(reusable_oauth2)]
 SessionDep = Annotated[AsyncSession, Depends(get_db_session)]
 
 
-def get_sync_db_session() -> Generator[Session]:
+def get_sync_db_session() -> Any:
     """Synchronous database session for tests."""
     session = SyncSessionLocal()
     try:
@@ -85,10 +96,10 @@ def get_sync_db_session() -> Generator[Session]:
 
 SyncSessionDep = Annotated[Session, Depends(get_sync_db_session)]
 
-# Per-flow typed dependencies
-ImplicitTokenDep = Annotated[str, Depends(reusable_oauth2_implicit)]
-AuthCodeTokenDep = Annotated[str, Depends(reusable_oauth2_auth_code)]
-ClientCredsTokenDep = Annotated[str, Depends(reusable_oauth2_client_creds)]
+# Per-flow typed dependencies (str | None: header is optional, see above)
+ImplicitTokenDep = Annotated[str | None, Depends(reusable_oauth2_implicit)]
+AuthCodeTokenDep = Annotated[str | None, Depends(reusable_oauth2_auth_code)]
+ClientCredsTokenDep = Annotated[str | None, Depends(reusable_oauth2_client_creds)]
 
 
 async def get_current_user(
@@ -104,14 +115,26 @@ async def get_current_user(
     """
     cookie_token = await get_token_from_cookie(request)
     token_to_use = cookie_token or token
+    if not token_to_use:
+        # No token in header or cookie — unauthenticated (not a bad token).
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     try:
+        # Decode with aud/iss when configured, accept without for backwards compat.
+        decode_kwargs: dict = {}
+        if settings.JWT_AUDIENCE:
+            decode_kwargs["audience"] = settings.JWT_AUDIENCE
+        if settings.JWT_ISSUER:
+            decode_kwargs["issuer"] = settings.JWT_ISSUER
         payload = jwt.decode(
             token_to_use,
             security.PUBLIC_KEY,
             algorithms=[security.ALGORITHM],
-            audience=settings.JWT_AUDIENCE,
-            issuer=settings.JWT_ISSUER,
+            **decode_kwargs,
         )
         token_data = TokenPayload(**payload)
     except (InvalidTokenError, ValidationError):
@@ -164,15 +187,38 @@ async def get_current_active_user(
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
-async def get_current_active_superuser(current_user: CurrentUser, token: TokenDep) -> User:
-    """Check token scopes for superuser, not the is_superuser flag."""
+async def get_current_active_superuser(
+    current_user: CurrentUser,
+    request: Request,
+) -> User:
+    """Check token scopes for superuser, not the is_superuser flag.
+
+    Resolves the presented token exactly like `get_current_user` does
+    (httpOnly cookie first, then Authorization header), so
+    cookie-authenticated clients are checked against their own token's
+    embedded scopes instead of being rejected.
+    """
+    cookie_token = await get_token_from_cookie(request)
+    auth_header = request.headers.get("authorization", "")
+    header_token = auth_header[7:] if auth_header.startswith("Bearer ") else None
+    token_to_use = cookie_token or header_token
+    if not token_to_use:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     try:
+        decode_kwargs: dict = {}
+        if settings.JWT_AUDIENCE:
+            decode_kwargs["audience"] = settings.JWT_AUDIENCE
+        if settings.JWT_ISSUER:
+            decode_kwargs["issuer"] = settings.JWT_ISSUER
         payload = jwt.decode(
-            token,
+            token_to_use,
             security.PUBLIC_KEY,
             algorithms=[security.ALGORITHM],
-            audience=settings.JWT_AUDIENCE,
-            issuer=settings.JWT_ISSUER,
+            **decode_kwargs,
         )
         token_data = TokenPayload(**payload)
         if "superuser" not in (token_data.scopes or []):
@@ -185,7 +231,7 @@ async def get_current_active_superuser(current_user: CurrentUser, token: TokenDe
 async def get_current_user_with_scopes(
     session: SessionDep,
     request: Request,
-    token: str = Depends(reusable_oauth2),
+    token: str | None = Depends(reusable_oauth2),
 ) -> tuple[User, list[str]]:
     """Validate JWT token and return (user, scopes) tuple."""
     # Authorization header takes priority when present (tests, API clients)
@@ -199,14 +245,25 @@ async def get_current_user_with_scopes(
         # Fall back to cookie token, then to oauth2 parameter
         cookie_token = await get_token_from_cookie(request)
         token_to_use = cookie_token or token
+    if not token_to_use:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     try:
+        # Decode with aud/iss when configured, accept without for backwards compat.
+        decode_kwargs: dict = {}
+        if settings.JWT_AUDIENCE:
+            decode_kwargs["audience"] = settings.JWT_AUDIENCE
+        if settings.JWT_ISSUER:
+            decode_kwargs["issuer"] = settings.JWT_ISSUER
         payload = jwt.decode(
             token_to_use,
             security.PUBLIC_KEY,
             algorithms=[security.ALGORITHM],
-            audience=settings.JWT_AUDIENCE,
-            issuer=settings.JWT_ISSUER,
+            **decode_kwargs,
         )
         token_data = TokenPayload(**payload)
     except (InvalidTokenError, ValidationError):
@@ -230,43 +287,52 @@ async def get_current_user_with_scopes(
 
 
 async def _get_user_scopes(session: AsyncSession, user: User) -> list[str]:
-    """Get effective scopes for a user, matching login logic.
+    """Get effective scopes for a user from the database.
 
-    Login grants api:all to all authenticated users. So if the user has
-    any scope, they effectively get api:all (same as login). If no scopes,
-    they also get api:all as a fallback.
+    Returns only the scopes actually assigned to the user in DB.
+    No implicit grants — authorization is enforced by scope checks on each endpoint.
     """
     from app.repositories.user_scope_repo import UserScopeRepository
 
     repo = UserScopeRepository(session)
     db_scopes = await repo.get_scopes(user.id)
-    if not db_scopes:
-        # Align with login logic: users with no DB scopes get api:all
-        return ["api:all"]
-    if "superuser" in db_scopes or "api:all" in db_scopes:
-        return ["api:all"]
-    # Login grants api:all to all authenticated users (any scope → api:all)
-    return ["api:all"]
+    return list(db_scopes) if db_scopes else []
 
 
 async def get_current_active_superuser_bypass(
     session: SessionDep,
     request: Request,
 ) -> User:
-    """Authenticate user and return them, without requiring superuser status."""
+    """Authenticate user and return them, without requiring superuser status.
+
+    DEPRECATED: Use `CurrentUser` directly instead. This exists only for backward
+    compatibility with existing route definitions — prefer the simpler
+    `CurrentUser = Annotated[User, Depends(get_current_user)]` pattern.
+    """
     cookie_token = await get_token_from_cookie(request)
     auth_header = request.headers.get("authorization", "")
     header_token = None
     if auth_header.startswith("Bearer "):
         header_token = auth_header[7:]
     token_to_use = cookie_token or header_token
+    if not token_to_use:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     try:
+        # Decode with aud/iss when configured, accept without for backwards compat.
+        decode_kwargs: dict = {}
+        if settings.JWT_AUDIENCE:
+            decode_kwargs["audience"] = settings.JWT_AUDIENCE
+        if settings.JWT_ISSUER:
+            decode_kwargs["issuer"] = settings.JWT_ISSUER
         payload = jwt.decode(
             token_to_use,
             security.PUBLIC_KEY,
             algorithms=[security.ALGORITHM],
-            audience=settings.JWT_AUDIENCE,
-            issuer=settings.JWT_ISSUER,
+            **decode_kwargs,
         )
         token_data = TokenPayload(**payload)
     except (InvalidTokenError, ValidationError):
@@ -291,13 +357,14 @@ def require_scope(required_scope: str) -> Callable:
     """Return a dependency that checks if the user has the required scope.
 
     Users with "superuser" scope bypass all scope checks.
+    No implicit grants — users must have exactly the required scope or be superusers.
     """
 
     async def scope_checker(
         user_scopes: Annotated[tuple[User, list[str]], Depends(get_current_user_with_scopes)],
     ) -> User:
         user, scopes = user_scopes
-        if "superuser" in scopes or "api:all" in scopes:
+        if "superuser" in scopes:
             return user
         if required_scope not in scopes:
             raise HTTPException(

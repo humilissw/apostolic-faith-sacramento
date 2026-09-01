@@ -2,13 +2,14 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException, status
 
-from app.api.deps import CurrentUser, SessionDep, require_scope
-from app.models import Event, Message
+from app.api.deps import SessionDep, require_scope
+from app.models import Message
 from app.repositories.event_repo import EventRepository
 from app.requests.event_request import EventCreate, EventUpdate
 from app.responses.event_response import EventPublic, EventsPublic
 
 router = APIRouter(prefix="/events", tags=["events"])
+
 
 @router.get("/liveness")
 async def get_liveness() -> str:
@@ -37,8 +38,8 @@ async def read_events(session: SessionDep, skip: int = 0, limit: int = 100) -> A
     events, total_count = await repository.get_all(skip=skip, limit=limit)
 
     return EventsPublic(
-        data=[EventPublic.model_validate(i.model_dump()) for i in events], 
-        count=total_count)
+        data=[EventPublic.model_validate(i.model_dump()) for i in events], count=total_count
+    )
 
 
 @router.get(
@@ -64,6 +65,7 @@ async def read_event_by_id(event_id: str, session: SessionDep) -> Any:
         id=event.id,
         title=event.title,
         description=event.description,
+        date=event.date,
         start_time=event.start_time,
         end_time=event.end_time,
         created_on=event.created_on,
@@ -77,9 +79,7 @@ async def read_event_by_id(event_id: str, session: SessionDep) -> Any:
     status_code=status.HTTP_201_CREATED,
     dependencies=[require_scope("api:all")],
 )
-async def create_event_endpoint(
-    *, session: SessionDep, event_in: EventCreate
-) -> Any:
+async def create_event_endpoint(*, session: SessionDep, event_in: EventCreate) -> Any:
     """
     Create new event entry.
 
@@ -141,13 +141,11 @@ async def update_event_endpoint(
     response_model=Message,
     dependencies=[require_scope("api:all")],
 )
-async def delete_event_endpoint(
-    event_id: str, session: SessionDep
-) -> Any:
+async def delete_event_endpoint(event_id: str, session: SessionDep) -> Any:
     """
     Delete an event entry.
 
-    Deletes an event entry by ID. 
+    Deletes an event entry by ID.
     """
     repository = EventRepository(session=session)
     event = await repository.get_by_id(event_id=event_id)

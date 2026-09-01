@@ -1,9 +1,10 @@
-from sqlalchemy import select, func
+from datetime import UTC, datetime
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.requests.event_request import EventCreate, EventUpdate
-from app.responses.event_response import EventPublic, EventsPublic
+
 from app.models import Event
-from datetime import datetime, timezone
+from app.requests.event_request import EventCreate, EventUpdate
 
 
 class EventRepository:
@@ -37,8 +38,8 @@ class EventRepository:
             date=event_in.date,
             start_time=event_in.start_time,
             end_time=event_in.end_time,
-            created_on=datetime.now(timezone.utc),
-            updated_on=datetime.now(timezone.utc),
+            created_on=datetime.now(UTC),
+            updated_on=datetime.now(UTC),
         )
         self.session.add(db_obj)
         await self.session.commit()
@@ -54,7 +55,7 @@ class EventRepository:
         event = result.scalar_one_or_none()
         if event:
             return event  # type: ignore[no-any-return]
-        statement = select(Event).where(Event.new_id == str(event_id))  # type: ignore[arg-type]
+        statement = select(Event).where(Event.id == str(event_id))  # type: ignore[arg-type]
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()  # type: ignore[no-any-return]
 
@@ -94,8 +95,7 @@ class EventRepository:
             Event: Updated event object
         """
         event_data = event_in.model_dump(exclude_unset=True)
-        extra_data = {}
-        db_event.sqlmodel_update(event_data, update=extra_data)
+        db_event.sqlmodel_update(event_data)
         self.session.add(db_event)
         await self.session.commit()
         await self.session.refresh(db_event)

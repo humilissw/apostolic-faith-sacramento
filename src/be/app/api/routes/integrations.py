@@ -1,11 +1,12 @@
 """Routes for third-party integration management."""
 
+import logging
+
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
 
 from app.api.deps import CurrentUser, SessionDep, require_scope
 from app.models import IntegrationConfig, Message
-from app.repositories.integration_repo import IntegrationConfigRepository
 from app.requests.integration_request import (
     CredentialUpdate,
     IntegrationCreate,
@@ -18,24 +19,15 @@ from app.responses.integration_response import (
     IntegrationsPublic,
     TestConnectionResponse,
 )
-from app.services.integration_service import (
-    KNOWN_INTEGRATIONS,
-    IntegrationService,
-)
+from app.services.integration_management_service import IntegrationManagementService
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/integrations", tags=["integrations"])
 
 
-def _get_service(session) -> IntegrationService:
-    return IntegrationService(IntegrationConfigRepository(session))
-
-
-def _mask_credentials(creds: dict[str, str] | None) -> dict[str, str]:
-    if not creds:
-        return {}
-    return {
-        field: f"****{value[-4:]}" if len(value) > 4 else "****" for field, value in creds.items()
-    }
+def _get_service(session) -> IntegrationManagementService:
+    return IntegrationManagementService(session)
 
 
 @router.get(
@@ -59,7 +51,7 @@ async def list_integrations(
             if is_valid:
                 integrations.append(is_valid)
         except Exception as error:
-            print(error)
+            logger.error("Failed to validate integration config: %s", error)
     return IntegrationsPublic(
         data=integrations,
         count=total,
@@ -94,7 +86,7 @@ async def get_integration(
     creds = await service.get_credentials(integration)
     return IntegrationConfigPublicWithCreds(
         **IntegrationConfigPublic.model_validate(integration.model_dump()).model_dump(),
-        credential_fields=_mask_credentials(creds),
+        credential_fields=service.mask_credentials(creds),
     )
 
 
@@ -120,15 +112,10 @@ async def create_integration(
             detail=f"Integration type '{integration_in.type}' already exists",
         )
 
-    # Use KNOWN_INTEGRATIONS defaults if not provided
-    meta = KNOWN_INTEGRATIONS.get(integration_in.type, {})
-    display_name = integration_in.display_name or meta.get("display_name", integration_in.type)
-    icon = integration_in.icon or meta.get("icon", "Plug")
-
     integration = await service.create(
-        type=integration_in.type,
-        display_name=display_name,
-        icon=icon,
+        type_id=integration_in.type,
+        display_name=integration_in.display_name,
+        icon=integration_in.icon,
         enabled=integration_in.enabled,
         config_json=integration_in.config_json,
         credentials=integration_in.credentials,
@@ -137,7 +124,7 @@ async def create_integration(
     creds = await service.get_credentials(integration)
     return IntegrationConfigPublicWithCreds(
         **IntegrationConfigPublic.model_validate(integration.model_dump()).model_dump(),
-        credential_fields=_mask_credentials(creds),
+        credential_fields=service.mask_credentials(creds),
     )
 
 
@@ -164,7 +151,7 @@ async def update_integration(
     creds = await service.get_credentials(updated)
     return IntegrationConfigPublicWithCreds(
         **IntegrationConfigPublic.model_validate(updated.model_dump()).model_dump(),
-        credential_fields=_mask_credentials(creds),
+        credential_fields=service.mask_credentials(creds),
     )
 
 
@@ -189,7 +176,7 @@ async def update_credentials(
     creds = await service.get_credentials(updated)
     return IntegrationConfigPublicWithCreds(
         **IntegrationConfigPublic.model_validate(updated.model_dump()).model_dump(),
-        credential_fields=_mask_credentials(creds),
+        credential_fields=service.mask_credentials(creds),
     )
 
 
@@ -223,18 +210,24 @@ async def test_connection(
     session: SessionDep,
     current_user: CurrentUser,
 ) -> TestConnectionResponse:
-    """Test connection for an integration type (superuser only)."""
+    """Test connection for an integration type (superuser only).
+
+    SSRF protection is enforced by the registered connection handlers
+    which validate URLs before connecting.
+    """
     service = _get_service(session)
-    config = None
-    if test_in.config_json:
-        import json
 
+    # Parse and validate config
+    config = service.parse_config_json(test_in.config_json)
+    if config:
         try:
-            config = json.loads(test_in.config_json)
-        except json.JSONDecodeError:
-            raise HTTPException(status_code=400, detail="Invalid config_json")
+            service.validate_config_urls(config)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
 
-    result = await service.test_connection(test_in.type, test_in.credentials, config)
+    result = await service.test_connection(
+        test_in.type, test_in.credentials, str(test_in.config_json) if test_in.config_json else None
+    )
     return TestConnectionResponse(**result)
 
 
@@ -269,21 +262,7 @@ async def pre_seed_integrations(
 ) -> IntegrationsPublic:
     """Create placeholder entries for all known integration types (superuser only)."""
     service = _get_service(session)
-    created = []
-
-    for type_id, meta in KNOWN_INTEGRATIONS.items():
-        existing = await service.get_by_type(type_id)
-        if not existing:
-            created.append(
-                await service.create(
-                    type=type_id,
-                    display_name=meta["display_name"],
-                    icon=meta["icon"],
-                    enabled=False,
-                    config_json=None,
-                    credentials={},
-                )
-            )
+    await service.create_pre_seeded_integrations()
 
     items, total = await service.get_all()
     return IntegrationsPublic(

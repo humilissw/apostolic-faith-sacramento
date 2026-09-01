@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-A FastAPI backend for the Apostolic Faith Sacramento church application. Currently on `feature/media-page-functionality` branch working on video/media upload capabilities.
+A FastAPI backend for the Apostolic Faith Sacramento church application, serving members, managing church services, and handling media uploads. Currently on `main` branch.
 
 ## Quick Start
 

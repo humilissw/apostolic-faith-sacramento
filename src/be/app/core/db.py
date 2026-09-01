@@ -1,4 +1,5 @@
-from typing import AsyncGenerator
+from typing import Any
+import logging
 
 from sqlalchemy.orm import Session
 
@@ -8,6 +9,8 @@ from app.config import settings
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from app.models import User  # noqa: F403
+
+logger = logging.getLogger(__name__)
 
 engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
 
@@ -33,7 +36,7 @@ AsyncSessionLocal = async_sessionmaker(
 
 
 # Dependency to inject the async database session
-async def get_db_session() -> AsyncGenerator[AsyncSession]:
+async def get_db_session() -> Any:
     """Create a new async database session for each request."""
     # Create a new async engine for each request to avoid event loop issues
     async_engine = create_async_engine(
@@ -81,11 +84,6 @@ async def init_db_async() -> None:
         statement = select(User).where(User.email == settings.FIRST_SUPERUSER)
         user_result = await session.execute(statement)
         user = user_result.scalar()
-        print("==============")
-        print(user)
-        if user is not None:
-            print(user.email)
-        print("==============")
         if user is None:
             user_in = UserCreate(
                 email=settings.FIRST_SUPERUSER,
@@ -97,7 +95,7 @@ async def init_db_async() -> None:
             session.add(UserScope(user_id=user.id, scope="superuser"))
             await session.commit()
     except Exception as error:
-        print(error)
+        logger.error("Failed to initialize DB: %s", error)
     finally:
         await session.close()
 

@@ -96,7 +96,8 @@ async def test_create_user_new_email(
 ) -> None:
     with (patch("app.utils.send_email", return_value=None),):
         username = random_email()
-        password = random_lower_string()
+        # Use a password that meets complexity requirements
+        password = "TestPass123!"
         data = {"email": username, "password": password}
         r = await users_client.post(
             f"{settings.API_V1_STR}/users/",
@@ -357,7 +358,8 @@ async def test_update_password_me_same_password_error(
 @pytest.mark.asyncio
 async def test_register_user(users_client: httpx.AsyncClient, db_session: AsyncSession) -> None:
     username = random_email()
-    password = random_lower_string()
+    # Use a password that meets complexity requirements
+    password = "TestPass123!"
     full_name = random_lower_string()
     data = {"email": username, "password": password, "full_name": full_name}
     r = await users_client.post(
@@ -381,7 +383,8 @@ async def test_register_user(users_client: httpx.AsyncClient, db_session: AsyncS
 async def test_register_user_already_exists_error(
     users_client: httpx.AsyncClient,
 ) -> None:
-    password = random_lower_string()
+    # Use a password that meets complexity requirements
+    password = "TestPass123!"
     full_name = random_lower_string()
     data = {
         "email": settings.FIRST_SUPERUSER,

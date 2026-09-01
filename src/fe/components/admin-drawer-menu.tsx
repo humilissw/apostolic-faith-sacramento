@@ -68,13 +68,8 @@ export function AdminMenu() {
       const auth = useAuth();
       const pathname = usePathname();
       const [open, setOpen] = useState(false);
-    
+
       // Call all hooks at top level (unconditional)
-      const enableHome = useFeatureFlag("enable_home");
-      const enableDoctrines = useFeatureFlag("enable_doctrines");
-      const enableMedia = useFeatureFlag("enable_media");
-      const enableDonate = useFeatureFlag("enable_donate");
-      const enableContact = useFeatureFlag("enable_contact");
       const enableVideoUploads = useFeatureFlag("enable_video_uploads");
       const enableSchedulerCalendar = useFeatureFlag("enable_scheduler_calendar");
       const enableSchedulerAdmin = useFeatureFlag("enable_scheduler_admin");
@@ -84,17 +79,17 @@ export function AdminMenu() {
       const enableIntegrations = useFeatureFlag("enable_integrations");
       const enableFlagsAdmin = useFeatureFlag("enable_flags_admin");
       const enableEventsAdmin = useFeatureFlag("enable_events_admin");
-    
+
       const isAuthenticated = auth.isAuthenticated;
-    
+
       const drawerItems: DrawerItem[][] = [];
-    
+
       if (isAuthenticated && enableVideoUploads) {
         drawerItems.push([
           { title: "Video Uploads", url: "/video-uploads/", icon: Video },
         ]);
       }
-    
+
       if (isAuthenticated && enableSchedulerCalendar && (auth.hasScope("scheduler:admin") || auth.hasScope("member:limited"))) {
         const schedulerItems: DrawerItem[] = [
           { title: "Scheduler Calendar", url: "/scheduler-calendar/", icon: Calendar },
@@ -105,11 +100,11 @@ export function AdminMenu() {
         if (enableMyScheduler && (auth.hasScope("scheduler:admin") || auth.hasScope("member:limited"))) {
           schedulerItems.push({ title: "My Scheduler", url: "/my-scheduler/", icon: Calendar });
         }
-         if (schedulerItems.length > 0) {
-           drawerItems.push(schedulerItems);
-         }
+        if (schedulerItems.length > 0) {
+          drawerItems.push(schedulerItems);
+        }
       }
-    
+
       if (isAuthenticated && auth.hasScope("superuser")) {
         const adminItems: DrawerItem[] = [];
         if (enableUsersAdmin) {
@@ -127,8 +122,8 @@ export function AdminMenu() {
         if (enableEventsAdmin) {
           adminItems.push({ title: "Events Admin", url: "/events-admin/", icon: Calendar });
         }
-         if (adminItems.length > 0) {
-           drawerItems.push(adminItems);
+        if (adminItems.length > 0) {
+          drawerItems.push(adminItems);
         }
       }
   return (
@@ -143,7 +138,7 @@ export function AdminMenu() {
             <XIcon color="gray"/>
           </button>
         </DrawerHeader>
-            <div>
+            <div className="flex-1 overflow-y-auto">
                 {drawerItems.map((group) =>
                 group.map((item) => (
                   <DrawerItemLink
@@ -159,8 +154,8 @@ export function AdminMenu() {
                   />
                 ))
               )}
-              <button 
-                className = "flex justify-start items-center rounded-md h-auto w-full text-sm p-4 transition-colors gap-2 border-t text-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" 
+              <button
+                className = "flex justify-start items-center rounded-md h-auto w-full text-sm p-4 transition-colors gap-2 border-t text-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 onClick={() => auth.logout()}
               >
                 <CircleUserRound className="w-4 h-4"/> Log out

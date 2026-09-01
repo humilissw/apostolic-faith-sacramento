@@ -17,7 +17,7 @@ A Next.js static website for the Apostolic Faith Sacramento church, featuring se
 - **Icons**: Lucide React + React Icons
 - **Testing**: Jest + @testing-library/react
 - **Linting**: ESLint + eslint-config-next
-- **Package Manager**: pnpm
+- **Package Manager**: bun
 
 ### Project Structure
 
@@ -32,7 +32,16 @@ fe/
 │   │   ├── media/           # Media gallery
 │   │   ├── doctrines/       # Doctrine pages
 │   │   ├── contact/         # Contact page
-│   │   └── live-service/    # Live streaming page
+│   │   ├── live-service/    # Live streaming page
+│   │   ├── donate/          # Donation page
+│   │   ├── integrations/    # Integration pages
+│   │   ├── users-admin/     # User admin panel
+│   │   ├── video-uploads/   # Video uploads
+│   │   ├── video-uploads-admin/  # Video upload admin
+│   │   ├── scheduler-admin/     # Scheduler admin
+│   │   ├── scheduler-calendar/  # Calendar view
+│   │   ├── my-scheduler/        # My scheduler (user)
+│   │   └── flags-admin/         # Feature flag admin
 │   ├── layout.tsx           # Root layout
 │   ├── globals.css          # Global styles
 │   └── not-found.tsx        # 404 page
@@ -190,16 +199,16 @@ Configured in `components.json`:
 
 ```bash
 # Run all tests
-pnpm test
+bun test
 
 # Watch mode
-pnpm test:watch
+bun test:watch
 
 # CI mode
-pnpm test:ci
+bun test:ci
 
 # Update snapshots
-pnpm snapshot-update
+bun run snapshot-update
 ```
 
 Test files live in `__tests__/` alongside components. Jest config in `jest.config.js` + `jest.setup.js`.
@@ -222,11 +231,13 @@ describe("Example", () => {
 Static export output goes to `out/`:
 
 ```bash
-pnpm build   # generates static files
-pnpm start   # starts dev server (not for production)
+bun build   # generates static files
+bun start   # starts dev server (not for production)
 ```
 
 The `out/` directory contains the fully static site ready for deployment.
+
+Docker builds use bun as the package manager (pinned via the `packageManager` field in package.json) and run the container with `bun https` — the Next.js dev server with experimental HTTPS (certs in `security_keys/`) on port 3000. There is no nginx; bun serves the app directly.
 
 ## Common Gotchas
 
@@ -257,7 +268,7 @@ The `out/` directory contains the fully static site ready for deployment.
 
 ### shadcn/ui Additions
 
-- New UI components are added via `pnpm dlx shadcn@latest add <component>`
+- New UI components are added via `bunx shadcn@latest add <component>`
 - Components go to `components/ui/` automatically
 - Check `components.json` for available aliases
 
@@ -268,5 +279,5 @@ The `out/` directory contains the fully static site ready for deployment.
 3. Review `components/ui/` for available shadcn/ui primitives
 4. Look at `lib/utils.ts` for utility functions
 5. Check `.env` for configuration
-6. Run `pnpm test` to verify nothing is broken
+6. Run `bun test` to verify nothing is broken
 7. Use `cn()` for all class name merging

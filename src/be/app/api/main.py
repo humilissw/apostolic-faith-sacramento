@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.routes import (
+    admin_password_reset,
     announcements,
     church_services,
     client_credentials,
@@ -41,6 +42,7 @@ api_router.include_router(client_credentials.router)
 api_router.include_router(scheduler.router)
 api_router.include_router(feature_flags.router)
 api_router.include_router(events.router)
+api_router.include_router(admin_password_reset.router)
 
 
 api_router.include_router(private.router)

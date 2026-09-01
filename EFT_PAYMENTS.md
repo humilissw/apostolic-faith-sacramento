@@ -113,5 +113,5 @@ NEXT_PUBLIC_STRIPE_PUBLIC_KEY=pk_test_xxx  # Publishable key
 cd src/be && poetry run pytest
 
 # Frontend tests
-cd src/fe && pnpm test
+cd src/fe && bun test
 ```

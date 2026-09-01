@@ -1,6 +1,6 @@
 """Routes for scheduler assignment management."""
 
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel
@@ -12,9 +12,6 @@ from app.models import (
     AssignmentPublic,
     AssignmentsPublic,
     TimeOffRequestPublic,
-    TimeOffRequest,
-    TimeOffRequestStatus,
-    User,
 )
 from app.requests.assignment_request import (
     AssignmentCreate,
@@ -22,9 +19,8 @@ from app.requests.assignment_request import (
     BulkAssignRequest,
     TimeOffRequestCreate,
 )
-from app.repositories.assignment_repo import AssignmentRepository
-from app.services.scheduler_service import SchedulerService
-from sqlmodel import select
+from app.services.assignment_service import AssignmentService
+from app.services.time_off_request_service import TimeOffRequestService
 
 router = APIRouter(prefix="/scheduler", tags=["scheduler"])
 
@@ -59,15 +55,8 @@ async def get_my_time_off(
     end_date: str | None = Query(None, description="ISO date YYYY-MM-DD"),
 ) -> Any:
     """Get current user's time-off requests (member:limited scope required)."""
-    stmt = select(TimeOffRequest).where(TimeOffRequest.user_id == current_user.id)
-    if start_date and end_date:
-        start = datetime.fromisoformat(start_date)
-        end = datetime.fromisoformat(end_date)
-        stmt = stmt.where(TimeOffRequest.date >= start)
-        stmt = stmt.where(TimeOffRequest.date <= end)
-    stmt = stmt.order_by(TimeOffRequest.date)  # type: ignore[arg-type]
-    result = await session.execute(stmt)
-    items = result.scalars().all()
+    svc = TimeOffRequestService(session)
+    items = await svc.get_user_time_off(current_user.id, start_date, end_date)
     return TimeOffRequestsPublic(
         data=[TimeOffRequestPublic.model_validate(a) for a in items],
         count=len(items),
@@ -86,17 +75,12 @@ async def create_time_off_request(
     data: TimeOffRequestCreate = ...,  # type: ignore[assignment]
 ) -> Any:
     """Create a time-off request for the current user."""
-    row = TimeOffRequest(
+    svc = TimeOffRequestService(session)
+    row = await svc.create_time_off_request(
         user_id=current_user.id,
         date=data.date,
-        status=TimeOffRequestStatus.pending,
         notes=data.notes,
-        created_on=datetime.now(timezone.utc),
-        updated_on=None,
     )
-    session.add(row)
-    await session.commit()
-    await session.refresh(row)
     return TimeOffRequestPublic.model_validate(row)
 
 
@@ -111,14 +95,11 @@ async def approve_time_off_request(
     current_user: CurrentUser,
 ) -> Any:
     """Approve a time-off request (admin only)."""
-    row = await session.get(TimeOffRequest, time_off_id)
-    if not row:
-        raise HTTPException(status_code=404, detail="Time-off request not found")
-    row.status = TimeOffRequestStatus.approved
-    row.updated_on = datetime.now(timezone.utc)
-    session.add(row)
-    await session.commit()
-    await session.refresh(row)
+    svc = TimeOffRequestService(session)
+    try:
+        row = await svc.approve_request(time_off_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
     return TimeOffRequestPublic.model_validate(row)
 
 
@@ -133,14 +114,11 @@ async def decline_time_off_request(
     current_user: CurrentUser,
 ) -> Any:
     """Decline a time-off request (admin only)."""
-    row = await session.get(TimeOffRequest, time_off_id)
-    if not row:
-        raise HTTPException(status_code=404, detail="Time-off request not found")
-    row.status = TimeOffRequestStatus.declined
-    row.updated_on = datetime.now(timezone.utc)
-    session.add(row)
-    await session.commit()
-    await session.refresh(row)
+    svc = TimeOffRequestService(session)
+    try:
+        row = await svc.decline_request(time_off_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
     return TimeOffRequestPublic.model_validate(row)
 
 
@@ -155,13 +133,13 @@ async def delete_time_off_request(
     current_user: CurrentUser,
 ) -> None:
     """Delete a time-off request (owner only)."""
-    row = await session.get(TimeOffRequest, time_off_id)
-    if not row:
-        raise HTTPException(status_code=404, detail="Time-off request not found")
-    if row.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Can only delete your own time-off requests")
-    await session.delete(row)
-    await session.commit()
+    svc = TimeOffRequestService(session)
+    try:
+        await svc.delete_request(time_off_id, current_user.id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except PermissionError as e:
+        raise HTTPException(status_code=403, detail=str(e))
 
 
 # ── Assignment routes ──────────────────────────────────────
@@ -177,8 +155,8 @@ async def get_my_assignments(
     current_user: CurrentUser,
 ) -> Any:
     """Get current user's own assignments (member:limited scope required)."""
-    repo = AssignmentRepository(session=session)
-    assignments = await repo.get_by_user_id(current_user.id)
+    svc = AssignmentService(session)
+    assignments = await svc.get_by_user_id(current_user.id)
     return AssignmentsPublic(
         data=[AssignmentPublic.model_validate(a) for a in assignments],
         count=len(assignments),
@@ -197,10 +175,10 @@ async def get_calendar_assignments(
     end_date: str = Query(..., description="ISO date YYYY-MM-DD"),
 ) -> Any:
     """Get assignments for a date range (member:limited scope required)."""
+    svc = AssignmentService(session)
     start = datetime.fromisoformat(start_date)
     end = datetime.fromisoformat(end_date)
-    repo = AssignmentRepository(session=session)
-    assignments = await repo.get_by_date_range(start, end)
+    assignments = await svc.get_by_date_range(start, end)
     return AssignmentsPublic(
         data=[AssignmentPublic.model_validate(a) for a in assignments],
         count=len(assignments),
@@ -219,25 +197,15 @@ async def get_calendar_with_names(
     end_date: str = Query(..., description="ISO date YYYY-MM-DD"),
 ) -> Any:
     """Get assignments for a date range, including user email (member:limited scope required)."""
+    svc = AssignmentService(session)
     start = datetime.fromisoformat(start_date)
     end = datetime.fromisoformat(end_date)
-    repo = AssignmentRepository(session=session)
-    assignments = await repo.get_by_date_range(start, end)
-    enriched: list[EnrichedAssignment] = []
-    for a in assignments:
-        user = await session.get(User, a.user_id)
-        enriched.append(
-            EnrichedAssignment(
-                **AssignmentPublic.model_validate(a).model_dump(),
-                user_email=user.email if user else "unknown",
-                user_full_name=(
-                    user.full_name
-                    if user and user.full_name
-                    else (user.email if user else "unknown")
-                ),
-            )
-        )
-    return EnrichedAssignmentsResponse(data=enriched, count=len(enriched))
+    assignments = await svc.get_by_date_range(start, end)
+    enriched = await svc.enrich_assignments_with_user_data(assignments)
+    return EnrichedAssignmentsResponse(
+        data=[EnrichedAssignment(**e) for e in enriched],  # type: ignore[arg-type]
+        count=len(enriched),
+    )
 
 
 @router.get(
@@ -252,10 +220,10 @@ async def get_my_calendar(
     end_date: str = Query(..., description="ISO date YYYY-MM-DD"),
 ) -> Any:
     """Get current user's own assignments in a date range (member:limited scope required)."""
+    svc = AssignmentService(session)
     start = datetime.fromisoformat(start_date)
     end = datetime.fromisoformat(end_date)
-    repo = AssignmentRepository(session=session)
-    assignments = await repo.get_by_user_and_date_range(current_user.id, start, end)
+    assignments = await svc.get_by_user_and_date_range(current_user.id, start, end)
     return AssignmentsPublic(
         data=[AssignmentPublic.model_validate(a) for a in assignments],
         count=len(assignments),
@@ -274,8 +242,8 @@ async def list_assignments(
     limit: int = 100,
 ) -> Any:
     """List all assignments (scheduler:admin scope required)."""
-    repo = AssignmentRepository(session=session)
-    assignments, total_count = await repo.get_all(skip=skip, limit=limit)
+    svc = AssignmentService(session)
+    assignments, total_count = await svc.get_all(skip=skip, limit=limit)
     return AssignmentsPublic(
         data=[AssignmentPublic.model_validate(a) for a in assignments],
         count=total_count,
@@ -293,8 +261,8 @@ async def get_assignment(
     current_user: CurrentUser,
 ) -> Any:
     """Get a single assignment (scheduler:admin scope required)."""
-    repo = AssignmentRepository(session=session)
-    assignment = await repo.get_by_id(assignment_id)
+    svc = AssignmentService(session)
+    assignment = await svc.get_by_id(assignment_id)
     if not assignment:
         raise HTTPException(status_code=404, detail="Assignment not found")
     return AssignmentPublic.model_validate(assignment)
@@ -312,13 +280,9 @@ async def create_assignment(
     assignment_in: AssignmentCreate = ...,  # type: ignore[assignment]
 ) -> Any:
     """Create a new assignment (scheduler:admin scope required)."""
-    repo = AssignmentRepository(session=session)
+    svc = AssignmentService(session)
 
-    # Check for double-booking conflicts
-    conflicts = await repo.check_conflicts(
-        user_id=assignment_in.user_id,
-        event_date=assignment_in.event_date,
-    )
+    assignment, conflicts = await svc.create_assignment(assignment_in)
     if conflicts:
         conflict_ids = [c.id for c in conflicts]
         conflict_details = "\n".join(
@@ -334,22 +298,10 @@ async def create_assignment(
             },
         )
 
-    assignment = await repo.create(assignment_in=assignment_in)
     if assignment is None:
         raise HTTPException(status_code=500, detail="Failed to create assignment")
 
-    # Send email notification
-    scheduler_svc = SchedulerService(session)
-    await scheduler_svc.send_assignment_notification(
-        user_id=assignment.user_id,
-        assignment_type=assignment_in.type.value,
-        role=assignment_in.role,
-        event_date=assignment.event_date.strftime("%B %d, %Y"),
-        instrument=assignment_in.instrument,
-        notes=assignment_in.notes,
-    )
-
-    return AssignmentPublic.model_validate(assignment)
+    return assignment
 
 
 @router.patch(
@@ -364,12 +316,11 @@ async def update_assignment(
     assignment_in: AssignmentUpdate = ...,  # type: ignore[assignment]
 ) -> Any:
     """Update an assignment (scheduler:admin scope required)."""
-    repo = AssignmentRepository(session=session)
-    assignment = await repo.get_by_id(assignment_id)
-    if not assignment:
+    svc = AssignmentService(session)
+    result = await svc.update_assignment(assignment_id, assignment_in)
+    if not result:
         raise HTTPException(status_code=404, detail="Assignment not found")
-    assignment = await repo.update(db_assignment=assignment, assignment_in=assignment_in)
-    return AssignmentPublic.model_validate(assignment)
+    return AssignmentPublic.model_validate(result)
 
 
 @router.delete(
@@ -383,11 +334,10 @@ async def delete_assignment(
     current_user: CurrentUser,
 ) -> None:
     """Delete an assignment (scheduler:admin scope required)."""
-    repo = AssignmentRepository(session=session)
-    assignment = await repo.get_by_id(assignment_id)
-    if not assignment:
+    svc = AssignmentService(session)
+    deleted = await svc.delete_assignment(assignment_id)
+    if not deleted:
         raise HTTPException(status_code=404, detail="Assignment not found")
-    await repo.delete(db_assignment=assignment)
 
 
 class BulkAssignResponse(BaseModel):
@@ -408,59 +358,12 @@ async def bulk_assign(
 ) -> Any:
     """Bulk create assignments for multiple users on the same date
     (scheduler:admin scope required)."""
-    repo = AssignmentRepository(session=session)
-    scheduler_svc = SchedulerService(session)
+    svc = AssignmentService(session)
 
-    created: list[AssignmentPublic] = []
-    conflicts: list[dict[str, Any]] = []
-
-    for entry in bulk_in.entries:
-        assignment_in = AssignmentCreate(
-            user_id=entry.user_id,
-            event_date=bulk_in.event_date,
-            type=bulk_in.type,
-            role=entry.role,
-            instrument=entry.instrument,
-            notes=entry.notes,
-            group_leader=entry.group_leader,
-        )
-
-        # Check for double-booking conflicts
-        conflicts_check = await repo.check_conflicts(
-            user_id=entry.user_id,
-            event_date=bulk_in.event_date,
-        )
-        if conflicts_check:
-            conflicts.append(
-                {
-                    "user_id": entry.user_id,
-                    "message": "User already has an assignment on "
-                    + f"{bulk_in.event_date.strftime('%Y-%m-%d')}",
-                    "conflicts": [c.model_dump() for c in conflicts_check],
-                }
-            )
-            continue
-
-        assignment = await repo.create(assignment_in=assignment_in)
-        if assignment is None:
-            conflicts.append(
-                {
-                    "user_id": entry.user_id,
-                    "message": "Failed to create assignment",
-                }
-            )
-            continue
-
-        # Send email notification
-        await scheduler_svc.send_assignment_notification(
-            user_id=assignment.user_id,
-            assignment_type=bulk_in.type.value,
-            role=entry.role,
-            event_date=assignment.event_date.strftime("%B %d, %Y"),
-            instrument=entry.instrument,
-            notes=entry.notes,
-        )
-
-        created.append(AssignmentPublic.model_validate(assignment))
+    created, conflicts = await svc.bulk_assign(
+        entries=bulk_in.entries,
+        event_date=bulk_in.event_date,
+        type=bulk_in.type,
+    )
 
     return BulkAssignResponse(created=created, conflicts=conflicts)

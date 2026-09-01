@@ -7,7 +7,7 @@ export default function AFCLogoWhite(props: { width: number; height: number; }) 
     return (
         <Link href="/" className="shrink-0">
             <Image
-            src='/logo-grey.jpg'
+            src='/logo-white.jpg'
             alt="Apostolic Faith Church Logo"
             width={props.width}
             height={props.height}/>
