@@ -21,7 +21,7 @@ export default function Calendar() {
           if (!response.ok) {
             throw new Error(`Response status: ${response.status}`);
           }
-    
+
           const result = await response.json();
           setCalendarData(result);
         } catch (error) {
@@ -30,17 +30,17 @@ export default function Calendar() {
           }
         }
     }
-    
+
       useEffect(() => {
         fetchData();
       }, [])
-    
+
     const currentDate = new Date();
     const firstDayOfMonth = startOfMonth(currentDate);
     const lastDayOfMonth = endOfMonth(currentDate);
 
     const daysInMonth = eachDayOfInterval({
-        start: firstDayOfMonth, 
+        start: firstDayOfMonth,
         end: lastDayOfMonth
     })
 
@@ -63,9 +63,9 @@ export default function Calendar() {
                     <div className="border" key={index} />
                 ))}
                 {daysInMonth.map((day, index) => (
-                   <div 
-                    key={index} 
-                    className="border h-40 text-right"> 
+                    <div
+                    key={index}
+                    className="border h-40 text-right">
                     <span className="mr-2 mt-1 inline-block">{format(day, "d")}</span>
                     <div className="text-sm font-bold text-left">
                         {calendarData
@@ -78,7 +78,7 @@ export default function Calendar() {
                                 </div>
                             ))}
                         </div>
-                   </div> 
+                    </div>
                 ))}
             </div>
         </div>
