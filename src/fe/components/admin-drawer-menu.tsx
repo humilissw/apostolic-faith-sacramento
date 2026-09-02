@@ -35,18 +35,7 @@ import {
   XIcon
 } from "lucide-react";
 
-import AFCLogo from "@/components/afc-logo";
-import { AnimatedSheet } from "./animated-sheet";
 import { useState } from "react";
-
-const publicNav = [
-  { title: "Home", url: "/", icon: Home },
-  { title: "Our Beliefs", url: "/doctrines/", icon: BookOpen },
-  { title: "Sermons", url: "https://www.youtube.com/@ApostolicFaithSacramento/streams", external: true, icon: Video },
-  { title: "Media", url: "/media/", icon: Film },
-  { title: "Donate", url: "/donate/", icon: CreditCard },
-  { title: "Contact Us", url: "/contact/", icon: Mail },
-];
 
 interface DrawerItem {
   title: string;
@@ -89,6 +78,7 @@ export function AdminMenu() {
       const enableVideoUploadsAdmin = useFeatureFlag("enable_video_uploads_admin");
       const enableIntegrations = useFeatureFlag("enable_integrations");
       const enableFlagsAdmin = useFeatureFlag("enable_flags_admin");
+      const enableEventsAdmin = useFeatureFlag("enable_events_admin");
 
       const isAuthenticated = auth.isAuthenticated;
 
@@ -128,6 +118,9 @@ export function AdminMenu() {
         }
         if (enableFlagsAdmin) {
           adminItems.push({ title: "Feature Flags", url: "/flags-admin/", icon: ToggleRight });
+        }
+        if (enableEventsAdmin) {
+          adminItems.push({ title: "Events Admin", url: "/events-admin/", icon: Calendar });
         }
         if (adminItems.length > 0) {
           drawerItems.push(adminItems);

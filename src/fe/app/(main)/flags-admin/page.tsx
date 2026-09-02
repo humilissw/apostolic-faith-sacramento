@@ -21,22 +21,23 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
-const KNOWN_FLAGS: Record<string, { displayName: string; icon: string; requiredScopes: string[] }> = {
-  enable_home: { displayName: "Home", icon: "Home", requiredScopes: [] },
-  enable_doctrines: { displayName: "Doctrines", icon: "BookOpen", requiredScopes: [] },
-  enable_contact: { displayName: "Contact", icon: "Mail", requiredScopes: [] },
-  enable_media: { displayName: "Media", icon: "Film", requiredScopes: [] },
-  enable_donate: { displayName: "Donate", icon: "CreditCard", requiredScopes: [] },
-  enable_sermon: { displayName: "Sermons", icon: "Video", requiredScopes: [] },
-  enable_live_service: { displayName: "Live Service", icon: "Broadcast", requiredScopes: [] },
-  enable_video_uploads: { displayName: "Video Uploads", icon: "Video", requiredScopes: ["authenticated"] },
-  enable_scheduler_calendar: { displayName: "Scheduler Calendar", icon: "Calendar", requiredScopes: ["scheduler:admin", "member:limited"] },
-  enable_scheduler_admin: { displayName: "Scheduler Admin", icon: "Calendar", requiredScopes: ["scheduler:admin"] },
-  enable_my_scheduler: { displayName: "My Scheduler", icon: "Calendar", requiredScopes: ["scheduler:admin", "member:limited"] },
-  enable_users_admin: { displayName: "Users Admin", icon: "Users", requiredScopes: ["superuser"] },
-  enable_video_uploads_admin: { displayName: "Video Uploads Admin", icon: "Film", requiredScopes: ["superuser"] },
-  enable_integrations: { displayName: "Integrations", icon: "Settings", requiredScopes: ["superuser"] },
-  enable_flags_admin: { displayName: "Flags Admin", icon: "ToggleRight", requiredScopes: ["superuser"] },
+const KNOWN_FLAGS: Record<string, { displayName: string; icon: string }> = {
+  enable_home: { displayName: "Home", icon: "Home" },
+  enable_doctrines: { displayName: "Doctrines", icon: "BookOpen" },
+  enable_contact: { displayName: "Contact", icon: "Mail" },
+  enable_media: { displayName: "Media", icon: "Film" },
+  enable_donate: { displayName: "Donate", icon: "CreditCard" },
+  enable_sermon: { displayName: "Sermons", icon: "Video" },
+  enable_live_service: { displayName: "Live Service", icon: "Broadcast" },
+  enable_video_uploads: { displayName: "Video Uploads", icon: "Video" },
+  enable_scheduler_calendar: { displayName: "Scheduler Calendar", icon: "Calendar" },
+  enable_scheduler_admin: { displayName: "Scheduler Admin", icon: "Calendar" },
+  enable_my_scheduler: { displayName: "My Scheduler", icon: "Calendar" },
+  enable_users_admin: { displayName: "Users Admin", icon: "Users" },
+  enable_video_uploads_admin: { displayName: "Video Uploads Admin", icon: "Film" },
+  enable_integrations: { displayName: "Integrations", icon: "Settings" },
+  enable_events: { displayName: "Events", icon: "Calendar" },
+  enable_events_admin: { displayName: "Events Admin", icon: "Calendar" },
 };
 
 interface KnownFlagMeta {

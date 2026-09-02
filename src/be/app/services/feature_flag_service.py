@@ -95,6 +95,16 @@ KNOWN_FEATURE_FLAGS: dict[str, dict[str, str | list[str]]] = {
         "icon": "ToggleRight",
         "required_scopes": ["superuser"],
     },
+    "enable_events": {
+        "display_name": "Events",
+        "description": "Show the events page",
+        "icon": "Calendar",
+    },
+    "enable_events_admin": {
+        "display_name": "Events Admin",
+        "description": "Show the events admin page",
+        "icon": "Calendar",
+    },
     "enable_admin_password_reset": {
         "display_name": "Admin Password Reset",
         "description": "Allow administrators to send password reset emails for any user",

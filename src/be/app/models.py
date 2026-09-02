@@ -1,7 +1,7 @@
 import datetime
-from enum import Enum
-from typing import Annotated, Optional
 import uuid
+from enum import Enum
+from typing import Annotated
 
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import Index as saIndex
@@ -78,7 +78,7 @@ class User(UserBase, table=True):  # type: ignore[call-arg]
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), max_length=36, primary_key=True)
     hashed_password: str = Field(max_length=4000)
     created_on: datetime.datetime = Field(
-        default=datetime.datetime.now(datetime.timezone.utc), nullable=False
+        default=datetime.datetime.now(datetime.UTC), nullable=False
     )
     updated_on: datetime.datetime | None = Field(nullable=True, default=None)
     new_id: str = Field(default_factory=lambda: str(uuid.uuid4()), max_length=36, exclude=True)
@@ -94,7 +94,7 @@ class UserScope(SQLModel, table=True):  # type: ignore[call-arg]
     user_id: str = Field(foreign_key="users.id", max_length=36, nullable=False)
     scope: str = Field(max_length=50, nullable=False)
     created_on: datetime.datetime = Field(
-        default=datetime.datetime.now(datetime.timezone.utc), nullable=False
+        default=datetime.datetime.now(datetime.UTC), nullable=False
     )
 
 
@@ -136,7 +136,7 @@ class Item(ItemBase, table=True):  # type: ignore[call-arg]
         default_factory=lambda: str(uuid.uuid4()), max_length=36, nullable=False
     )
     created_on: datetime.datetime | None = Field(
-        default=datetime.datetime.now(datetime.timezone.utc), nullable=False
+        default=datetime.datetime.now(datetime.UTC), nullable=False
     )
     updated_on: datetime.datetime | None = Field(nullable=True, default=None)
     # owner: User | None = Relationship(back_populates="items")
@@ -213,7 +213,7 @@ class RefreshToken(SQLModel, table=True):  # type: ignore[call-arg]
     revoked: bool = Field(default=False)
     expires_at: datetime.datetime = Field(nullable=False)
     created_on: datetime.datetime = Field(
-        default=datetime.datetime.now(datetime.timezone.utc), nullable=False
+        default=datetime.datetime.now(datetime.UTC), nullable=False
     )
 
 
@@ -250,7 +250,7 @@ class PasswordResetToken(SQLModel, table=True):  # type: ignore[call-arg]
     invalidated: bool = Field(default=False, index=True)
     expires_at: datetime.datetime = Field(nullable=False, index=True)
     created_on: datetime.datetime = Field(
-        default=datetime.datetime.now(datetime.timezone.utc), nullable=False
+        default=datetime.datetime.now(datetime.UTC), nullable=False
     )
 
 
@@ -276,9 +276,18 @@ class Test(SQLModel, table=True):  # type: ignore[call-arg]
 class DefaultBase(SQLModel):
     id: str = Field(default_factory=uuid.uuid4, primary_key=True, max_length=36)
     created_on: datetime.datetime = Field(
-        default=datetime.datetime.now(datetime.timezone.utc), nullable=False
+        default=datetime.datetime.now(datetime.UTC), nullable=False
     )
     updated_on: datetime.datetime = Field(nullable=True)
+
+
+class Event(DefaultBase, table=True):  # type: ignore[call-arg]
+    __tablename__ = "events"
+    title: str = Field(max_length=200, nullable=False)
+    description: str = Field(max_length=4000, nullable=True)
+    date: datetime.datetime = Field(nullable=False)
+    start_time: datetime.datetime = Field(nullable=False)
+    end_time: datetime.datetime = Field(nullable=False)
 
 
 class Member(DefaultBase, table=True):  # type: ignore[call-arg]
@@ -294,8 +303,8 @@ class ChurchService(DefaultBase, table=True):  # type: ignore[call-arg]
     __tablename__ = "church_services"
     service_date: datetime.datetime = Field(nullable=False)
     speaker: str = Field(max_length=200, nullable=True)
-    service_title: Optional[str] = Field(max_length=200, nullable=True)
-    file_location: Optional[str] = Field(max_length=1000, nullable=True)
+    service_title: str | None = Field(max_length=200, nullable=True)
+    file_location: str | None = Field(max_length=1000, nullable=True)
     edited: bool = Field(nullable=False, default=False)
     uploaded: bool = Field(nullable=False, default=False)
 
@@ -368,7 +377,7 @@ class AuthorizationCode(SQLModel, table=True):  # type: ignore[call-arg]
     used: bool = Field(default=False)
     expires_at: datetime.datetime = Field(nullable=False)
     created_on: datetime.datetime = Field(
-        default=datetime.datetime.now(datetime.timezone.utc), nullable=False
+        default=datetime.datetime.now(datetime.UTC), nullable=False
     )
 
 
@@ -382,7 +391,7 @@ class ClientCredentials(SQLModel, table=True):  # type: ignore[call-arg]
     scopes: str = Field(max_length=1000)  # comma-separated scope values
     is_active: bool = Field(default=True)
     created_on: datetime.datetime = Field(
-        default=datetime.datetime.now(datetime.timezone.utc), nullable=False
+        default=datetime.datetime.now(datetime.UTC), nullable=False
     )
 
 
@@ -478,7 +487,7 @@ class IntegrationConfig(DefaultBase, table=True):  # type: ignore[call-arg]
     cred_encrypted_iv: str | None = Field(default=None, max_length=255)
     cred_encrypted_blob: str | None = Field(default=None, max_length=4000)
     updated_on: datetime.datetime | None = Field(  # type: ignore
-        default_factory=lambda: datetime.datetime.now(datetime.timezone.utc),
+        default_factory=lambda: datetime.datetime.now(datetime.UTC),
         nullable=True,
     )
 
@@ -602,8 +611,6 @@ class FeatureFlagBase(SQLModel):
 class FeatureFlagCreate(FeatureFlagBase):
     """Properties to receive via API on creation."""
 
-    pass
-
 
 class FeatureFlagUpdate(SQLModel):
     """Properties to receive via API on update (all optional)."""
@@ -618,7 +625,7 @@ class FeatureFlag(FeatureFlagBase, table=True):  # type: ignore[call-arg]
     __tablename__ = "feature_flags"
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True, max_length=36)
     created_on: datetime.datetime = Field(
-        default=datetime.datetime.now(datetime.timezone.utc), nullable=False
+        default=datetime.datetime.now(datetime.UTC), nullable=False
     )
     updated_on: datetime.datetime | None = Field(default=None, nullable=True)
 

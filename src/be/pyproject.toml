@@ -173,7 +173,7 @@ exclude_dirs = [
 ]
 skips = [
     "B101",  # assert_used - fine in tests and safety checks
-    "B106",  # hardcoded_password_funcarg - dummy OAuth credentials in demo code
+    #"B106",  # hardcoded_password_funcarg - dummy OAuth credentials in demo code
     "B201",  # flask_debug_true - sample auth0 app
     "B404",  # subprocess import - needed for setup_poetry.py
     "B310",  # urllib_open - needed for setup_poetry.py

@@ -5,6 +5,7 @@ from app.api.routes import (
     announcements,
     church_services,
     client_credentials,
+    events,
     feature_flags,
     google,
     health,
@@ -40,6 +41,7 @@ api_router.include_router(user_scopes.router)
 api_router.include_router(client_credentials.router)
 api_router.include_router(scheduler.router)
 api_router.include_router(feature_flags.router)
+api_router.include_router(events.router)
 api_router.include_router(admin_password_reset.router)
 
 

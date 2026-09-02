@@ -1,0 +1,44 @@
+[
+  {
+    "id": 1,
+    "date": "2026-03-01 11:00:00",
+    "title": "Morning Worship Service", 
+    "description": "This is a description of the event"
+  },
+  {
+    "id": 2,
+    "date": "2026-03-08 11:00:00",
+    "title": "Morning Worship Service", 
+    "description": "This is a description of the event"
+  },
+  {
+    "id": 3,
+    "date": "2026-03-15 11:00:00",
+    "title": "Morning Worship Service", 
+    "description": "This is a description of the event"
+  },
+  {
+    "id": 4,
+    "date": "2026-03-22 11:00:00",
+    "title": "Morning Worship Service", 
+    "description": "This is a description of the event"
+  },
+  {
+    "id": 5,
+    "date": "2026-05-24 11:00:00",
+    "title": "Morning Worship Service", 
+    "description": "This is a description of the event"
+  },
+  {
+    "id": 6,
+    "date": "2026-05-24 12:00:00",
+    "title": "Morning Worship Service", 
+    "description": "This is a description of the event"
+  },
+  {
+    "id": 7,
+    "date": "2026-05-24 13:00:00",
+    "title": "Morning Worship Service", 
+    "description": "This is a description of the event"
+  }
+]
