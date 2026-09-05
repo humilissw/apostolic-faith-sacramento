@@ -1,7 +1,7 @@
 """add events table
 
 Revision ID: 4fb0dd9b3eaa
-Revises: n3o4p5q6r7s8
+Revises: 336acd53a355
 Create Date: 2026-07-31 15:31:42.007528
 
 """
@@ -14,7 +14,7 @@ import sqlmodel
 
 # revision identifiers, used by Alembic.
 revision: str = '4fb0dd9b3eaa'
-down_revision: Union[str, Sequence[str], None] = 'n3o4p5q6r7s8'
+down_revision: Union[str, Sequence[str], None] = '336acd53a355'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
