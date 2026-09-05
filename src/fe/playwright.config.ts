@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test'
 
-const baseURL = 'http://localhost:3000'
+const baseURL = 'https://localhost:3000'
 
 export default defineConfig({
   testDir: './tests',
@@ -16,6 +16,10 @@ export default defineConfig({
   use: {
     headless: true,
     baseURL,
+    // The dev stack serves HTTPS with self-signed / mkcert certs that may not
+    // be trusted by the test browser — bypass cert validation (dev only) so
+    // navigations don't fail with net::ERR_CERT_AUTHORITY_INVALID.
+    ignoreHTTPSErrors: true,
     screenshot: 'only-on-failure',
     trace: 'on-first-retry',
   },

@@ -14,19 +14,19 @@ test.describe('Navbar (unauthenticated)', () => {
   })
 
   test('Media link is present in navbar', async ({ page }) => {
-    const nav = page.locator('nav').first()
+    const nav = page.getByRole('navigation').last()
     await expect(nav.getByText('Media')).toBeVisible()
     const mediaLink = nav.getByRole('link', { name: 'Media' })
     await expect(mediaLink).toHaveAttribute('href', /media/)
   })
 
   test('Contact Us link is present in navbar', async ({ page }) => {
-    const nav = page.locator('nav').first()
+    const nav = page.getByRole('navigation').last()
     await expect(nav.getByText('Contact Us')).toBeVisible()
   })
 
   test('About dropdown contains Our Beliefs', async ({ page }) => {
-    const nav = page.locator('nav').first()
+    const nav = page.getByRole('navigation').last()
     const aboutBtn = nav.getByRole('button', { name: /about/i })
     await expect(aboutBtn).toBeVisible()
     await aboutBtn.click()
@@ -34,7 +34,7 @@ test.describe('Navbar (unauthenticated)', () => {
   })
 
   test('Resources dropdown is present', async ({ page }) => {
-    const nav = page.locator('nav').first()
+    const nav = page.getByRole('navigation').last()
     const resourcesBtn = nav.getByRole('button', { name: /resources/i })
     await expect(resourcesBtn).toBeVisible()
   })

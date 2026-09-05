@@ -32,14 +32,14 @@ test.describe('Homepage', () => {
   })
 
   test('renders navbar with navigation links', async ({ page }) => {
-    const nav = page.locator('nav').first()
+    const nav = page.getByRole('navigation').last()
     await expect(nav).toBeVisible()
     await expect(nav.getByText('Media')).toBeVisible()
     await expect(nav.getByText('Contact Us')).toBeVisible()
   })
 
   test('renders navbar dropdown triggers', async ({ page }) => {
-    const nav = page.locator('nav').first()
+    const nav = page.getByRole('navigation').last()
     await expect(nav.getByRole('button', { name: /about/i })).toBeVisible()
     await expect(nav.getByRole('button', { name: /resources/i })).toBeVisible()
   })
