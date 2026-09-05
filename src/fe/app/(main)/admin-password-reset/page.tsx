@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { Key, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
-import { adminPasswordReset } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { adminPasswordReset } from "@/lib/api/auth";
 
 export default function AdminPasswordResetPage() {
   const [email, setEmail] = useState("");

@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -7,7 +9,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Field, FieldGroup } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
@@ -15,8 +16,6 @@ import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { createEvent, updateEvent, type Event } from "@/lib/api"
 import { toast } from "sonner"
-import { Plus } from 'lucide-react';
-import { fromZonedTime } from 'date-fns-tz';
 
 interface EventDialogProps {
   open: boolean;
@@ -25,90 +24,157 @@ interface EventDialogProps {
   onSuccess: () => void;
 }
 
+// Events are stored/displayed in the church's local timezone (see events-admin page).
+const EVENT_TIME_ZONE = "America/Los_Angeles";
+
+function zonedOffsetMs(zone: string, timestamp: number): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: zone,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(new Date(timestamp));
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((p) => p.type === type)?.value ?? "0");
+  const asUtc = Date.UTC(
+    get("year"),
+    get("month") - 1,
+    get("day"),
+    get("hour"),
+    get("minute"),
+    get("second"),
+  );
+  return asUtc - (timestamp - (timestamp % 1000));
+}
+
+// Convert a wall-clock "yyyy-MM-dd" + "HH:mm" in EVENT_TIME_ZONE to a UTC ISO string.
+function fromZonedTime(dateStr: string, timeStr: string): string {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const [hour, minute] = timeStr.split(":").map(Number);
+  const guess = Date.UTC(year, month - 1, day, hour, minute);
+  // Two-pass offset lookup so DST transitions resolve correctly.
+  const firstPass = guess - zonedOffsetMs(EVENT_TIME_ZONE, guess);
+  return new Date(guess - zonedOffsetMs(EVENT_TIME_ZONE, firstPass)).toISOString();
+}
+
+// "yyyy-MM-dd" input value for an ISO timestamp, viewed in EVENT_TIME_ZONE.
+function toInputDateValue(isoString: string): string {
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: EVENT_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+}
+
+// "HH:mm" input value for an ISO timestamp, viewed in EVENT_TIME_ZONE.
+function toTimeInputValue(isoString: string): string {
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) return "";
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: EVENT_TIME_ZONE,
+    hourCycle: "h23",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).formatToParts(date);
+  const hour = (parts.find((p) => p.type === "hour")?.value ?? "00").padStart(2, "0");
+  const minute = (parts.find((p) => p.type === "minute")?.value ?? "00").padStart(2, "0");
+  return `${hour}:${minute}`;
+}
+
 export function EventDialog({
   open,
   onOpenChange,
   event,
   onSuccess,
 }: EventDialogProps) {
+  const [eventTitle, setEventTitle] = useState(event?.title ?? "");
+  const [eventDescription, setEventDescription] = useState(event?.description ?? "");
+  const [eventDate, setEventDate] = useState(
+    event?.date ? toInputDateValue(event.date) : "",
+  );
+  const [eventStartTime, setEventStartTime] = useState(
+    event?.start_time ? toTimeInputValue(event.start_time) : "",
+  );
+  const [eventEndTime, setEventEndTime] = useState(
+    event?.end_time ? toTimeInputValue(event.end_time) : "",
+  );
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-    const [eventTitle, setEventTitle] = useState(event?.title ?? "");
-    const [eventDescription, setEventDescription] = useState(event?.description ?? "");
-    const [eventDate, setEventDate] = useState(event?.date ?? "");
-    const [eventStartTime, setEventStartTime] = useState(event?.start_time ? toTimeInputValue(event.start_time) : "");
-    const [eventEndTime, setEventEndTime] = useState(event?.end_time ? toTimeInputValue(event.end_time) : "");
-    const [saving, setSaving] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+  // Re-seed the form whenever the dialog opens or switches events, so state
+  // is never stale if the dialog stays mounted between edits. Adjusting state
+  // during render (not in an effect) per React's "reset state on prop change".
+  const seedKey = `${open ? "open" : "closed"}:${event?.id ?? "new"}`;
+  const [prevSeedKey, setPrevSeedKey] = useState(seedKey);
+  if (seedKey !== prevSeedKey) {
+    setPrevSeedKey(seedKey);
+    if (open) {
+      setEventTitle(event?.title ?? "");
+      setEventDescription(event?.description ?? "");
+      setEventDate(event?.date ? toInputDateValue(event.date) : "");
+      setEventStartTime(event?.start_time ? toTimeInputValue(event.start_time) : "");
+      setEventEndTime(event?.end_time ? toTimeInputValue(event.end_time) : "");
+      setError(null);
+    }
+  }
 
-    function toTimeInputValue(isoString: string): string {
-        const date = new Date(isoString);
-        const hours = date.getHours().toString().padStart(2, '0');
-        const minutes = date.getMinutes().toString().padStart(2, '0');
-        return `${hours}:${minutes}`;
+  const handleSave = async () => {
+    const trimmedTitle = eventTitle.trim();
+    const trimmedDescription = eventDescription.trim();
+    if (!trimmedTitle || !trimmedDescription || !eventDate || !eventStartTime || !eventEndTime) {
+      setError("One or more fields are empty");
+      return;
     }
 
-    const handleSave = async () => {
-        console.log("Saving event with values:", {
-            title: eventTitle,
-            description: eventDescription,
-            date: eventDate,
-            start_time: eventStartTime,
-            end_time: eventEndTime,
-        });
-        const trimmedTitle = eventTitle.trim();
-        const trimmedDescription = eventDescription.trim();
-        if (!trimmedTitle || !trimmedDescription || !eventDate || !eventStartTime || !eventEndTime) {
-            setError("One or more fields are empty");
-            console.log("One or more fields are empty");
-            return;
-        }
-        const start = fromZonedTime(`${eventDate}T${eventStartTime}:00`);
-        const end = fromZonedTime(`${eventDate}T${eventEndTime}:00`);
-        const date = new Date(eventDate);
-        setSaving(true);
-        setError(null);
-        try {
-          console.log("2 Saving event with values:", {
-            title: trimmedTitle,
-            description: eventDescription,
-            date: date.toISOString(),
-            start_time: start.toISOString(),
-            end_time: end.toISOString(),
-        });
-        const payload = {
-            title: trimmedTitle,
-            description: trimmedDescription,
-            date: date.toISOString(),
-            start_time: start.toISOString(),
-            end_time: end.toISOString(),
-        };
-        console.log(" I dont think i get here")
-        if (!event) {
-          console.log("In here?")
-            await createEvent(payload);
-            toast.success("Event created");
-            setEventTitle("");
-            setEventDescription("");
-            setEventDate("");
-            setEventStartTime("");
-            setEventEndTime("");
-        } else {
-          console.log("Updating event with payload:", payload);
-            await updateEvent(event.id, payload);
-            toast.success("Event updated");
-        }
-        onOpenChange(false);
-        onSuccess();
-        } catch (err) {
-        console.log("Error occurred while saving event:", err);
-        setError(err instanceof Error ? err.message : "Failed to save");
-        } finally {
-        setSaving(false);
-        }
-    };
+    const start = fromZonedTime(eventDate, eventStartTime);
+    const end = fromZonedTime(eventDate, eventEndTime);
+    if (new Date(end).getTime() <= new Date(start).getTime()) {
+      setError("End time must be after start time");
+      return;
+    }
+    const date = fromZonedTime(eventDate, "00:00");
+
+    setSaving(true);
+    setError(null);
+    try {
+      const payload = {
+        title: trimmedTitle,
+        description: trimmedDescription,
+        date,
+        start_time: start,
+        end_time: end,
+      };
+      if (!event) {
+        await createEvent(payload);
+        toast.success("Event created");
+      } else {
+        await updateEvent(event.id, payload);
+        toast.success("Event updated");
+      }
+      onOpenChange(false);
+      onSuccess();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <form>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          void handleSave();
+        }}
+      >
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>{event ? "Edit Event" : "Add Event"}</DialogTitle>
@@ -145,19 +211,17 @@ export function EventDialog({
               <Input id="end-time-1" name="end_time" type="time" value={eventEndTime} onChange={(e) => setEventEndTime(e.target.value)} required/>
             </Field>
           </FieldGroup>
+          {error && <p className="text-sm text-red-600">{error}</p>}
           <DialogFooter>
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <DialogClose asChild>
-              <Button 
-                type="submit"
-                disabled={!eventTitle || !eventDescription || !eventDate || !eventStartTime || !eventEndTime || saving}
-                onClick={handleSave}
-              >
-                Save changes
-              </Button>
-            </DialogClose>
+            <Button
+              type="submit"
+              disabled={!eventTitle.trim() || !eventDescription.trim() || !eventDate || !eventStartTime || !eventEndTime || saving}
+            >
+              {saving ? "Saving..." : "Save changes"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </form>

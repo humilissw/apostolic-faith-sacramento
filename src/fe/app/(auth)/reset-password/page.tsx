@@ -1,31 +1,25 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import AFCLogo from "@/components/afc-logo";
-import { resetPassword } from "@/lib/api";
+import { resetPassword } from "@/lib/api/auth";
 
 export default function ResetPasswordPage() {
-  const router = useRouter();
-  const [token, setToken] = useState("");
+  // Read token directly from URL (lazy initializer) to avoid useSearchParams() during static export
+  const [token] = useState(() =>
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("token") ?? ""
+      : ""
+  );
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-
-  useEffect(() => {
-    // Read token directly from URL to avoid useSearchParams() during static export
-    const params = new URLSearchParams(window.location.search);
-    const tokenFromUrl = params.get("token");
-    if (tokenFromUrl) {
-      setToken(tokenFromUrl);
-    }
-  }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();

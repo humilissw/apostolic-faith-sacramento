@@ -9,9 +9,13 @@ const mockLogout = jest.fn()
 const mockRefreshToken = jest.fn()
 
 jest.mock('@/lib/api', () => ({
-  fetchMe: (...args: unknown[]) => mockFetchMe(...args),
   logout: (...args: unknown[]) => mockLogout(...args),
   refreshToken: (...args: unknown[]) => mockRefreshToken(...args),
+}))
+
+// fetchMe lives in its own module — auth-context imports it from there.
+jest.mock('@/lib/api/auth', () => ({
+  fetchMe: (...args: unknown[]) => mockFetchMe(...args),
 }))
 
 function TestChild({ onAuth }: { onAuth?: (ctx: ReturnType<typeof useAuth>) => void }) {

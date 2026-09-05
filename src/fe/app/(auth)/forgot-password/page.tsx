@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import AFCLogo from "@/components/afc-logo";
-import { requestPasswordReset } from "@/lib/api";
+import { requestPasswordReset } from "@/lib/api/auth";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");

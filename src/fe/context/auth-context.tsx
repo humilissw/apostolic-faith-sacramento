@@ -10,8 +10,8 @@ import {
   useState,
 } from "react";
 
-import { fetchMe, logout as apiLogout, refreshToken as apiRefreshToken } from "@/lib/api";
-import type { MeResponse } from "@/lib/api";
+import {logout as apiLogout, refreshToken as apiRefreshToken } from "@/lib/api";
+import { fetchMe, MeResponse } from "@/lib/api/auth";
 
 interface AuthContextValue {
   isAuthenticated: boolean;
