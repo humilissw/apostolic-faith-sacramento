@@ -60,9 +60,9 @@
         "dev",
         "--experimental-https",
         "--experimental-https-key",
-        "${workspaceFolder}/infrastructure/certs/key.pem",
+        "${workspaceFolder}/src/fe/security_keys/cert_key.pem",
         "--experimental-https-cert",
-        "${workspaceFolder}/infrastructure/certs/cert.pem",
+        "${workspaceFolder}/src/fe/security_keys/cert.pem",
         "--turbopack"
       ],
       "serverReadyAction": {
@@ -85,7 +85,7 @@
         "--",
         "--experimental-https",
         "--experimental-https-key",
-        "${workspaceFolder}/infrastructure/certs/key.pem",
+        "${workspaceFolder}/src/fe/security_keys/cert_key.pem",
         "--experimental-https-cert",
         "${workspaceFolder}/infrastructure/certs/cert.pem",
         "--turbopack"
