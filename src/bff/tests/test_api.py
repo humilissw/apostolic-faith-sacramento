@@ -46,6 +46,27 @@ def test_query_string_is_forwarded(client, mock_backend):
     assert "limit=50" in req["target"]
 
 
+def test_post_form_body_is_forwarded(client, mock_backend):
+    # Regression: form-encoded POST bodies used to be dropped (request.data
+    # triggers Werkzeug's form parsing, which consumed the stream and returned
+    # empty bytes), so the backend's OAuth2 password grant answered 422
+    # "Field required" for username/password.
+    mock_backend.set_route("POST", "/api/v1/login/access-token", token_response())
+
+    resp = client.post(
+        "/api/v1/login/access-token",
+        data="username=u%40e.com&password=pw&scope=api%3Aall",
+        content_type="application/x-www-form-urlencoded",
+    )
+    assert resp.status_code == 200
+
+    req = mock_backend.requests[-1]
+    body = req["body"].decode()
+    assert "username=u%40e.com" in body
+    assert "password=pw" in body
+    assert "scope=api%3Aall" in body
+
+
 def test_post_json_body_is_forwarded(client, mock_backend):
     _login(client, mock_backend)
     mock_backend.set_route(

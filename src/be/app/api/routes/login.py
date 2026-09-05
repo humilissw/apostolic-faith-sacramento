@@ -126,13 +126,32 @@ async def login_access_token(
     session: AsyncSession = Depends(get_db_session),
 ) -> Token:
     """OAuth2 password grant — returns tokens in JSON body and httpOnly cookies."""
-    ip = request.client.host if request.client else "unknown"
+    from app.core.rate_limiter import (
+        LOGIN_MAX_ATTEMPTS,
+        LOGIN_WINDOW_SECONDS,
+        check_rate_limit,
+        get_client_ip,
+        login_bucket_key,
+        reset_rate_bucket,
+        retry_after_seconds,
+    )
 
-    # Rate limit
-    from app.core.rate_limiter import check_rate_limit
+    ip = get_client_ip(request)
 
-    if not check_rate_limit(f"login:{ip}", 5, 15 * 60):
-        raise HTTPException(status_code=429, detail="Rate limit exceeded. Please try again later.")
+    # Lockout check only: the bucket is consumed exclusively by *failed*
+    # credential attempts below, and cleared on a successful login. This way
+    # legitimate users logging in repeatedly are never rate-limited.
+    key = login_bucket_key(ip)
+    if not check_rate_limit(key, LOGIN_MAX_ATTEMPTS, LOGIN_WINDOW_SECONDS, consume=False):
+        raise HTTPException(
+            status_code=429,
+            detail="Too many failed login attempts. Please try again later.",
+            headers={"Retry-After": str(retry_after_seconds(key, LOGIN_WINDOW_SECONDS))},
+        )
+
+    def _record_failed_attempt() -> None:
+        # Consume one slot for this failed attempt (brute-force protection).
+        check_rate_limit(key, LOGIN_MAX_ATTEMPTS, LOGIN_WINDOW_SECONDS)
 
     # Authenticate user via repository (separate from token lifecycle)
     user_repo = UserRepository(session=session)
@@ -141,13 +160,18 @@ async def login_access_token(
         logger.warning(
             "Failed login attempt for non-existent email: %s | ip=%s", form_data.username, ip
         )
+        _record_failed_attempt()
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     if not verify_password(form_data.password, user.hashed_password):
         logger.warning("Failed login attempt for email: %s | ip=%s", form_data.username, ip)
+        _record_failed_attempt()
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     if not user.is_active:
         logger.info("Login attempt by inactive user: %s | ip=%s", form_data.username, ip)
         raise HTTPException(status_code=400, detail="Inactive user")
+
+    # Successful credentials: clear any failed-attempt lockout for this IP.
+    reset_rate_bucket(key)
 
     # Delegate token creation + cookie setting to service
     token_svc = AuthTokenService(session=session)
@@ -491,9 +515,9 @@ async def recover_password(
     body: PasswordRecoveryRequest, session: SessionDep, request: Request
 ) -> Message:
     """Send a password reset email (prevents enumeration)."""
-    ip = request.client.host if request.client else "unknown"
-    from app.core.rate_limiter import check_rate_limit
+    from app.core.rate_limiter import check_rate_limit, get_client_ip
 
+    ip = get_client_ip(request)
     if not check_rate_limit(f"recovery:{ip}", 3, 60 * 60):
         raise HTTPException(status_code=429, detail="Rate limit exceeded. Please try again later.")
 
@@ -507,9 +531,9 @@ async def recover_password(
 @router.post("/reset-password/")
 async def reset_password(session: SessionDep, body: NewPassword, request: Request) -> Message:
     """Reset password using a single-use token from the recovery email."""
-    from app.core.rate_limiter import check_rate_limit
+    from app.core.rate_limiter import check_rate_limit, get_client_ip
 
-    ip = request.client.host if request.client else "unknown"
+    ip = get_client_ip(request)
     if not check_rate_limit(f"reset:{ip}", 5, 60 * 60):
         raise HTTPException(status_code=429, detail="Rate limit exceeded. Please try again later.")
 

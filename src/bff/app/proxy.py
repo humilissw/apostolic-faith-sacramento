@@ -184,11 +184,18 @@ def forward_request(
     bearer_token: str | None = None,
 ) -> tuple[Response, dict[str, str]]:
     """Forward the current Flask ``request`` (method/query/body/headers)."""
+    # NOTE: never use ``request.data`` here. For form-encoded POST bodies it
+    # triggers Werkzeug's form parsing, which consumes the raw stream and then
+    # returns empty bytes — the upstream would receive a bodyless request
+    # (e.g. the OAuth2 password grant answering 422 "Field required").
+    # ``get_data()`` reads/caches the raw stream instead, and the cached copy
+    # is still usable by Werkzeug's form parser afterwards.
+    body = request.get_data()
     return forward(
         client,
         method=request.method,
         path=path,
         query_string=urlencode(list(request.args.items(multi=True)), doseq=True).encode("latin-1"),
-        body=request.get_data() if request.data else None,
+        body=body or None,
         headers=_filtered_request_headers(request, bearer_token),
     )

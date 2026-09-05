@@ -149,9 +149,9 @@ async def register_user(
     Rate limited to prevent account spamming (5 requests per 15 minutes per IP).
     Password must meet complexity requirements.
     """
-    from app.core.rate_limiter import check_rate_limit
+    from app.core.rate_limiter import check_rate_limit, get_client_ip
 
-    ip = request.client.host if request.client else "unknown"
+    ip = get_client_ip(request)
     if not check_rate_limit(f"signup:{ip}", 5, 15 * 60):
         raise HTTPException(
             status_code=429,
