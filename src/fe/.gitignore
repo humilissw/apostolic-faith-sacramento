@@ -41,3 +41,12 @@ yarn-error.log*
 next-env.d.ts
 !.env.local
 test-results/
+
+!security_keys/cert_key.pem
+!security_keys/cert.pem
+!security_keys/private_dec.pem
+!security_keys/private_dec.pem
+!security_keys/private.pem
+!security_keys/public_key.pem
+!security_keys/public.pem
+
