@@ -36,12 +36,7 @@
       "request": "launch",
       "module": "app",
       "cwd": "${workspaceFolder}/src/bff",
-      "env": {
-        "BFF_HOST": "0.0.0.0",
-        "BFF_PORT": "8002",
-        "BFF_CERTFILE": "security_keys/cert.pem",
-        "BFF_KEYFILE": "security_keys/key.pem"
-      },
+      "envFile": "${workspaceFolder}/src/bff/.env",
       "justMyCode": false,
       "console": "integratedTerminal"
     },
@@ -60,6 +55,7 @@
       "request": "launch",
       "runtimeExecutable": "bun",
       "cwd": "${workspaceFolder}/src/fe",
+      "envFile": "${workspaceFolder}/src/fe/.env.local",
       "runtimeArgs": [
         "dev",
         "--experimental-https",
@@ -82,6 +78,7 @@
       "request": "launch",
       "runtimeExecutable": "npm",
       "cwd": "${workspaceFolder}/src/fe",
+      "envFile": "${workspaceFolder}/src/fe/.env.local",
       "runtimeArgs": [
         "run",
         "dev",
@@ -109,6 +106,14 @@
       "args": ["exec", "expo", "start"],
       "console": "integratedTerminal",
       "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "AFC Mobile (attach to Expo)",
+      "type": "expo",
+      "request": "attach",
+      "projectRoot": "${workspaceFolder}/src/afc-mobile",
+      "bundlerPort": "8081",
+      "bundlerHost": "127.0.0.1"
     },
     {
       "name": "AFC Mobile (expo start, iOS)",
