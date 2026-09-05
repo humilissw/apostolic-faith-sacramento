@@ -14,6 +14,8 @@
 		"hbenl.vscode-test-explorer",
 		"pflannery.vscode-versionlens",
         "ms-python.python",
+        "ms-python.debugpy",
+        "expo.vscode-expo-tools",
         "bierner.markdown-mermaid",
         "bpruitt-goddard.mermaid-markdown-syntax-highlighting",
         "mermaidchart.vscode-mermaid-chart"

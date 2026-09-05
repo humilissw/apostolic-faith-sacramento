@@ -2,37 +2,13 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Launch via bun",
-      "request": "launch",
-      "runtimeArgs": ["dev", "--experimental-https",  "--experimental-https-key",  "${workspaceFolder}/infrastructure/certs/key.pem",  "--experimental-https-cert",  "${workspaceFolder}/infrastructure/certs/cert.pem",  "--turbopack"],
-      "runtimeExecutable": "bun",
-      "cwd": "${workspaceFolder}/src/fe",
-      "skipFiles": ["<node_internals>/**"],
-      "type": "node"
-    },
-    {
-      "name": "Launch via npm",
-      "request": "launch",
-      "cwd": "${workspaceFolder}/src/fe",
-      "runtimeArgs": ["run", "dev", "--experimental-https",  "--experimental-https-key",  "${workspaceFolder}/infrastructure/certs/key.pem",  "--experimental-https-cert",  "${workspaceFolder}/infrastructure/certs/cert.pem",  "--turbopack"],
-      "runtimeExecutable": "npm",
-      "skipFiles": ["<node_internals>/**"],
-      "type": "node"
-    },
-    {
-      "name": "Python Debugger: Current File",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${file}",
-      "console": "integratedTerminal"
-    },
-    {
-      "name": "AFC Backend",
+      "name": "AFC Backend (FastAPI)",
       "type": "debugpy",
       "request": "launch",
       "module": "uvicorn",
-      "autoStartBrowser": true,
+      "cwd": "${workspaceFolder}/src/be",
       "envFile": "${workspaceFolder}/src/be/.env",
+      "autoStartBrowser": true,
       "autoReload": {
         "enable": true
       },
@@ -43,6 +19,179 @@
         "--ssl-keyfile=${workspaceFolder}/src/be/security_keys/cert_key.pem"
       ],
       "jinja": true
+    },
+    {
+      "name": "AFC Backend: Pytest",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "cwd": "${workspaceFolder}/src/be",
+      "envFile": "${workspaceFolder}/src/be/.env",
+      "args": ["tests", "-vv"],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "AFC BFF (Flask)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "app",
+      "cwd": "${workspaceFolder}/src/bff",
+      "env": {
+        "BFF_HOST": "0.0.0.0",
+        "BFF_PORT": "8002",
+        "BFF_CERTFILE": "security_keys/cert.pem",
+        "BFF_KEYFILE": "security_keys/key.pem"
+      },
+      "justMyCode": false,
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "AFC BFF: Pytest",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "cwd": "${workspaceFolder}/src/bff",
+      "args": ["tests", "-vv", "--no-cov"],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "AFC Frontend (bun dev)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "bun",
+      "cwd": "${workspaceFolder}/src/fe",
+      "runtimeArgs": [
+        "dev",
+        "--experimental-https",
+        "--experimental-https-key",
+        "${workspaceFolder}/infrastructure/certs/key.pem",
+        "--experimental-https-cert",
+        "${workspaceFolder}/infrastructure/certs/cert.pem",
+        "--turbopack"
+      ],
+      "serverReadyAction": {
+        "pattern": "- Local:.+(https?://.+)",
+        "uriFormat": "%s",
+        "action": "debugWithChrome"
+      },
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "AFC Frontend (npm dev)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "cwd": "${workspaceFolder}/src/fe",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "--experimental-https",
+        "--experimental-https-key",
+        "${workspaceFolder}/infrastructure/certs/key.pem",
+        "--experimental-https-cert",
+        "${workspaceFolder}/infrastructure/certs/cert.pem",
+        "--turbopack"
+      ],
+      "serverReadyAction": {
+        "pattern": "- Local:.+(https?://.+)",
+        "uriFormat": "%s",
+        "action": "debugWithChrome"
+      },
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "AFC Mobile (expo start)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "pnpm",
+      "cwd": "${workspaceFolder}/src/afc-mobile",
+      "args": ["exec", "expo", "start"],
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "AFC Mobile (expo start, iOS)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "pnpm",
+      "cwd": "${workspaceFolder}/src/afc-mobile",
+      "args": ["exec", "expo", "start", "--ios"],
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "AFC Mobile (expo start, Android)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "pnpm",
+      "cwd": "${workspaceFolder}/src/afc-mobile",
+      "args": ["exec", "expo", "start", "--android"],
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "AFC Mobile (expo start, web)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "pnpm",
+      "cwd": "${workspaceFolder}/src/afc-mobile",
+      "args": ["exec", "expo", "start", "--web"],
+      "serverReadyAction": {
+        "pattern": "- Web.+(https?://.+)",
+        "uriFormat": "%s",
+        "action": "debugWithChrome"
+      },
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Console: Keygen",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/console/keygen/main.py",
+      "cwd": "${workspaceFolder}/src/console/keygen",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Python Debugger: Current File",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Attach to Node (9229)",
+      "type": "node",
+      "request": "attach",
+      "port": 9229,
+      "cwd": "${workspaceFolder}/src/fe",
+      "sourceMaps": true,
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ],
+  "compounds": [
+    {
+      "name": "AFC Full Stack (be + bff + fe)",
+      "configurations": [
+        "AFC Backend (FastAPI)",
+        "AFC BFF (Flask)",
+        "AFC Frontend (bun dev)"
+      ],
+      "stopAll": true,
+      "presentation": {
+        "group": 1,
+        "order": 1
+      }
+    },
+    {
+      "name": "AFC API Only (be + bff)",
+      "configurations": ["AFC Backend (FastAPI)", "AFC BFF (Flask)"],
+      "stopAll": true,
+      "presentation": {
+        "group": 1,
+        "order": 2
+      }
     }
   ]
 }
