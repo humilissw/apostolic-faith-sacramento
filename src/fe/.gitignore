@@ -42,6 +42,7 @@ next-env.d.ts
 !.env.local
 test-results/
 
+#normally you would NEVER commit these since these are secrets but this is a public git repo so it's ok.  (but we need to move these outside of app)
 !security_keys/cert_key.pem
 !security_keys/cert.pem
 !security_keys/private_dec.pem

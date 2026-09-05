@@ -29,3 +29,13 @@ htmlcov/
 #     -sha256 -days 3650 -nodes -subj "/CN=localhost" \
 #     -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
 # (Docker builds read these from the filesystem, not git.)
+
+#normally you would NEVER commit these since these are secrets but this is a public git repo so it's ok.  (but we need to move these outside of app)
+!security_keys/cert_key.pem
+!security_keys/cert.pem
+!security_keys/private_dec.pem
+!security_keys/private_dec.pem
+!security_keys/private.pem
+!security_keys/public_key.pem
+!security_keys/public.pem
+
