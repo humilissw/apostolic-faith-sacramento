@@ -2,7 +2,6 @@
 
 import { startOfMonth, format, endOfMonth, eachDayOfInterval, getDay, isSameDay } from "date-fns"
 import { useEffect, useState } from "react";
-
 const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 interface CalendarEvent {
@@ -15,24 +14,31 @@ interface CalendarEvent {
 export default function Calendar() {
 
       const [calendarData, setCalendarData] = useState([]);
-      const fetchData = async () => {
-        try {
-          const response = await fetch('/calendarData.json');
-          if (!response.ok) {
-            throw new Error(`Response status: ${response.status}`);
-          }
-
-          const result = await response.json();
-          setCalendarData(result);
-        } catch (error) {
-          if (error instanceof Error) {
-            console.error(error.message);
-          }
-        }
-    }
 
       useEffect(() => {
-        fetchData();
+        let cancelled = false;
+        // Fetch on mount; state updates only after the async response so no
+        // setState runs synchronously in the effect body.
+        (async () => {
+          try {
+            const response = await fetch('/calendarData.json');
+            if (!response.ok) {
+              throw new Error(`Response status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            if (!cancelled) {
+              setCalendarData(result);
+            }
+          } catch (error) {
+            if (error instanceof Error) {
+              console.error(error.message);
+            }
+          }
+        })();
+        return () => {
+          cancelled = true;
+        };
       }, [])
 
     const currentDate = new Date();

@@ -31,7 +31,11 @@ class UserBase(SQLModel):
 
 # Properties to receive via API on creation
 class UserCreate(UserBase):
-    password: str = Field(min_length=8, max_length=128)
+    # Optional: internal flows (signup, seeding) may supply a password.
+    # Admin-created users must NOT provide one — they receive a one-time
+    # HMAC-signed email link to set their own password. The admin API layer
+    # rejects any password supplied here.
+    password: str | None = Field(default=None, min_length=8, max_length=128)
     scopes: list[str] = Field(default_factory=list)
 
 
@@ -59,7 +63,9 @@ def validate_password_complexity(password: str) -> bool:
 # Properties to receive via API on update, all are optional
 class UserUpdate(UserBase):
     email: EmailStr | None = Field(default=None, max_length=255)  # type: ignore
-    password: str | None = Field(default=None, min_length=8, max_length=128)
+    # NOTE: deliberately no `password` field. Administrators must never set a
+    # password on behalf of another user; users set passwords only through the
+    # signed one-time email link or their own /users/me/password endpoint.
 
 
 class UserUpdateMe(SQLModel):

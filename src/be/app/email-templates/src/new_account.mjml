@@ -4,11 +4,13 @@
       <mj-column vertical-align="middle" width="100%">
         <mj-text align="center" padding="35px" font-size="20px" color="#333">{{ project_name }} - New Account</mj-text>
         <mj-text align="center" font-size="16px" padding-left="25px" padding-right="25px" font-family="Arial, Helvetica, sans-serif" color="#555"><span>Welcome to your new account!</span></mj-text>
-        <mj-text align="center" font-size="16px" padding-left="25px" padding-right="25px" font-family="Arial, Helvetica, sans-serif" color="#555">Here are your account details:</mj-text>
-        <mj-text align="center" font-size="16px" padding-left="25px" padding-right="25px" font-family="Arial, Helvetica, sans-serif" color="#555">Username: {{ username }}</mj-text>
-        <mj-text align="center" font-size="16px" padding-left="25px" padding-right="25px" font-family="Arial, Helvetica, sans-serif" color="#555">Password: {{ password }}</mj-text>
-        <mj-button align="center" font-size="18px" background-color="#009688" border-radius="8px" color="#fff" href="{{ link }}" padding="15px 30px">Go to Dashboard</mj-button>
+        <mj-text align="center" font-size="16px" padding-left="25px" padding-right="25px" font-family="Arial, Helvetica, sans-serif" color="#555">An account has been created for you ({{ email }}). Click the button below to choose your password:</mj-text>
+        <mj-button align="center" font-size="18px" background-color="#009688" border-radius="8px" color="#fff" href="{{ link }}" padding="15px 30px">Set Password</mj-button>
+        <mj-text align="center" font-size="16px" padding-left="25px" padding-right="25px" font-family="Arial, Helvetica, sans-serif" color="#555">Or copy and paste the following link into your browser:</mj-text>
+        <mj-text align="center" font-size="16px" padding-left="25px" padding-right="25px" font-family="Arial, Helvetica, sans-serif" color="#555"><a href="{{ link }}">{{ link }}</a></mj-text>
+        <mj-text align="center" font-size="16px" padding-left="25px" padding-right="25px" font-family="Arial, Helvetica, sans-serif" color="#555">This link can only be used once and will expire in {{ valid_hours }} hours.</mj-text>
         <mj-divider border-color="#ccc" border-width="2px"></mj-divider>
+        <mj-text align="center" font-size="14px" padding-left="25px" padding-right="25px" font-family="Arial, Helvetica, sans-serif" color="#555">If you weren't expecting this account you can disregard this email.</mj-text>
       </mj-column>
     </mj-section>
   </mj-body>

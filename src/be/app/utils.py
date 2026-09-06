@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -9,8 +9,8 @@ import jwt
 from jinja2 import Template
 from jwt.exceptions import InvalidTokenError
 
-from app.core import security
 from app.config import settings
+from app.core import security
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -83,17 +83,25 @@ def generate_reset_password_email(email_to: str, email: str, token: str) -> Emai
     return EmailData(html_content=html_content, subject=subject)
 
 
-def generate_new_account_email(email_to: str, username: str, password: str) -> EmailData:
+def generate_new_account_email(
+    email_to: str, username: str, link: str, valid_hours: int
+) -> EmailData:
+    """Build the new-account email with a one-time set-password link.
+
+    ``link`` is the HMAC-signed single-use token; the admin never sets (or
+    sees) a password — the recipient chooses their own via the reset page.
+    """
     project_name = settings.PROJECT_NAME
-    subject = f"{project_name} - New account for user {username}"
+    subject = f"{project_name} - Set up your new account"
+    reset_link = f"{settings.FRONTEND_HOST}/reset-password?token={link}"
     html_content = render_email_template(
         template_name="new_account.html",
         context={
             "project_name": settings.PROJECT_NAME,
             "username": username,
-            "password": password,
             "email": email_to,
-            "link": settings.FRONTEND_HOST,
+            "valid_hours": valid_hours,
+            "link": reset_link,
         },
     )
     return EmailData(html_content=html_content, subject=subject)
@@ -126,7 +134,7 @@ def generate_assignment_email(
 
 def generate_password_reset_token(email: str) -> str:
     delta = timedelta(hours=settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     expires = now + delta
     exp = expires.timestamp()
     encoded_jwt = jwt.encode(

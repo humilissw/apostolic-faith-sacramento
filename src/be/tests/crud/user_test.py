@@ -93,9 +93,12 @@ async def test_update_user(db_session) -> None:
     user_in = UserCreate(email=email, password=password, is_superuser=True)
     user = await crud.create_user(session=db_session, user_create=user_in)
     new_password = random_lower_string()
-    user_in_update = UserUpdate(password=new_password, is_superuser=True)
+    user_in_update = UserUpdate(is_superuser=True)
     if user.id is not None:
         await crud.update_user(session=db_session, db_user=user, user_in=user_in_update)
+        # Passwords are only changed through the dedicated password update
+        # (self-service or signed email link), never via UserUpdate.
+        await crud.update_user_password(session=db_session, db_user=user, new_password=new_password)
     result = await db_session.execute(select(User).where(User.id == user.id))
     user_2 = result.scalar()
     assert user_2

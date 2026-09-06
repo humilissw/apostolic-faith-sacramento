@@ -1,7 +1,10 @@
-from sqlalchemy import select, func
+import secrets
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models import User, UserCreate, UserUpdate, UserUpdateMe
+
 from app.core.security import get_password_hash
+from app.models import User, UserCreate, UserUpdate, UserUpdateMe
 
 
 class UserRepository:
@@ -20,18 +23,23 @@ class UserRepository:
         self.session = session
 
     async def create(self, user_create: UserCreate) -> User:
-        """
-        Create a new user entry.
+        """Create a new user entry.
 
         Args:
-            user_create: UserCreate object containing user data
+            user_create: UserCreate object containing user data. If no
+                password is supplied (the admin-created-user flow), the user
+                gets a random unusable password hash and must set their own
+                password via the signed one-time email link.
 
         Returns:
             User: Created user object
         """
+        password = (
+            user_create.password if user_create.password is not None else secrets.token_urlsafe(32)
+        )
         db_obj = User.model_validate(
             user_create,
-            update={"hashed_password": get_password_hash(user_create.password)},
+            update={"hashed_password": get_password_hash(password)},
         )
         self.session.add(db_obj)
         await self.session.commit()
@@ -100,12 +108,11 @@ class UserRepository:
             User: Updated user object
         """
         user_data = user_in.model_dump(exclude_unset=True)
-        extra_data = {}
-        if "password" in user_data:
-            password = user_data["password"]
-            hashed_password = get_password_hash(password)
-            extra_data["hashed_password"] = hashed_password
-        db_user.sqlmodel_update(user_data, update=extra_data)
+        # NOTE: password is intentionally not updatable here (UserUpdate and
+        # UserUpdateMe carry no password field). Passwords are only changed by
+        # the user themselves via /users/me/password or a signed one-time
+        # email link (see update_password below).
+        db_user.sqlmodel_update(user_data)
         self.session.add(db_user)
         await self.session.commit()
         await self.session.refresh(db_user)

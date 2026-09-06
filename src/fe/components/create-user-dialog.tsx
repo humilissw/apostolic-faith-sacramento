@@ -55,7 +55,6 @@ export default function CreateUserDialog({
   onSuccess,
 }: CreateUserDialogProps) {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [scopes, setScopes] = useState<string[]>([]);
   const isSuperuser = scopes.includes("superuser");
@@ -63,14 +62,13 @@ export default function CreateUserDialog({
   const [error, setError] = useState<string | null>(null);
 
   const handleCreate = async () => {
-    if (!email.trim() || !password.trim()) return;
+    if (!email.trim()) return;
     setCreating(true);
     setError(null);
     try {
       const { createUser } = await import("@/lib/api");
       await createUser({
         email: email.trim(),
-        password,
         full_name: fullName.trim() || undefined,
         is_superuser: isSuperuser,
         scopes,
@@ -78,7 +76,6 @@ export default function CreateUserDialog({
       onSuccess();
       onOpenChange(false);
       setEmail("");
-      setPassword("");
       setFullName("");
       setScopes([]);
     } catch (err) {
@@ -94,7 +91,8 @@ export default function CreateUserDialog({
         <DialogHeader>
           <DialogTitle>Create User</DialogTitle>
           <DialogDescription>
-            Add a new user to the application.
+            Add a new user to the application. The user will receive an email
+            with a one-time link to set their own password.
           </DialogDescription>
         </DialogHeader>
 
@@ -108,17 +106,6 @@ export default function CreateUserDialog({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoFocus
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="Min 8 characters"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
             />
           </div>
 
@@ -204,7 +191,7 @@ export default function CreateUserDialog({
           </Button>
           <Button
             onClick={handleCreate}
-            disabled={creating || !email.trim() || !password.trim() || !email.includes("@")}
+            disabled={creating || !email.trim() || !email.includes("@")}
           >
             {creating ? (
               <Loader2 className="w-4 h-4 animate-spin mr-2" />

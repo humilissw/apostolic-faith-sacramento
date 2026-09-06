@@ -505,9 +505,37 @@ export async function deleteUsers(userIds: string[]): Promise<void> {
   }
 }
 
+/**
+ * Send password reset emails to one or more users (admin only).
+ * Each user receives an HMAC-signed, single-use link to set a new password.
+ */
+export async function bulkAdminPasswordReset(
+  userIds: string[],
+): Promise<{ message: string }> {
+  const res = await fetchWithAuth(
+    `${API_BASE}${API_V1}/admin/password-reset/bulk`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_ids: userIds }),
+    },
+  );
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(body || "Failed to send password reset emails");
+  }
+  return res.json();
+}
+
+/** Send a password reset email to a single user (admin only). */
+export async function sendPasswordReset(userId: string): Promise<{ message: string }> {
+  return bulkAdminPasswordReset([userId]);
+}
+
 export interface CreateUserRequest {
   email: string;
-  password: string;
+  // No password: admins must never set a user's password. The new user
+  // receives an email with an HMAC-signed, single-use set-password link.
   full_name?: string;
   is_active?: boolean;
   is_superuser?: boolean;

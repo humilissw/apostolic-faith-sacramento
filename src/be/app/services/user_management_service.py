@@ -14,11 +14,10 @@ from app.models import (
     UserScope,
     UserUpdate,
     UserUpdateMe,
-    validate_password_complexity,
 )
 from app.repositories.user_repo import UserRepository
 from app.repositories.user_scope_repo import UserScopeRepository
-from app.utils import generate_new_account_email, send_email
+from app.services.auth_service import AuthService
 
 
 class UserManagementService:
@@ -28,11 +27,17 @@ class UserManagementService:
         self.session = session
 
     async def create_user(self, user_create: UserCreate) -> UserPublic:
-        """Create a new user with validation and email notification."""
-        if not validate_password_complexity(user_create.password):
+        """Create a new user and email them a link to set their own password.
+
+        Administrators must never set a password on behalf of another user:
+        any supplied password is rejected. The account is created with an
+        unusable random password, and the user receives a new-account email
+        containing an HMAC-signed, single-use link to choose their password.
+        """
+        if user_create.password is not None:
             raise ValueError(
-                "Password must be at least 8 characters and contain uppercase, "
-                "lowercase, digit, and special character."
+                "Password cannot be set when creating a user. The user will "
+                "receive an email with a one-time link to set their own password."
             )
 
         repository = UserRepository(session=self.session)
@@ -47,18 +52,20 @@ class UserManagementService:
             scope_repo = UserScopeRepository(self.session)
             await scope_repo.set_scopes(user.id, user_create.scopes)
 
-        # Send welcome email
-        if settings.emails_enabled and user_create.email:
-            email_data = generate_new_account_email(
-                email_to=user_create.email,
-                username=user_create.email,
-                password=user_create.password,
-            )
-            send_email(
-                email_to=user_create.email,
-                subject=email_data.subject,
-                html_content=email_data.html_content,
-            )
+        # Send new-account email with a one-time set-password link.
+        # The link is HMAC-signed and single-use (see AuthService /
+        # core.reset_tokens); the plaintext password never leaves the server
+        # because there is none.
+        if settings.emails_enabled and user.email:
+            try:
+                auth_service = AuthService(user_repository=repository, session=self.session)
+                await auth_service.send_set_password_email(user, reason="welcome")
+            except Exception:
+                import logging
+
+                logging.getLogger(__name__).exception(
+                    "Failed to send set-password email to new user %s", user.email
+                )
 
         return await self._populate_scopes(user)
 

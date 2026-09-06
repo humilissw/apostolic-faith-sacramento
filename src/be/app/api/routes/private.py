@@ -14,9 +14,10 @@ router = APIRouter(tags=["private"], prefix="/private")
 
 class PrivateUserCreate(BaseModel):
     email: str
-    password: str
     full_name: str
     is_verified: bool = False
+    # NOTE: no password field — users set their own password via the
+    # one-time signed email link; admins must never set passwords.
 
 
 @router.post("/users/", response_model=UserPublic)
@@ -28,13 +29,13 @@ async def create_user(
     """
     Create a new user.
 
-    Requires superuser privileges.
+    Requires superuser privileges. The new account is created without a usable
+    password; the user receives an email with a one-time link to set it.
     """
     from app.crud import create_user as crud_create_user
 
     user_create = UserCreate(
         email=user_in.email,
-        password=user_in.password,
         full_name=user_in.full_name,
         is_active=user_in.is_verified,
     )

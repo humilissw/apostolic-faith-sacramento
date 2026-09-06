@@ -1,7 +1,8 @@
+from datetime import UTC
 from unittest.mock import patch
 
-import pytest
 import httpx
+import pytest
 from httpx import ASGITransport
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -323,11 +324,13 @@ async def test_reset_password(login_client, login_db_session) -> None:
     user = await repo.get_by_email(email=email)
 
     # Generate a server-side token (not JWT-based like before)
-    from datetime import datetime, timedelta, timezone
     import secrets
+    from datetime import datetime, timedelta
+
+    from app.core.reset_tokens import sign_reset_token
 
     reset_token = secrets.token_urlsafe(32)
-    expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+    expires_at = datetime.now(UTC) + timedelta(hours=1)
     db_token = PasswordResetToken(
         user_id=user.id,
         token=reset_token,
@@ -337,7 +340,8 @@ async def test_reset_password(login_client, login_db_session) -> None:
     login_db_session.add(db_token)
     await login_db_session.commit()
 
-    data = {"new_password": new_password, "token": reset_token}
+    # The email link carries the HMAC-signed token id, not the raw token
+    data = {"new_password": new_password, "token": sign_reset_token(str(db_token.id))}
 
     r = await login_client.post(
         f"{settings.API_V1_STR}/reset-password/",
@@ -400,10 +404,12 @@ async def test_reset_password_token_single_use(login_client, login_db_session) -
 
     # Generate a server-side token
     import secrets
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
+
+    from app.core.reset_tokens import sign_reset_token
 
     reset_token = secrets.token_urlsafe(32)
-    expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+    expires_at = datetime.now(UTC) + timedelta(hours=1)
     db_token = PasswordResetToken(
         user_id=user.id,
         token=reset_token,
@@ -413,8 +419,10 @@ async def test_reset_password_token_single_use(login_client, login_db_session) -
     login_db_session.add(db_token)
     await login_db_session.commit()
 
+    signed_link = sign_reset_token(str(db_token.id))
+
     # First use should succeed
-    data1 = {"new_password": new_password, "token": reset_token}
+    data1 = {"new_password": new_password, "token": signed_link}
     r1 = await login_client.post(
         f"{settings.API_V1_STR}/reset-password/",
         json=data1,
@@ -422,7 +430,7 @@ async def test_reset_password_token_single_use(login_client, login_db_session) -
     assert r1.status_code == 200
 
     # Second use should fail (token already invalidated)
-    data2 = {"new_password": another_new_password, "token": reset_token}
+    data2 = {"new_password": another_new_password, "token": signed_link}
     r2 = await login_client.post(
         f"{settings.API_V1_STR}/reset-password/",
         json=data2,
@@ -449,7 +457,9 @@ async def test_reset_password_invalidates_all_user_tokens(login_client, login_db
     await create_user(session=login_db_session, user_create=user_create)
 
     import secrets
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
+
+    from app.core.reset_tokens import sign_reset_token
 
     # Find the user to get their ID
     repo = UserRepository(login_db_session)
@@ -458,7 +468,7 @@ async def test_reset_password_invalidates_all_user_tokens(login_client, login_db
     # Create two tokens for the same user
     token1 = secrets.token_urlsafe(32)
     token2 = secrets.token_urlsafe(32)
-    expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+    expires_at = datetime.now(UTC) + timedelta(hours=1)
 
     db_token1 = PasswordResetToken(user_id=user.id, token=token1, expires_at=expires_at)
     db_token2 = PasswordResetToken(user_id=user.id, token=token2, expires_at=expires_at)
@@ -468,15 +478,15 @@ async def test_reset_password_invalidates_all_user_tokens(login_client, login_db
     await login_db_session.commit()
 
     # Use first token - should succeed and invalidate the second
-    data1 = {"new_password": new_password, "token": token1}
+    data1 = {"new_password": new_password, "token": sign_reset_token(str(db_token1.id))}
     r1 = await login_client.post(
         f"{settings.API_V1_STR}/reset-password/",
         json=data1,
     )
     assert r1.status_code == 200
 
-    # Second token should now be invalid
-    data2 = {"new_password": "AnotherPass456!", "token": token2}
+    # Second token should now be invalid (even with a valid HMAC signature)
+    data2 = {"new_password": "AnotherPass456!", "token": sign_reset_token(str(db_token2.id))}
     r2 = await login_client.post(
         f"{settings.API_V1_STR}/reset-password/",
         json=data2,

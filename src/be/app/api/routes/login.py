@@ -1,13 +1,13 @@
-from datetime import datetime, timezone
-from typing import Annotated, Any
-
 import logging
+from datetime import UTC, datetime
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, Field
-from sqlalchemy import select, update as sa_update
+from sqlalchemy import select
+from sqlalchemy import update as sa_update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import (
@@ -334,7 +334,7 @@ async def client_credentials_login(
         refresh_token=refresh_token_str,
         token_type="bearer",
         access_token_expires=access_expires,
-        refresh_token_expires=int((refresh_expires - datetime.now(timezone.utc)).total_seconds()),
+        refresh_token_expires=int((refresh_expires - datetime.now(UTC)).total_seconds()),
         scopes=token_scopes,
     )
 
@@ -522,8 +522,11 @@ async def recover_password(
         raise HTTPException(status_code=429, detail="Rate limit exceeded. Please try again later.")
 
     repository = UserRepository(session=session)
-    auth_service = AuthService(user_repository=repository)
-    await auth_service.initiate_password_recovery(email=body.email, session=session)
+    auth_service = AuthService(user_repository=repository, session=session)
+    try:
+        await auth_service.initiate_password_recovery(email=body.email)
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
     return Message(message="Password recovery email sent")
 
@@ -538,11 +541,9 @@ async def reset_password(session: SessionDep, body: NewPassword, request: Reques
         raise HTTPException(status_code=429, detail="Rate limit exceeded. Please try again later.")
 
     user_repository = UserRepository(session=session)
-    auth_service = AuthService(user_repository=user_repository)
+    auth_service = AuthService(user_repository=user_repository, session=session)
 
-    result = await auth_service.reset_password(
-        token=body.token, new_password=body.new_password, session=session
-    )
+    result = await auth_service.reset_password(token=body.token, new_password=body.new_password)
 
     return Message(message=result["message"])
 
@@ -560,8 +561,11 @@ async def recover_password_html_content(email: str, session: SessionDep) -> Any:
         raise HTTPException(status_code=400, detail="Invalid email format")
 
     user_repository = UserRepository(session=session)
-    auth_service = AuthService(user_repository=user_repository)
-    await auth_service.initiate_password_recovery(email=email, session=session)
+    auth_service = AuthService(user_repository=user_repository, session=session)
+    try:
+        await auth_service.initiate_password_recovery(email=email)
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
     return HTMLResponse(
         content="Password recovery email sent successfully",

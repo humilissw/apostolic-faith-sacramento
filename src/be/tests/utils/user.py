@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import crud
 from app.config import settings
-from app.models import User, UserCreate, UserUpdate
+from app.models import User, UserCreate
 from tests.utils.utils import random_email, random_lower_string
 
 
@@ -41,9 +41,10 @@ async def authentication_token_from_email(
         user_in_create = UserCreate(email=email, password=password)
         user = await crud.create_user(session=db, user_create=user_in_create)
     else:
-        user_in_update = UserUpdate(password=password)
+        # Passwords are only changed via the dedicated password update
+        # (UserUpdate no longer carries a password field).
         if not user.id:
             raise Exception("User id not set")
-        user = await crud.update_user(session=db, db_user=user, user_in=user_in_update)
+        user = await crud.update_user_password(session=db, db_user=user, new_password=password)
 
     return await user_authentication_headers(client=client, email=email, password=password)

@@ -1,10 +1,10 @@
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 import httpx
 import pytest
 from httpx import ASGITransport
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.core.db import get_db_session
@@ -72,7 +72,6 @@ async def test_create_user(
             headers=auth_headers,
             json={
                 "email": test_email,
-                "password": "password123",
                 "full_name": "Pollo Listo",
             },
         )

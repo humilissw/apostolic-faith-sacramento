@@ -1,18 +1,19 @@
+import secrets
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import get_password_hash, verify_password
-from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import (
     Item,
     ItemCreate,
+    Media,
     User,
     UserCreate,
     UserUpdate,
-    Media,
     VideoUpload,
 )
 from app.requests.media_request import MediaCreate, MediaUpdate
@@ -20,8 +21,13 @@ from app.requests.video_upload_request import VideoUploadCreate, VideoUploadUpda
 
 
 async def create_user(*, session: AsyncSession, user_create: UserCreate) -> User:
+    # Admin-created users never supply a password; they get a random unusable
+    # hash and set their own password via the signed one-time email link.
+    password = (
+        user_create.password if user_create.password is not None else secrets.token_urlsafe(32)
+    )
     db_obj = User.model_validate(
-        user_create, update={"hashed_password": get_password_hash(user_create.password)}
+        user_create, update={"hashed_password": get_password_hash(password)}
     )
     session.add(db_obj)
     await session.commit()
@@ -39,13 +45,20 @@ async def create_user(*, session: AsyncSession, user_create: UserCreate) -> User
 
 
 async def update_user(*, session: AsyncSession, db_user: User, user_in: UserUpdate) -> Any:
+    # NOTE: password is intentionally not updatable here (UserUpdate has no
+    # password field). Passwords are only changed by the user themselves via
+    # /users/me/password or a signed one-time email link.
     user_data = user_in.model_dump(exclude_unset=True)
-    extra_data = {}
-    if "password" in user_data:
-        password = user_data["password"]
-        hashed_password = get_password_hash(password)
-        extra_data["hashed_password"] = hashed_password
-    db_user.sqlmodel_update(user_data, update=extra_data)
+    db_user.sqlmodel_update(user_data)
+    session.add(db_user)
+    await session.commit()
+    await session.refresh(db_user)
+    return db_user
+
+
+async def update_user_password(*, session: AsyncSession, db_user: User, new_password: str) -> User:
+    """Set a user's password (used by self-service and email-link flows only)."""
+    db_user.hashed_password = get_password_hash(new_password)
     session.add(db_user)
     await session.commit()
     await session.refresh(db_user)
@@ -81,9 +94,9 @@ async def create_media(*, session: AsyncSession, media_in: MediaCreate, owner_id
     media = Media(
         name=media_in.name,
         owner_id=owner_id,
-        uploaded_on=datetime.now(timezone.utc),
-        created_on=datetime.now(timezone.utc),
-        updated_on=datetime.now(timezone.utc),
+        uploaded_on=datetime.now(UTC),
+        created_on=datetime.now(UTC),
+        updated_on=datetime.now(UTC),
     )
     session.add(media)
     await session.commit()
@@ -108,7 +121,7 @@ async def get_media(*, session: AsyncSession, skip: int = 0, limit: int = 100) -
 async def update_media(*, session: AsyncSession, db_media: Media, media_in: MediaUpdate) -> Media:
     """Update a media entry."""
     update_data = media_in.model_dump(exclude_unset=True)
-    update_data["updated_on"] = datetime.now(timezone.utc)
+    update_data["updated_on"] = datetime.now(UTC)
 
     # Handle datetime fields
     if "created_on" in update_data:
@@ -136,9 +149,9 @@ async def create_video_upload(
         owner_id=owner_id,
         upload_location=video_upload_in.upload_location,
         upload_name=video_upload_in.upload_name,
-        media_association_date=datetime.now(timezone.utc),
-        created_on=datetime.now(timezone.utc),
-        updated_on=datetime.now(timezone.utc),
+        media_association_date=datetime.now(UTC),
+        created_on=datetime.now(UTC),
+        updated_on=datetime.now(UTC),
     )
     session.add(video_upload)
     await session.commit()
@@ -174,7 +187,7 @@ async def update_video_upload(
 ) -> VideoUpload:
     """Update a video upload entry."""
     update_data = video_upload_in.model_dump(exclude_unset=True)
-    update_data["updated_on"] = datetime.now(timezone.utc)
+    update_data["updated_on"] = datetime.now(UTC)
 
     # Handle datetime fields
     if "created_on" in update_data:

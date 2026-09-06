@@ -2,8 +2,8 @@
 
 from unittest.mock import patch
 
-import pytest
 import httpx
+import pytest
 from httpx import ASGITransport
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -269,3 +269,95 @@ async def test_admin_password_reset_no_auth_required(admin_reset_client) -> None
         json={"email": "test@example.com"},
     )
     assert r.status_code in (401, 403)
+
+
+@pytest.mark.asyncio
+async def test_admin_password_reset_bulk_sends_to_all_users(
+    admin_reset_client, admin_reset_db_session, admin_reset_superuser_token_headers
+) -> None:
+    """Bulk endpoint emails every selected user and reports the count."""
+    await admin_reset_client.post(
+        f"{settings.API_V1_STR}/feature-flags/pre-seed",
+        headers=admin_reset_superuser_token_headers,
+    )
+
+    with patch("app.services.auth_service.send_email", return_value=None):
+        ids: list[str] = []
+        for _ in range(2):
+            user_create = UserCreate(
+                email=random_email(),
+                full_name="Bulk Target",
+                password="TempPass123!",
+                is_active=True,
+                is_superuser=False,
+            )
+            user = await create_user(session=admin_reset_db_session, user_create=user_create)
+            ids.append(str(user.id))
+
+        r = await admin_reset_client.post(
+            f"{settings.API_V1_STR}/admin/password-reset/bulk",
+            json={"user_ids": ids},
+            headers=admin_reset_superuser_token_headers,
+        )
+        assert r.status_code == 200
+        assert "2 user(s)" in r.json()["message"]
+
+
+@pytest.mark.asyncio
+async def test_admin_password_reset_bulk_empty_rejected(
+    admin_reset_client, admin_reset_superuser_token_headers
+) -> None:
+    """Bulk endpoint rejects an empty selection."""
+    r = await admin_reset_client.post(
+        f"{settings.API_V1_STR}/admin/password-reset/bulk",
+        json={"user_ids": []},
+        headers=admin_reset_superuser_token_headers,
+    )
+    assert r.status_code == 422  # min_length=1 validation
+
+
+@pytest.mark.asyncio
+async def test_admin_password_reset_bulk_non_superuser_forbidden(
+    admin_reset_client, admin_reset_normal_user_token_headers
+) -> None:
+    """Non-superusers cannot call the bulk reset endpoint."""
+    r = await admin_reset_client.post(
+        f"{settings.API_V1_STR}/admin/password-reset/bulk",
+        json={"user_ids": ["some-id"]},
+        headers=admin_reset_normal_user_token_headers,
+    )
+    assert r.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_admin_password_reset_bulk_disabled_flag(
+    admin_reset_client, admin_reset_superuser_token_headers
+) -> None:
+    """Bulk endpoint respects the feature flag."""
+    r = await admin_reset_client.post(
+        f"{settings.API_V1_STR}/admin/password-reset/bulk",
+        json={"user_ids": ["some-id"]},
+        headers=admin_reset_superuser_token_headers,
+    )
+    assert r.status_code == 403
+    assert "disabled" in r.json()["detail"].lower()
+
+
+def test_reset_link_hmac_signature_roundtrip() -> None:
+    """Signed reset links verify; tampered or unsigned values do not."""
+    from app.core.reset_tokens import sign_reset_token, verify_reset_token_link
+
+    token_id = "12345678-1234-1234-1234-123456789abc"
+    signed = sign_reset_token(token_id)
+
+    assert verify_reset_token_link(signed) == token_id
+    # Tampered signature fails HMAC check. Flip a char in the middle of the
+    # signature segment — NOT the very last char: with a 32-byte digest the
+    # final base64url char carries only 2 significant bits, so flipping it can
+    # decode to identical bytes and (correctly) still verify.
+    cut = signed.rfind(".")
+    mid = cut + 1 + (len(signed) - cut) // 2
+    tampered = signed[:mid] + ("a" if signed[mid] != "a" else "b") + signed[mid + 1 :]
+    assert verify_reset_token_link(tampered) is None
+    # Raw unsigned id is rejected
+    assert verify_reset_token_link(token_id) is None

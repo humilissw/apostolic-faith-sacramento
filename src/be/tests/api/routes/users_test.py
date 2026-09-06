@@ -1,16 +1,16 @@
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 from unittest.mock import patch
 
-import pytest
 import httpx
+import pytest
 from httpx import ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from app import crud
 from app.config import settings
-from app.core.security import verify_password, get_password_hash
 from app.core.db import get_db_session
+from app.core.security import get_password_hash, verify_password
 from app.main import app
 from app.models import User, UserCreate, UserScope
 from tests.utils.utils import random_email, random_lower_string
@@ -96,9 +96,9 @@ async def test_create_user_new_email(
 ) -> None:
     with (patch("app.utils.send_email", return_value=None),):
         username = random_email()
-        # Use a password that meets complexity requirements
-        password = "TestPass123!"
-        data = {"email": username, "password": password}
+        # Admins never set passwords; the user picks their own via the
+        # one-time signed email link.
+        data = {"email": username}
         r = await users_client.post(
             f"{settings.API_V1_STR}/users/",
             headers=superuser_token_headers,
@@ -109,6 +109,23 @@ async def test_create_user_new_email(
         user = await crud.get_user_by_email(session=db_session, email=username)
         assert user
         assert user.email == created_user["email"]
+
+
+@pytest.mark.asyncio
+async def test_create_user_with_password_rejected(
+    users_client: httpx.AsyncClient,
+    superuser_token_headers: dict[str, str],
+) -> None:
+    """Admins must never set a password on behalf of another user."""
+    username = random_email()
+    data = {"email": username, "password": "TestPass123!"}
+    r = await users_client.post(
+        f"{settings.API_V1_STR}/users/",
+        headers=superuser_token_headers,
+        json=data,
+    )
+    assert r.status_code == 400
+    assert "one-time link" in r.json()["detail"]
 
 
 @pytest.mark.asyncio

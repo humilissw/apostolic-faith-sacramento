@@ -11,11 +11,15 @@ import {
   UserPlus,
   Search,
   X,
+  KeyRound,
+  Loader2,
 } from "lucide-react";
 import {
   fetchUsersWithScopes,
   deleteUser,
   deleteUsers,
+  sendPasswordReset,
+  bulkAdminPasswordReset,
   type UserWithScopes,
 } from "@/lib/api";
 import { Card } from "@/components/ui/card";
@@ -45,6 +49,10 @@ export default function UsersAdminPage() {
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [removingUserId, setRemovingUserId] = useState<string | null>(null);
+  const [resettingUserIds, setResettingUserIds] = useState<Set<string>>(new Set());
+  const [bulkResetLoading, setBulkResetLoading] = useState(false);
+  const [resetStatus, setResetStatus] = useState<string | null>(null);
+  const [resetError, setResetError] = useState<string | null>(null);
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [total, setTotal] = useState(0);
   const hasMore = total > 0 && users.length < total;
@@ -126,7 +134,7 @@ export default function UsersAdminPage() {
     { width: "8rem", minWidth: "8rem" },
     { width: "6rem", minWidth: "6rem" },
     { width: "16rem", minWidth: "16rem" },
-    { width: "6rem", minWidth: "6rem" },
+    { width: "9rem", minWidth: "9rem" },
   ], []);
 
   const getBodyCellStyle = useCallback(
@@ -231,6 +239,41 @@ export default function UsersAdminPage() {
     }
   };
 
+  const handleSendReset = async (id: string) => {
+    if (!confirm("Send a password reset email to this user?")) return;
+    setResettingUserIds((prev) => new Set(prev).add(id));
+    setResetStatus(null);
+    setResetError(null);
+    try {
+      const res = await sendPasswordReset(id);
+      setResetStatus(res.message || "Password reset email sent");
+    } catch (err) {
+      setResetError(err instanceof Error ? err.message : "Failed to send password reset email");
+    } finally {
+      setResettingUserIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+  };
+
+  const handleBulkReset = async () => {
+    if (!confirm(`Send password reset emails to ${selectedUsers.size} selected users?`)) return;
+    const ids = Array.from(selectedUsers);
+    setBulkResetLoading(true);
+    setResetStatus(null);
+    setResetError(null);
+    try {
+      const res = await bulkAdminPasswordReset(ids);
+      setResetStatus(res.message || `Password reset emails sent to ${ids.length} user(s)`);
+    } catch (err) {
+      setResetError(err instanceof Error ? err.message : "Failed to send password reset emails");
+    } finally {
+      setBulkResetLoading(false);
+    }
+  };
+
   const handleOpenDialog = (user: UserWithScopes) => {
     setEditingUser({ id: user.id, email: user.email });
     setDialogOpen(true);
@@ -273,12 +316,37 @@ export default function UsersAdminPage() {
           Create User
         </Button>
         {selectedUsers.size > 0 && (
-          <Button variant="destructive" onClick={handleBulkDelete}>
-            <Trash2 className="w-4 h-4 mr-2" />
-            Delete selected ({selectedUsers.size})
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleBulkReset}
+              disabled={bulkResetLoading}
+            >
+              <KeyRound className="w-4 h-4 mr-2" />
+              {bulkResetLoading
+                ? "Sending..."
+                : `Send reset link (${selectedUsers.size})`}
+            </Button>
+            <Button variant="destructive" onClick={handleBulkDelete}>
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete selected ({selectedUsers.size})
+            </Button>
+          </div>
         )}
       </div>
+
+      {(resetStatus || resetError) && (
+        <div
+          role="status"
+          className={
+            resetStatus
+              ? "mb-4 px-4 py-2 rounded-md text-sm bg-green-50 text-green-800 border border-green-200"
+              : "mb-4 px-4 py-2 rounded-md text-sm bg-red-50 text-red-800 border border-red-200"
+          }
+        >
+          {resetStatus || resetError}
+        </div>
+      )}
 
       {/* Search and filter bar */}
       <div className="flex gap-2 mb-4">
@@ -403,7 +471,7 @@ export default function UsersAdminPage() {
                       </TableCell>
                     );
                   })}
-                  <TableCell className="bg-card border-b sticky top-0 z-10 shrink-0 w-[6rem]">
+                  <TableCell className="bg-card border-b sticky top-0 z-10 shrink-0 w-[9rem]">
                     Actions
                   </TableCell>
                 </TableRow>
@@ -489,6 +557,20 @@ export default function UsersAdminPage() {
                     </TableCell>
                     <TableCell style={getBodyCellStyle(5)}>
                       <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          title="Send password reset email"
+                          aria-label="Send password reset email"
+                          disabled={resettingUserIds.has(user.id)}
+                          onClick={() => handleSendReset(user.id)}
+                        >
+                          {resettingUserIds.has(user.id) ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <KeyRound className="w-4 h-4" />
+                          )}
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"

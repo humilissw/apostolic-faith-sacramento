@@ -1,8 +1,10 @@
+import logging
 from typing import Any
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app import crud
 from app.api.deps import (
     CurrentUser,
     SessionDep,
@@ -21,11 +23,9 @@ from app.models import (
     UserUpdateMe,
     validate_password_complexity,
 )
-from app import crud
 from app.repositories.user_repo import UserRepository
 from app.repositories.user_scope_repo import UserScopeRepository
 from app.services.user_management_service import UserManagementService
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -66,8 +66,9 @@ async def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
     """
     Create new user.
 
-    Password must meet complexity requirements. Admin-created users are exempt from
-    scope assignment.
+    Admins must not supply a password: the account is created without one and
+    the user receives an email with an HMAC-signed, single-use link to set
+    their own password. Any supplied password is rejected with 400.
     """
     svc = UserManagementService(session)
     try:
