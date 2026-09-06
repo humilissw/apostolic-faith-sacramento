@@ -57,13 +57,7 @@
       "cwd": "${workspaceFolder}/src/fe",
       "envFile": "${workspaceFolder}/src/fe/.env.local",
       "runtimeArgs": [
-        "dev",
-        "--experimental-https",
-        "--experimental-https-key",
-        "${workspaceFolder}/src/fe/security_keys/cert_key.pem",
-        "--experimental-https-cert",
-        "${workspaceFolder}/src/fe/security_keys/cert.pem",
-        "--turbopack"
+        "https"
       ],
       "serverReadyAction": {
         "pattern": "- Local:.+(https?://.+)",
