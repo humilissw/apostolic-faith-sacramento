@@ -1,0 +1,17 @@
+{
+  "executionEnvironments": [
+    {
+      "root": "src/be",
+      "extraPaths": [
+        "src/be",
+        "src/be/app"
+      ]
+    },
+    {
+      "root": "src/bff",
+      "extraPaths": [
+        "src/bff"
+      ]
+    }
+  ]
+}
