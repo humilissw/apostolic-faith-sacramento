@@ -214,3 +214,4 @@ deploy_to_prod.sh
 deploy_to_prod.sh.bak.*
 *.prod
 .venv/
+src/fe/playwright-report/
