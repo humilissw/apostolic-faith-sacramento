@@ -32,7 +32,10 @@ COPY --from=builder /usr/local/lib/python3.14/site-packages /usr/local/lib/pytho
 COPY --from=builder /usr/local/bin /usr/local/bin
 COPY --from=builder /app /app
 
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+RUN groupadd -r appuser && useradd -r -g appuser appuser \
+    && mkdir -p /app/security_keys \
+    && chmod 600 /app/security_keys/*.pem 2>/dev/null || true \
+    && chown -R appuser:appuser /app/security_keys
 USER appuser
 
 EXPOSE 8000

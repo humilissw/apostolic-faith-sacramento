@@ -3,6 +3,7 @@
 import '@testing-library/jest-dom'
 import { render, screen } from '@testing-library/react'
 import Navbar from '@/components/navbar'
+import { useFeatureFlag } from '@/context/feature-flag-context'
 
 jest.mock('next/navigation', () => ({
   ...jest.requireActual('next/navigation'),
@@ -60,5 +61,31 @@ describe('Navbar (unauthenticated)', () => {
     // No user profile section for unauthenticated
     const signInText = screen.queryByText(/signed in/i)
     expect(signInText).not.toBeInTheDocument()
+  })
+})
+
+describe('Navbar (feature flags)', () => {
+  // Flag-aware mock: default everything on, then flip individual flags off.
+  const disabledFlags = new Set<string>()
+  beforeEach(() => disabledFlags.clear())
+
+  function renderWithFlagOff(flagName: string) {
+    disabledFlags.add(flagName)
+    ;(useFeatureFlag as jest.Mock).mockImplementation((name: string) => !disabledFlags.has(name))
+    render(<Navbar />)
+  }
+
+  it('hides Events when enable_events is off', () => {
+    renderWithFlagOff('enable_events')
+    expect(screen.queryByText('Events')).not.toBeInTheDocument()
+    // Other public links still render
+    expect(screen.getAllByText('Home').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Media').length).toBeGreaterThan(0)
+  })
+
+  it('shows Events when enable_events is on', () => {
+    ;(useFeatureFlag as jest.Mock).mockImplementation(() => true)
+    render(<Navbar />)
+    expect(screen.getAllByText('Events').length).toBeGreaterThan(0)
   })
 })

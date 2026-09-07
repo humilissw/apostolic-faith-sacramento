@@ -23,6 +23,9 @@
 # misc
 .DS_Store
 *.pem
+# Dev-only TLS material under security_keys/ is tracked on purpose
+# (regenerate with infrastructure/generate_dev_certs.sh).
+!security_keys/*.pem
 
 # debug
 npm-debug.log*
@@ -50,4 +53,3 @@ test-results/
 !security_keys/private.pem
 !security_keys/public_key.pem
 !security_keys/public.pem
-

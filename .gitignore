@@ -170,6 +170,13 @@ htmlcov/
 *.pem
 cert.pem
 key.pem
+# Development-only TLS/RSA keys under security_keys/ ARE tracked on purpose
+# (fresh clone runs out of the box). Real secrets move elsewhere later.
+!src/be/security_keys/**
+!src/bff/security_keys/**
+!src/fe/security_keys/**
+# Dev CA used to sign the above leaf certs - also dev-only, tracked on purpose.
+!infrastructure/certs/**
 
 # IDE
 .vscode/

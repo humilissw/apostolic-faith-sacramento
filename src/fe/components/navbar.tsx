@@ -107,12 +107,16 @@ export default function Navbar() {
       const flagMap: Record<string, boolean> = {
         "/": enableHome,
         "/doctrines/": enableDoctrines,
+        "/events/": enableEvents,
         "/media/": enableMedia,
         "/donate/": enableDonate,
         "/contact/": enableContact,
       };
       const enabled = flagMap[item.url];
-      if (enabled === undefined) return true; // external links always show
+      // External links (no flag) always show; internal links without a
+      // registered flag stay hidden so a missing mapping can never leak a
+      // disabled page into the navbar.
+      if (enabled === undefined) return Boolean(item.external);
       return enabled;
     }).map((item) => ({ ...item, url: item.url === "/" ? "/" : item.url }));
     if (publicItems.length > 0) {

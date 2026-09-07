@@ -67,13 +67,18 @@ services:
       - "8002:8002"
     environment:
       - BACKEND_URL=https://backend:8000
-      # Self-signed dev backend cert (loopback inside the app network).
-      - BACKEND_VERIFY=false
+      # Verify the backend's dev cert against its own self-signed PEM (the CA
+      # bundle below). The backend cert carries SANs for `backend` + localhost.
+      - BACKEND_VERIFY=true
+      - BACKEND_CA_BUNDLE=/app/security_keys/backend_ca.pem
       - SPA_ORIGINS=https://localhost:3000
       - SPA_URL=https://localhost:3000
       - SESSION_COOKIE_SECURE=true
       # Set a real SECRET_KEY in production (signs sessions + auth codes).
       - SECRET_KEY=***
+    volumes:
+      # Dev CA used to verify the backend's CA-signed leaf cert.
+      - ./src/be/security_keys/ca.pem:/app/security_keys/backend_ca.pem:ro
     depends_on:
       - backend
     networks:
