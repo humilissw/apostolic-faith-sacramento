@@ -39,16 +39,14 @@ def upgrade() -> None:
 
     # Seed member:limited scope for existing users without it
     try:
-        op.execute(
-            """
+        op.execute("""
             INSERT INTO user_scopes (id, user_id, scope, created_on)
             SELECT UUID(), id, 'member:limited', NOW()
             FROM users
             WHERE id NOT IN (
                 SELECT user_id FROM user_scopes WHERE scope = 'member:limited'
             )
-            """
-        )
+            """)
     except Exception:
         pass
 

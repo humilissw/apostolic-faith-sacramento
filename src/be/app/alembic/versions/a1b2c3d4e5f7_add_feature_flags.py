@@ -29,8 +29,7 @@ def upgrade() -> None:
     )
 
     # Seed default feature flags
-    op.execute(
-        """
+    op.execute("""
         INSERT INTO feature_flags (id, name, description, is_enabled, created_on, updated_on)
         VALUES
         (UUID(), 'enable_home', 'Show the home page', 1, NOW(), NULL),
@@ -48,8 +47,7 @@ def upgrade() -> None:
         (UUID(), 'enable_video_uploads_admin', 'Show the video uploads admin page', 1, NOW(), NULL),
         (UUID(), 'enable_integrations', 'Show the integrations page', 1, NOW(), NULL)
         ON DUPLICATE KEY UPDATE name = name
-        """
-    )
+        """)
 
 
 def downgrade() -> None:

@@ -44,7 +44,7 @@ export default function Events() {
     }
 
     function handleEventButton () {
-        setEventsButton(true); 
+        setEventsButton(true);
         setCalendarButton(false);
         setEventButtonStyle("rounded-none border-y border-l border-black shadow-lg bg-zinc-900 hover:text-white")
         setCalendarButtonStyle("rounded-none border border-black bg-white/70 shadow-lg hover:bg-zinc-200 text-zinc-900")
@@ -80,7 +80,7 @@ export default function Events() {
         setEditingEvent(null);
         setDialogOpen(true);
     }
-    
+
 
     useEffect(() => {
         let cancelled = false;
@@ -100,7 +100,7 @@ export default function Events() {
             if (!cancelled) setLoading(false);
           }
         }
-    
+
         const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://localhost:8000/";
         const API_V1 = "api/v1";
         load();
@@ -115,7 +115,7 @@ export default function Events() {
                 Events
             </h1>
         </div>
-    
+
 
         <div className="flex flex-col justify-center pt-15">
             <div className="flex min-w-[700px] sm:min-w-0 max-w-6xl mx-auto">
@@ -123,12 +123,12 @@ export default function Events() {
                 <Button onClick={handleCalendarButton} className={calendarButtonStyle} size="default" variant="default">Calendar</Button>
             </div>
 
-            {eventsButton && 
+            {eventsButton &&
             <div className="flex flex-col justify-center items-center pb-25">
                 <div className='flex w-full justify-start items-center py-5 px-65'>
                     <Button className="bg-zinc-900 text-white" variant="outline" onClick={handleCreate}>Create Event<Plus className="w-4 h-4" /></Button>
                     {dialogOpen && (
-                      <EventDialog 
+                      <EventDialog
                         //key={editingEvent?.id ?? "create"}
                         open={dialogOpen}
                         onOpenChange={setDialogOpen}
@@ -136,7 +136,7 @@ export default function Events() {
                         onSuccess={() => {
                           fetchEvents().then((data) => setEvents(data.data));
                         }}/>
-                    )} 
+                    )}
                 </div>
                 <div className='grid grid-cols-2 gap-y-20 gap-x-30 px-65'>
                     {events.length === 0 && !loading && <p>No events found.</p>}
@@ -163,7 +163,7 @@ export default function Events() {
                                     </div>
                                 </div>
                             </Link>
-                            <div className='flex flex-row gap-2 pt-2'> 
+                            <div className='flex flex-row gap-2 pt-2'>
                                 <button onClick={() => handleDeleteClick(data.id)}>
                                     <Trash2 color="red" size={16} />
                                 </button>
@@ -172,7 +172,7 @@ export default function Events() {
                                 </button>
                             </div>
                         </div>
-                        
+
                     )}
                 </div>
 

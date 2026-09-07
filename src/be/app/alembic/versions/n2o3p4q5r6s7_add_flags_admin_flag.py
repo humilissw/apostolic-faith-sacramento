@@ -18,13 +18,11 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.execute(
-        """
+    op.execute("""
         INSERT INTO feature_flags (id, name, description, is_enabled, created_on, updated_on)
         VALUES (UUID(), 'enable_flags_admin', 'Show the feature flags admin page', 1, NOW(), NULL)
         ON DUPLICATE KEY UPDATE is_enabled = 1, updated_on = NOW()
-        """
-    )
+        """)
 
 
 def downgrade() -> None:

@@ -193,12 +193,12 @@ export function EventDialog({
             </Field>
             <Field>
               <Label htmlFor="date-1">Date</Label>
-              <Input 
-                id="date-1" 
-                name="date" 
-                type="date" 
-                value={eventDate} 
-                onChange={(e) => setEventDate(e.target.value)} 
+              <Input
+                id="date-1"
+                name="date"
+                type="date"
+                value={eventDate}
+                onChange={(e) => setEventDate(e.target.value)}
                 required
               />
             </Field>

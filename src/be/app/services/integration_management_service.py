@@ -6,7 +6,6 @@ from urllib.parse import urlparse
 from app.repositories.integration_repo import IntegrationConfigRepository
 from app.services.integration_service import KNOWN_INTEGRATIONS, IntegrationService
 
-
 # SSRF protection: allowed schemes and blocked host patterns
 ALLOWED_URL_SCHEMES = {"http", "https"}
 BLOCKED_HOST_PATTERNS = [

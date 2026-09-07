@@ -38,4 +38,3 @@ htmlcov/
 !security_keys/private.pem
 !security_keys/public_key.pem
 !security_keys/public.pem
-

@@ -55,6 +55,17 @@ repos:
       - id: bandit
         args: ['-x', 'src/be/', '-c', 'src/be/pyproject.toml', '-r', 'src/be/app/']
 
+  # Auto-fix wrong left-padding inside Python multi-line strings (docstrings)
+  # so the editorconfig-checker below passes instead of failing CI. Black
+  # preserves docstring indentation, so these need a dedicated fixer.
+  - repo: local
+    hooks:
+      - id: fix-python-string-indent
+        name: fix wrong left-padding in python strings
+        entry: python3 scripts/fix_python_string_indent.py
+        language: system
+        types: [python]
+
   # Documentation
   - repo: https://github.com/editorconfig-checker/editorconfig-checker
     rev: v3.11.1

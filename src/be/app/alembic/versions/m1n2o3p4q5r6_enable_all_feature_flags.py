@@ -43,13 +43,11 @@ KNOWN_FLAGS = [
 def upgrade() -> None:
     for name, desc in KNOWN_FLAGS:
         # fid = _flag_uuid(name)
-        op.execute(
-            f"""
+        op.execute(f"""
             INSERT INTO feature_flags (id, name, description, is_enabled, created_on, updated_on)
             VALUES ('UUID()', '{name}', '{desc}', 1, NOW(), NULL)
             ON DUPLICATE KEY UPDATE is_enabled = 1, updated_on = NOW()
-            """
-        )
+            """)
 
 
 def downgrade() -> None:

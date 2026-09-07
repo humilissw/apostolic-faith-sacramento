@@ -27,7 +27,7 @@ _ctx.verify_mode = ssl.CERT_NONE
 
 
 class _Handler(BaseHTTPRequestHandler):
-    def do_GET(self):  # noqa: N802 - http.server API
+    def do_GET(self):
         try:
             with urllib.request.urlopen(BACKEND_URL, timeout=5, context=_ctx) as resp:
                 body = resp.read()

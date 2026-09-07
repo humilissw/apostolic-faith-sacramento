@@ -12,6 +12,7 @@ class EventPublic(BaseModel):
     created_on: datetime
     updated_on: datetime | None = None
 
+
 class EventsPublic(BaseModel):
     data: list[EventPublic]
     count: int

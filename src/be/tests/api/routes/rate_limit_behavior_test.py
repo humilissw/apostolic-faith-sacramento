@@ -42,9 +42,7 @@ def _login_url() -> str:
 
 
 async def _attempt(client: httpx.AsyncClient, username: str, password: str) -> httpx.Response:
-    return await client.post(
-        _login_url(), data={"username": username, "password": password}
-    )
+    return await client.post(_login_url(), data={"username": username, "password": password})
 
 
 async def test_repeated_failed_logins_lock_out_after_max_attempts(rl_client):

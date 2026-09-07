@@ -94,11 +94,11 @@ class RateLimitMiddleware:
     Default limits (per client IP, resolved via X-Forwarded-For when proxied):
     - All API routes: 100 requests per minute
     - Login / signup: NOT consumed here — enforced per-endpoint, where the
-      handler can distinguish successful logins from failed ones. The
-      middleware only enforces the resulting lockout (non-consuming check)
-      so a locked-out client never reaches the route logic.
+    handler can distinguish successful logins from failed ones. The
+    middleware only enforces the resulting lockout (non-consuming check)
+    so a locked-out client never reaches the route logic.
     - Token refresh: 60 requests per 5 minutes (token refresh is a normal,
-      frequent client operation — especially with multiple tabs open).
+    frequent client operation — especially with multiple tabs open).
 
     Limits are applied per-IP and persist for the lifetime of the process.
     For production, consider using a distributed rate limiter (Redis-backed).
@@ -145,10 +145,10 @@ class RateLimitMiddleware:
         # *successful* login would eat into the user's allowance.
         if "login/access-token" in request.url.path:
             key = login_bucket_key(client_ip)
-            if not _check_rate_limit(
-                key, LOGIN_MAX_ATTEMPTS, LOGIN_WINDOW_SECONDS, consume=False
-            ):
-                await self._reject(scope, receive, send, retry_after_seconds(key, LOGIN_WINDOW_SECONDS))
+            if not _check_rate_limit(key, LOGIN_MAX_ATTEMPTS, LOGIN_WINDOW_SECONDS, consume=False):
+                await self._reject(
+                    scope, receive, send, retry_after_seconds(key, LOGIN_WINDOW_SECONDS)
+                )
                 return
 
         # Check token refresh limits
