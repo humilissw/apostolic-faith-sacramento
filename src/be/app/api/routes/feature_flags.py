@@ -25,8 +25,16 @@ async def list_feature_flags(
     session: SessionDep,
     current_user: CurrentUser,
 ) -> FeatureFlagsPublic:
-    """List all feature flags (superuser only)."""
+    """List all feature flags (superuser only).
+
+    Self-heals missing rows first: the frontend navbar renders admin links
+    from this endpoint's payload merged over client defaults, so an empty or
+    partially-seeded table silently hides every admin link after login.
+    pre_seed_flags() inserts only flags that are absent — it never touches
+    is_enabled on existing rows, so admin-toggled values survive.
+    """
     service = _get_service(session)
+    await service.pre_seed_flags()
     items, total = await service.get_all()
     return FeatureFlagsPublic(
         data=[FeatureFlagPublic.model_validate(i.model_dump()) for i in items],

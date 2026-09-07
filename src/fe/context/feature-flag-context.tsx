@@ -8,6 +8,8 @@ import {
   useState,
 } from "react";
 
+import { fetchWithAuth } from "@/lib/api/auth";
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://localhost:8000/";
 const API_V1 = "api/v1";
 
@@ -29,6 +31,7 @@ const DEFAULT_FLAGS: Record<string, boolean> = {
   enable_donate: false,
   enable_sermon: true,
   enable_live_service: true,
+  enable_events: true,
   // Admin features default to disabled when backend is unreachable
   enable_video_uploads: false,
   enable_scheduler_calendar: false,
@@ -50,7 +53,13 @@ export function FeatureFlagProvider({ children }: { children: React.ReactNode })
 
     async function fetchFlags() {
       try {
-        const res = await fetch(`${API_BASE}${API_V1}/feature-flags/`);
+        // The endpoint is superuser-only, so the request MUST carry the
+        // session cookie. A bare fetch() defaults to same-origin credentials
+        // and never sends cookies cross-origin (SPA :3000 -> API :8002),
+        // which made admins silently fall back to DEFAULT_FLAGS (admin nav
+        // links hidden after login). fetchWithAuth adds credentials:"include"
+        // and refreshes once on 401.
+        const res = await fetchWithAuth(`${API_BASE}${API_V1}/feature-flags/`);
         if (!res.ok || cancelled) return;
         const data = await res.json();
         const flagMap: Record<string, boolean> = {};

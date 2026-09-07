@@ -34,7 +34,14 @@ def send_email(
     subject: str = "",
     html_content: str = "",
 ) -> None:
-    assert settings.emails_enabled, "no provided configuration for email variables"
+    if not settings.emails_enabled:
+        # Log before raising so the failure is visible in backend logs instead
+        # of dying as a bare AssertionError deep in an email send.
+        logger.error(
+            "Cannot send email to %s: emails are disabled (SMTP_HOST/SMTP_USER " "not configured)",
+            email_to,
+        )
+        raise RuntimeError("Email delivery is not configured (emails_enabled=False)")
     message = emails.Message(
         subject=subject,
         html=html_content,
@@ -44,15 +51,37 @@ def send_email(
         "host": settings.SMTP_HOST,
         "port": settings.SMTP_PORT,
     }
-    if settings.SMTP_TLS:
+    if settings.smtp_use_tls:
         smtp_options["tls"] = True
-    elif settings.SMTP_SSL:
+    elif settings.smtp_use_ssl:
         smtp_options["ssl"] = True
     if settings.SMTP_USER:
         smtp_options["user"] = settings.SMTP_USER
     if settings.SMTP_PASSWORD:
         smtp_options["password"] = settings.SMTP_PASSWORD
-    response = message.send(to=email_to, smtp=smtp_options)
+    try:
+        response = message.send(to=email_to, smtp=smtp_options)
+    except Exception:
+        logger.exception(
+            "Failed to send email to %s via %s:%s", email_to, settings.SMTP_HOST, settings.SMTP_PORT
+        )
+        raise
+    # The `emails` backend does NOT raise on connection/SMTP errors: it returns
+    # an SMTPResponse carrying the failure (status_code None/non-250). Treat a
+    # non-successful response as an error so callers can react and the cause is
+    # logged, instead of silently reporting success.
+    if not getattr(response, "success", False):
+        cause = getattr(response, "error", None)
+        logger.error(
+            "SMTP delivery to %s failed: status_code=%s status_text=%s error=%s (host=%s:%s)",
+            email_to,
+            getattr(response, "status_code", None),
+            getattr(response, "status_text", None),
+            cause,
+            settings.SMTP_HOST,
+            settings.SMTP_PORT,
+        )
+        raise RuntimeError(f"Email delivery to {email_to} failed: {cause or response!r}")
     logger.info(f"send email result: {response}")
 
 
