@@ -122,14 +122,19 @@ def create_app(settings: Settings | None = None) -> Flask:
     return app
 
 
+#: Module-level WSGI instance. PaaS hosts (Vercel and friends) import this
+#: module expecting a top-level ``app`` Flask object; the factory alone is
+#: not enough for their static detection. Settings are read from the
+#: environment at import time, which is exactly how those platforms inject
+#: configuration.
+app = create_app()
+
+
 def main() -> None:
     """Run the BFF over HTTPS (no plain HTTP)."""
     import os
 
     from werkzeug.serving import run_simple
-
-    settings = load_settings()
-    app = create_app(settings)
 
     host = os.environ.get("BFF_HOST", "0.0.0.0")  # nosec B104 -- container service bind
     port = int(os.environ.get("BFF_PORT", "8002"))
