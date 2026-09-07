@@ -85,9 +85,9 @@ class AssignmentService:
         if assignment is None:
             return None, []
 
-        # Send email notification
+        # Send email notification (best-effort: never fail the assignment itself)
         scheduler_svc = SchedulerService(self.session)
-        await scheduler_svc.send_assignment_notification(
+        await scheduler_svc.notify_assignment_safe(
             user_id=assignment.user_id,
             assignment_type=assignment_in.type.value,
             role=assignment_in.role,

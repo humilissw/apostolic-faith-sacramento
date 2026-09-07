@@ -22,7 +22,9 @@ export interface FeatureFlagsResponse {
 // --- Feature flag API functions ---
 
 export async function fetchFeatureFlags(): Promise<FeatureFlagsResponse> {
-  const res = await fetch(`${API_BASE}${API_V1}/feature-flags/`);
+  // Must carry the session cookie (endpoint is superuser-only); a bare
+  // fetch() drops cookies cross-origin. See feature-flag-context.
+  const res = await fetchWithAuth(`${API_BASE}${API_V1}/feature-flags/`);
   if (!res.ok) {
     throw new Error("Failed to fetch feature flags");
   }

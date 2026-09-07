@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,13 +8,24 @@ import Link from "next/link";
 import AFCLogo from "@/components/afc-logo";
 import { resetPassword } from "@/lib/api/auth";
 
-export default function ResetPasswordPage() {
-  // Read token directly from URL (lazy initializer) to avoid useSearchParams() during static export
-  const [token] = useState(() =>
-    typeof window !== "undefined"
-      ? new URLSearchParams(window.location.search).get("token") ?? ""
-      : ""
+// Read a query parameter only on the client. During prerender (static export)
+// there is no window, so the server snapshot is "" — the HTML and the client's
+// first render therefore AGREE. Reading window.location during render (even in
+// a lazy useState initializer) makes them disagree: the shipped button is
+// disabled="" but the client renders it enabled — a hydration mismatch React
+// refuses to patch, leaving "Reset Password" permanently unclickable.
+const noSubscribe = () => () => {};
+
+function useQueryParam(name: string): string {
+  return useSyncExternalStore(
+    noSubscribe,
+    () => new URLSearchParams(window.location.search).get(name) ?? "",
+    () => "",
   );
+}
+
+export default function ResetPasswordPage() {
+  const token = useQueryParam("token");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);

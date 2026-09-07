@@ -3,6 +3,7 @@ Authentication service for handling user authentication operations.
 Contains business logic for password recovery and reset.
 """
 
+import logging
 import secrets
 from datetime import UTC, datetime, timedelta
 
@@ -18,6 +19,8 @@ from app.utils import (
     generate_reset_password_email,
     send_email,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class AuthService:
@@ -94,6 +97,10 @@ class AuthService:
                 await self.send_set_password_email(user)
                 sent.append(email)
             except Exception:
+                # The client response must stay generic (no enumeration), but
+                # the server log needs the full error so delivery failures are
+                # diagnosable.
+                logger.exception("Password recovery email failed for %s", email)
                 failed.append(email)
 
         if raise_if_all_fail and failed and not sent:

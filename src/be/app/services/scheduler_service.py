@@ -3,11 +3,15 @@ Scheduler service for handling assignment operations.
 Contains business logic for assignment notifications and conflict management.
 """
 
+import logging
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import User
 from app.config import settings
 from app.utils import generate_assignment_email, send_email
+
+logger = logging.getLogger(__name__)
 
 
 class SchedulerService:
@@ -60,3 +64,35 @@ class SchedulerService:
             subject=email_data.subject,
             html_content=email_data.html_content,
         )
+
+    async def notify_assignment_safe(
+        self,
+        user_id: str,
+        assignment_type: str,
+        role: str,
+        event_date: str,
+        instrument: str | None = None,
+        notes: str | None = None,
+    ) -> None:
+        """Send an assignment notification without failing the core flow.
+
+        A delivery failure is logged (with full traceback) but never raised:
+        the assignment itself has already been committed and must not be
+        rolled back or reported as failed because of a notification email.
+        """
+        try:
+            await self.send_assignment_notification(
+                user_id=user_id,
+                assignment_type=assignment_type,
+                role=role,
+                event_date=event_date,
+                instrument=instrument,
+                notes=notes,
+            )
+        except Exception:
+            logger.exception(
+                "Assignment notification email failed for user_id=%s (%s / %s)",
+                user_id,
+                assignment_type,
+                role,
+            )
