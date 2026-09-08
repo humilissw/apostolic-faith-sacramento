@@ -33,6 +33,11 @@ HOP_BY_HOP_REQUEST_HEADERS = {
     "transfer-encoding",
     "upgrade",
     "accept-encoding",  # we control the request; never ask upstream to compress
+    # The BFF owns auth server-side: it injects Authorization per-request from
+    # its signed session. Forwarding the browser's cookies would let any SPA
+    # cookie (e.g. a stale localhost-wide `access_token` shared across ports)
+    # silently authenticate unrelated callers against the backend.
+    "cookie",
 }
 
 #: Response headers that must not be copied back to the client.
@@ -149,6 +154,13 @@ def forward(
         auth_cookies = _extract_token_cookies(upstream.headers.get_list("set-cookie"))
     finally:
         upstream.close()
+        # The backend's responses carry access_token/refresh_token Set-Cookie
+        # headers. Never let the shared client's cookie jar persist them: it
+        # would replay whichever user logged in last on EVERY later request —
+        # including anonymous ones — authenticating them as that user. The BFF
+        # keeps tokens only in its own signed session (see auth_cookies above).
+        if client.cookies:
+            client.cookies.clear()
 
     resp = Response(
         response_body,

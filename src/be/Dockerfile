@@ -33,9 +33,9 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 COPY --from=builder /app /app
 
 RUN groupadd -r appuser && useradd -r -g appuser appuser \
-    && mkdir -p /app/security_keys \
+    && mkdir -p /app/security_keys /app/data/event_flyers \
     && chmod 600 /app/security_keys/*.pem 2>/dev/null || true \
-    && chown -R appuser:appuser /app/security_keys
+    && chown -R appuser:appuser /app/security_keys /app/data
 USER appuser
 
 EXPOSE 8000

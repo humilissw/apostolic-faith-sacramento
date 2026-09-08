@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { API_BASE, API_V1 } from "@/lib/api/base";
 
 const KNOWN_FLAGS: Record<string, { displayName: string; icon: string }> = {
   enable_home: { displayName: "Home", icon: "Home" },
@@ -74,8 +75,6 @@ export default function FlagsAdminPage() {
       }
     }
 
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://localhost:8000/";
-    const API_V1 = "api/v1";
     load();
     return () => { cancelled = true; };
   }, []);

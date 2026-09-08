@@ -5,9 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { fetchWithAuth } from "@/lib/api";
+import { API_BASE, API_V1 } from "@/lib/api/base";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://localhost:8000/";
-const API_V1 = "api/v1";
 
 export default function UploadVideosPage() {
   const [uploading, setUploading] = useState(false);

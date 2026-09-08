@@ -3,8 +3,8 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
+import { API_BASE } from "@/lib/api/base";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://localhost:8000/";
 
 function GoogleCallbackContent() {
   const router = useRouter();

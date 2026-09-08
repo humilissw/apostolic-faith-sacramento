@@ -6,6 +6,7 @@ import {
 } from "@/components/ui/button";
 import Link from "next/link";
 import HomepageParagraph from "@/components/homepage-paragraph"
+import UpcomingEvent from "@/components/upcoming-event"
 
 export default function Home() {
   const homeEnabled = useFeatureFlag("enable_home");
@@ -54,6 +55,7 @@ export default function Home() {
         </Link>
       </div>
     </div>
+    <UpcomingEvent />
     </div>
   )
 }

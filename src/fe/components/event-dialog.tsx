@@ -14,7 +14,7 @@ import { Field, FieldGroup } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useState } from "react"
-import { createEvent, updateEvent, type Event } from "@/lib/api"
+import { createEvent, updateEvent, uploadEventFlyer, deleteEventFlyer, flyerImageUrl, parseServerDate, type Event } from "@/lib/api"
 import { toast } from "sonner"
 
 interface EventDialogProps {
@@ -63,7 +63,7 @@ function fromZonedTime(dateStr: string, timeStr: string): string {
 
 // "yyyy-MM-dd" input value for an ISO timestamp, viewed in EVENT_TIME_ZONE.
 function toInputDateValue(isoString: string): string {
-  const date = new Date(isoString);
+  const date = parseServerDate(isoString);
   if (Number.isNaN(date.getTime())) return "";
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: EVENT_TIME_ZONE,
@@ -75,7 +75,7 @@ function toInputDateValue(isoString: string): string {
 
 // "HH:mm" input value for an ISO timestamp, viewed in EVENT_TIME_ZONE.
 function toTimeInputValue(isoString: string): string {
-  const date = new Date(isoString);
+  const date = parseServerDate(isoString);
   if (Number.isNaN(date.getTime())) return "";
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: EVENT_TIME_ZONE,
@@ -99,6 +99,10 @@ export function EventDialog({
   const [eventDate, setEventDate] = useState(
     event?.date ? toInputDateValue(event.date) : "",
   );
+  // Separate end date lets an event span a range of days; defaults to the start date.
+  const [eventEndDate, setEventEndDate] = useState(
+    event?.end_time ? toInputDateValue(event.end_time) : "",
+  );
   const [eventStartTime, setEventStartTime] = useState(
     event?.start_time ? toTimeInputValue(event.start_time) : "",
   );
@@ -107,6 +111,8 @@ export function EventDialog({
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [flyerFile, setFlyerFile] = useState<File | null>(null);
+  const [removeFlyer, setRemoveFlyer] = useState(false);
 
   // Re-seed the form whenever the dialog opens or switches events, so state
   // is never stale if the dialog stays mounted between edits. Adjusting state
@@ -119,11 +125,17 @@ export function EventDialog({
       setEventTitle(event?.title ?? "");
       setEventDescription(event?.description ?? "");
       setEventDate(event?.date ? toInputDateValue(event.date) : "");
+      setEventEndDate(event?.end_time ? toInputDateValue(event.end_time) : "");
       setEventStartTime(event?.start_time ? toTimeInputValue(event.start_time) : "");
       setEventEndTime(event?.end_time ? toTimeInputValue(event.end_time) : "");
       setError(null);
+      setFlyerFile(null);
+      setRemoveFlyer(false);
     }
   }
+
+  const flyerSrc = !removeFlyer ? flyerImageUrl(event?.flyer_url ?? null) : null;
+  const flyerPreviewUrl = flyerFile ? URL.createObjectURL(flyerFile) : flyerSrc;
 
   const handleSave = async () => {
     const trimmedTitle = eventTitle.trim();
@@ -133,10 +145,20 @@ export function EventDialog({
       return;
     }
 
+    const effectiveEndDate = eventEndDate || eventDate;
+    if (effectiveEndDate < eventDate) {
+      setError("End date must be on or after the start date");
+      return;
+    }
+
     const start = fromZonedTime(eventDate, eventStartTime);
-    const end = fromZonedTime(eventDate, eventEndTime);
+    const end = fromZonedTime(effectiveEndDate, eventEndTime);
     if (new Date(end).getTime() <= new Date(start).getTime()) {
-      setError("End time must be after start time");
+      setError(
+        effectiveEndDate === eventDate
+          ? "End time must be after start time"
+          : "End date and time must be after the start",
+      );
       return;
     }
     const date = fromZonedTime(eventDate, "00:00");
@@ -152,10 +174,18 @@ export function EventDialog({
         end_time: end,
       };
       if (!event) {
-        await createEvent(payload);
+        const created = await createEvent(payload);
+        if (flyerFile) {
+          await uploadEventFlyer(created.id, flyerFile);
+        }
         toast.success("Event created");
       } else {
         await updateEvent(event.id, payload);
+        if (flyerFile) {
+          await uploadEventFlyer(event.id, flyerFile);
+        } else if (removeFlyer && event.flyer_url) {
+          await deleteEventFlyer(event.id);
+        }
         toast.success("Event updated");
       }
       onOpenChange(false);
@@ -169,13 +199,18 @@ export function EventDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          void handleSave();
-        }}
-      >
-        <DialogContent className="sm:max-w-sm">
+      {/* The form must live INSIDE DialogContent: Radix portals the content to
+          document.body, so a form wrapping DialogContent would be left behind
+          and the submit button would no longer be part of it — clicking Save
+          would do nothing. */}
+      <DialogContent className="sm:max-w-sm">
+        <form
+          className="contents"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void handleSave();
+          }}
+        >
           <DialogHeader>
             <DialogTitle>{event ? "Edit Event" : "Add Event"}</DialogTitle>
             <DialogDescription>
@@ -203,12 +238,59 @@ export function EventDialog({
               />
             </Field>
             <Field>
+              <Label htmlFor="end-date-1">End Date (leave blank for a single-day event)</Label>
+              <Input
+                id="end-date-1"
+                name="end_date"
+                type="date"
+                value={eventEndDate}
+                min={eventDate || undefined}
+                onChange={(e) => setEventEndDate(e.target.value)}
+              />
+            </Field>
+            <Field>
               <Label htmlFor="start-time-1">Start Time</Label>
               <Input id="start-time-1" name="start_time" type="time" value={eventStartTime} onChange={(e) => {setEventStartTime(e.target.value)}} required/>
             </Field>
             <Field>
               <Label htmlFor="end-time-1">End Time</Label>
               <Input id="end-time-1" name="end_time" type="time" value={eventEndTime} onChange={(e) => setEventEndTime(e.target.value)} required/>
+            </Field>
+            <Field>
+              <Label htmlFor="flyer-1">Flyer (shown on events page &amp; homepage)</Label>
+              <Input
+                id="flyer-1"
+                name="flyer"
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] ?? null;
+                  setFlyerFile(file);
+                  if (file) setRemoveFlyer(false);
+                }}
+              />
+              {flyerPreviewUrl && !removeFlyer && (
+                // Flyer images are served by the backend API, not a static host,
+                // so use a plain img rather than next/image.
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={flyerPreviewUrl}
+                  alt="Flyer preview"
+                  className="mt-2 max-h-40 w-auto rounded-md border border-zinc-300 object-contain"
+                />
+              )}
+              {event?.flyer_url && !removeFlyer && (
+                <button
+                  type="button"
+                  className="mt-1 text-sm text-red-600 underline self-start"
+                  onClick={() => { setRemoveFlyer(true); setFlyerFile(null); }}
+                >
+                  Remove flyer
+                </button>
+              )}
+              {removeFlyer && (
+                <p className="text-sm text-zinc-500">Flyer will be removed when you save.</p>
+              )}
             </Field>
           </FieldGroup>
           {error && <p className="text-sm text-red-600">{error}</p>}
@@ -223,8 +305,8 @@ export function EventDialog({
               {saving ? "Saving..." : "Save changes"}
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </form>
+        </form>
+      </DialogContent>
     </Dialog>
   )
 }

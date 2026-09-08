@@ -294,6 +294,8 @@ class Event(DefaultBase, table=True):  # type: ignore[call-arg]
     date: datetime.datetime = Field(nullable=False)
     start_time: datetime.datetime = Field(nullable=False)
     end_time: datetime.datetime = Field(nullable=False)
+    # Filename of the uploaded flyer inside settings.EVENT_FLYER_DIR (None = no flyer).
+    flyer_path: str | None = Field(default=None, max_length=1000, nullable=True)
 
 
 class Member(DefaultBase, table=True):  # type: ignore[call-arg]

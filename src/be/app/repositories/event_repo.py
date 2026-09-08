@@ -74,7 +74,6 @@ class EventRepository:
         count_statement = select(func.count()).select_from(Event)
         count_result = await self.session.execute(count_statement)
         total_count = count_result.scalar()
-        print("making it here?")
 
         # Get paginated results
         statement = select(Event).offset(skip).limit(limit)
@@ -110,3 +109,45 @@ class EventRepository:
         """
         await self.session.delete(db_event)
         await self.session.commit()
+
+    async def get_many_by_ids(self, event_ids: list[str]) -> list[Event]:
+        """
+        Retrieve multiple event entries by id.
+
+        Args:
+            event_ids: List of event ids
+        """
+        if not event_ids:
+            return []
+        statement = select(Event).where(Event.id.in_(event_ids))  # type: ignore[attr-defined]
+        result = await self.session.execute(statement)
+        return list(result.scalars().all())
+
+    async def delete_many(self, db_events: list[Event]) -> None:
+        """
+        Delete multiple event entries in a single transaction.
+
+        Args:
+            db_events: List of Event objects to delete
+        """
+        for db_event in db_events:
+            await self.session.delete(db_event)
+        await self.session.commit()
+
+    async def set_flyer(self, db_event: Event, flyer_filename: str | None) -> Event:
+        """
+        Set or clear the flyer filename for an event.
+
+        Args:
+            db_event: Event object to update
+            flyer_filename: Stored flyer filename, or None to clear
+
+        Returns:
+            Event: Updated event object
+        """
+        db_event.flyer_path = flyer_filename
+        db_event.updated_on = datetime.now(UTC)
+        self.session.add(db_event)
+        await self.session.commit()
+        await self.session.refresh(db_event)
+        return db_event

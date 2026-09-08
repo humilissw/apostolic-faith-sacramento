@@ -222,3 +222,6 @@ deploy_to_prod.sh.bak.*
 *.prod
 .venv/
 src/fe/playwright-report/
+
+# Uploaded event flyer images (runtime storage)
+src/be/data/event_flyers/

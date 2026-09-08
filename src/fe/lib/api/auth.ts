@@ -1,5 +1,4 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://localhost:8000/";
-const API_V1 = "api/v1";
+import { API_BASE, API_V1 } from "./base";
 
 // The SPA talks to the BFF (Flask) which sits in front of the FastAPI backend.
 // Auth is owned by the BFF server-side: it keeps the JWTs in a signed session

@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { API_BASE, API_V1 } from "@/lib/api/base";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://localhost:8000/";
-const API_V1 = "api/v1";
 
 interface VideoUpload {
   id: string;

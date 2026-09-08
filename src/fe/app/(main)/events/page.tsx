@@ -8,12 +8,17 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from 'react';
 import Calendar from "@/components/calendar";
 import TestCalendar from "@/components/test-calendar";
+import { API_BASE, API_V1 } from "@/lib/api/base";
 
 import {
   fetchEvents,
+  flyerImageUrl,
+  formatEventDateRange,
+  formatEventTime,
   type EventsResponse,
   type Event,
 } from "@/lib/api";
+import { FlyerImage } from "@/components/flyer-image";
 
 
 export default function Events() {
@@ -60,8 +65,6 @@ export default function Events() {
           }
         }
 
-        const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://localhost:8000/";
-        const API_V1 = "api/v1";
         load();
         return () => { cancelled = true; };
       }, []);
@@ -87,6 +90,14 @@ export default function Events() {
                 {events.map((data: Event, index) =>
                     <div className='flex flex-col md:flex-row '
                     key={index}>
+                        {data.flyer_url ? (
+                            <FlyerImage
+                            src={flyerImageUrl(data.flyer_url) ?? ""}
+                            alt={`Flyer for ${data.title}`}
+                            title={data.title}
+                            className='w-90 h-30 md:h-60 object-cover'
+                            />
+                        ) : (
                         <Image
                         src="/tempEventsPhoto.png"
                         width={300}
@@ -94,11 +105,12 @@ export default function Events() {
                         alt="Beige background with photo of cross"
                         className='w-90 h-30 md:h-60'
                         />
+                        )}
                         <div className='flex flex-col pl-5 font-medium font-noto-sans'>
                             <h1 className='text-3xl'>{data.title}</h1>
 
-                            <h1 className='text-black/40 font-normal'>{new Date(data.date).toLocaleDateString('en-US', { day: "2-digit", month: "short"})}</h1>
-                            <h1 className='text-black/40 font-normal'>{new Date(data.start_time).toLocaleTimeString('en-US', { hour: "2-digit", minute: "2-digit", hour12: true })} - {new Date(data.end_time).toLocaleTimeString('en-US', { hour: "2-digit", minute: "2-digit" })}</h1>
+                            <h1 className='text-black/40 font-normal'>{formatEventDateRange(data)}</h1>
+                            <h1 className='text-black/40 font-normal'>{formatEventTime(data.start_time)} - {formatEventTime(data.end_time)}</h1>
                             <h1 className='text-lg pt-5'>{data.description}</h1>
                         </div>
 

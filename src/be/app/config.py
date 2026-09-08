@@ -107,6 +107,8 @@ class Settings(BaseSettings):
     DEPLOY_QA_HOST: str = ""
     # Dev convenience: run `alembic upgrade head` on app startup (serialized across workers)
     RUN_MIGRATIONS_ON_STARTUP: bool = False
+    # Local directory where event flyer images are stored (served publicly, write via events:admin)
+    EVENT_FLYER_DIR: str = "data/event_flyers"
 
     @computed_field  # type: ignore[prop-decorator]
     @property

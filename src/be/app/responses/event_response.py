@@ -11,6 +11,8 @@ class EventPublic(BaseModel):
     end_time: datetime
     created_on: datetime
     updated_on: datetime | None = None
+    # Public URL path for the uploaded flyer image (None when no flyer exists).
+    flyer_url: str | None = None
 
 
 class EventsPublic(BaseModel):

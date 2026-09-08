@@ -1,5 +1,4 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://localhost:8000/";
-const API_V1 = "api/v1";
+import { API_BASE, API_V1 } from "./api/base";
 
 export interface LoginResponse {
   access_token: string;
@@ -948,6 +947,7 @@ export interface Event {
   end_time: string;
   created_on: string;
   updated_on: string | null;
+  flyer_url: string | null;
 }
 
 export interface EventCreateInput {
@@ -993,11 +993,8 @@ export async function createEvent(data: EventCreateInput): Promise<Event> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  console.log("AM i in here");
   if (!res.ok) {
-    console.log("Failing?");
     const body = await res.text();
-    console.log("Body:", body);
     throw new Error(body || "Failed to create event");
   }
   return res.json();
@@ -1023,5 +1020,120 @@ export async function deleteEvent(id: string): Promise<void> {
   if (!res.ok) {
     const body = await res.text();
     throw new Error(body || "Failed to delete event");
+  }
+}
+
+// Delete multiple events in a single request.
+export async function deleteEvents(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  const res = await fetchWithAuth(`${API_BASE}${API_V1}/events/bulk`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ event_ids: ids }),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(body || "Failed to delete events");
+  }
+}
+
+// Events are stored/displayed in the church's local timezone.
+export const EVENT_TIME_ZONE = "America/Los_Angeles";
+
+// The backend serialises datetimes without a zone suffix (they are UTC
+// wall-clock: the dialog converts entered Pacific wall-clock times to UTC ISO
+// before saving). Attach "Z" so they parse as the instant they represent;
+// always *format* them in EVENT_TIME_ZONE so what admins typed round-trips.
+export function parseServerDate(value: string): Date {
+  const parsed = /Z|[+-]\d{2}:\d{2}$/.test(value) ? new Date(value) : new Date(`${value}Z`);
+  return Number.isNaN(parsed.getTime()) ? new Date(NaN) : parsed;
+}
+
+// "yyyy-MM-dd" calendar-day key for an instant, viewed in EVENT_TIME_ZONE.
+function dayKeyInZone(date: Date): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: EVENT_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+}
+
+// True when an event's start and end fall on different calendar days
+// (i.e. it spans a range of days).
+export function isMultiDayEvent(event: { start_time: string; end_time: string }): boolean {
+  return dayKeyInZone(parseServerDate(event.start_time)) !== dayKeyInZone(parseServerDate(event.end_time));
+}
+
+// Every calendar day ("yyyy-MM-dd" in EVENT_TIME_ZONE) an event occupies,
+// from its start day through its end day inclusive. Multi-day events appear
+// on the calendar for each of these days.
+export function eventCalendarDays(event: { start_time: string; end_time: string }): string[] {
+  const start = parseServerDate(event.start_time);
+  const end = parseServerDate(event.end_time);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return [];
+  const startKey = dayKeyInZone(start);
+  const endKey = dayKeyInZone(end);
+  if (endKey <= startKey) return [startKey];
+  const [year, month, day] = startKey.split("-").map(Number);
+  const days = [startKey];
+  // Noon UTC is the same calendar day everywhere in US timezones, so stepping
+  // whole days from noon never skips or duplicates a day across DST changes.
+  for (let i = 1; i <= 366; i++) {
+    const key = dayKeyInZone(new Date(Date.UTC(year, month - 1, day + i, 12)));
+    days.push(key);
+    if (key >= endKey) break;
+  }
+  return days;
+}
+
+// Human-friendly date label; shows a range ("05 Sep - 08 Sep") for events
+// that span multiple days, and a single date otherwise.
+export function formatEventDateRange(event: { date: string; start_time: string; end_time: string }): string {
+  const opts: Intl.DateTimeFormatOptions = { day: "2-digit", month: "short", timeZone: EVENT_TIME_ZONE };
+  const startLabel = parseServerDate(event.date).toLocaleDateString("en-US", opts);
+  if (!isMultiDayEvent(event)) return startLabel;
+  const endLabel = parseServerDate(event.end_time).toLocaleDateString("en-US", opts);
+  return `${startLabel} - ${endLabel}`;
+}
+
+// "6:30 AM"-style time label for an event timestamp, in EVENT_TIME_ZONE.
+export function formatEventTime(value: string): string {
+  return parseServerDate(value).toLocaleTimeString("en-US", {
+    timeZone: EVENT_TIME_ZONE,
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+// Resolve a backend-relative flyer URL (Event.flyer_url) to an absolute URL.
+export function flyerImageUrl(flyerUrl: string | null): string | null {
+  if (!flyerUrl) return null;
+  const base = API_BASE.endsWith("/") ? API_BASE.slice(0, -1) : API_BASE;
+  return `${base}${flyerUrl.startsWith("/") ? "" : "/"}${flyerUrl}`;
+}
+
+export async function uploadEventFlyer(id: string, file: File): Promise<Event> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetchWithAuth(`${API_BASE}${API_V1}/events/${id}/flyer`, {
+    method: "POST",
+    body: formData,
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(body || "Failed to upload flyer");
+  }
+  return res.json();
+}
+
+export async function deleteEventFlyer(id: string): Promise<void> {
+  const res = await fetchWithAuth(`${API_BASE}${API_V1}/events/${id}/flyer`, {
+    method: "DELETE",
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(body || "Failed to delete flyer");
   }
 }

@@ -13,6 +13,12 @@ class EventCreate(BaseModel):
     end_time: datetime.datetime
 
 
+class EventBulkDelete(BaseModel):
+    """Bulk delete request schema."""
+
+    event_ids: list[str] = Field(min_length=1)
+
+
 class EventUpdate(BaseModel):
     """Event update request schema (all fields optional)."""
 

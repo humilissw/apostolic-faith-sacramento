@@ -1,10 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { fetchEvents, eventCalendarDays, formatEventTime, type Event } from '@/lib/api';
 
 interface CalendarEvent {
-  id: number;
-  date: string;
+  id: string;
   title: string;
   description: string;
+  start_time: string;
+  end_time: string;
+  /** Every calendar day ("yyyy-MM-dd") this event occupies (multi-day aware). */
+  days: string[];
 }
 
 const Calendar = () => {
@@ -12,23 +16,33 @@ const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
 
   useEffect(() => {
-    const fetchEvents = async () => {
+    let cancelled = false;
+    const fetchEventsFromApi = async () => {
       try {
-        const response = await fetch('/calendarData.json');
+        // Public events endpoint — new events created in the admin show up here.
+        const response = await fetchEvents();
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch events');
-        }
+        if (cancelled) return;
 
-        const data: CalendarEvent[] = await response.json();
+        const mapped: CalendarEvent[] = response.data.map((event: Event) => ({
+          id: event.id,
+          title: event.title,
+          description: event.description ?? '',
+          start_time: event.start_time,
+          end_time: event.end_time,
+          days: eventCalendarDays(event),
+        }));
 
-        setEvents(data);
+        setEvents(mapped);
       } catch (error) {
         console.error('Error fetching events:', error);
       }
     };
 
-    fetchEvents();
+    fetchEventsFromApi();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const year = currentDate.getFullYear();
@@ -52,15 +66,13 @@ const Calendar = () => {
     const map: Record<string, CalendarEvent[]> = {};
 
     events.forEach((event) => {
-      const eventDate = new Date(event.date);
-
-      const key = `${eventDate.getFullYear()}-${eventDate.getMonth()}-${eventDate.getDate()}`;
-
-      if (!map[key]) {
-        map[key] = [];
-      }
-
-      map[key].push(event);
+      // A multi-day event is registered on every day it spans.
+      event.days.forEach((key) => {
+        if (!map[key]) {
+          map[key] = [];
+        }
+        map[key].push(event);
+      });
     });
 
     return map;
@@ -80,7 +92,7 @@ const Calendar = () => {
 
   // Calendar days
   for (let day = 1; day <= daysInMonth; day++) {
-    const key = `${year}-${month}-${day}`;
+    const key = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const dayEvents = groupedEvents[key] || [];
 
     days.push(
@@ -94,19 +106,11 @@ const Calendar = () => {
 
         <div className="space-y-1">
           {dayEvents.map((event) => {
-            const eventDate = new Date(event.date);
-
-            const eventTime = eventDate.toLocaleTimeString(
-              'en-US',
-              {
-                hour: 'numeric',
-                minute: '2-digit',
-              }
-            );
+            const isContinuation = event.days[0] !== key;
 
             return (
               <div
-                key={event.id}
+                key={`${event.id}-${key}`}
                 className="relative group"
               >
                 {/* Event Card */}
@@ -116,7 +120,7 @@ const Calendar = () => {
                   </div>
 
                   <div className="text-gray-600 truncate">
-                    {eventTime}
+                    {isContinuation ? 'Continues' : formatEventTime(event.start_time)}
                   </div>
                 </div>
 
@@ -127,7 +131,7 @@ const Calendar = () => {
                   </h3>
 
                   <p className="text-xs sm:text-sm text-gray-500 mb-3">
-                    {eventTime}
+                    {formatEventTime(event.start_time)} – {formatEventTime(event.end_time)}
                   </p>
 
                   <div>
