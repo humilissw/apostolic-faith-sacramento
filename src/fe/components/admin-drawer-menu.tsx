@@ -105,6 +105,16 @@ export function AdminMenu() {
         }
       }
 
+      if (isAuthenticated && (auth.hasScope("superuser") || auth.hasScope("events:admin"))) {
+        const eventsAdminItems: DrawerItem[] = [];
+        if (enableEventsAdmin) {
+          eventsAdminItems.push({ title: "Events Admin", url: "/events-admin/", icon: Calendar });
+        }
+        if (eventsAdminItems.length > 0) {
+          drawerItems.push(eventsAdminItems);
+        }
+      }
+
       if (isAuthenticated && auth.hasScope("superuser")) {
         const adminItems: DrawerItem[] = [];
         if (enableUsersAdmin) {
@@ -118,9 +128,6 @@ export function AdminMenu() {
         }
         if (enableFlagsAdmin) {
           adminItems.push({ title: "Feature Flags", url: "/flags-admin/", icon: ToggleRight });
-        }
-        if (enableEventsAdmin) {
-          adminItems.push({ title: "Events Admin", url: "/events-admin/", icon: Calendar });
         }
         if (adminItems.length > 0) {
           drawerItems.push(adminItems);

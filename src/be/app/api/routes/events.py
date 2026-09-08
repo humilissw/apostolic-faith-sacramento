@@ -26,13 +26,13 @@ async def get_readiness() -> str:
 @router.get(
     "/",
     response_model=EventsPublic,
-    dependencies=[require_scope("superuser")],
 )
 async def read_events(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
     """
     Retrieve all event entries.
 
     Returns a list of all event entries with pagination.
+    Public endpoint — used by the public events page.
     """
     repository = EventRepository(session=session)
     events, total_count = await repository.get_all(skip=skip, limit=limit)
@@ -45,13 +45,13 @@ async def read_events(session: SessionDep, skip: int = 0, limit: int = 100) -> A
 @router.get(
     "/{event_id}",
     response_model=EventPublic,
-    dependencies=[require_scope("api:all")],
 )
 async def read_event_by_id(event_id: str, session: SessionDep) -> Any:
     """
     Get event by ID.
 
     Returns a single event entry by its ID.
+    Public endpoint — used by the public events page.
     """
     repository = EventRepository(session=session)
     event = await repository.get_by_id(event_id=event_id)
@@ -77,7 +77,7 @@ async def read_event_by_id(event_id: str, session: SessionDep) -> Any:
     "/",
     response_model=EventPublic,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[require_scope("api:all")],
+    dependencies=[require_scope("events:admin")],
 )
 async def create_event_endpoint(*, session: SessionDep, event_in: EventCreate) -> Any:
     """
@@ -102,7 +102,7 @@ async def create_event_endpoint(*, session: SessionDep, event_in: EventCreate) -
 @router.patch(
     "/{event_id}",
     response_model=EventPublic,
-    dependencies=[require_scope("api:all")],
+    dependencies=[require_scope("events:admin")],
 )
 async def update_event_endpoint(
     *,
@@ -139,7 +139,7 @@ async def update_event_endpoint(
 @router.delete(
     "/{event_id}",
     response_model=Message,
-    dependencies=[require_scope("api:all")],
+    dependencies=[require_scope("events:admin")],
 )
 async def delete_event_endpoint(event_id: str, session: SessionDep) -> Any:
     """

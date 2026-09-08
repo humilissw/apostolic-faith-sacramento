@@ -41,6 +41,7 @@ const DEFAULT_FLAGS: Record<string, boolean> = {
   enable_video_uploads_admin: false,
   enable_integrations: false,
   enable_flags_admin: false,
+  enable_events_admin: false,
   enable_admin_password_reset: false,
 };
 

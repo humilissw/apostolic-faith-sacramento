@@ -33,6 +33,9 @@ class Scope(str, Enum):
     SCHEDULER_ADMIN = "scheduler:admin"
     MEMBER_LIMITED = "member:limited"
 
+    # Events scopes
+    EVENTS_ADMIN = "events:admin"
+
     # Superuser claim (replaces is_superuser boolean)
     SUPERUSER = "superuser"
     # Service-to-service auth

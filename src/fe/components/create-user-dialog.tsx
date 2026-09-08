@@ -38,6 +38,9 @@ const ALL_SCOPES = [
     { value: "scheduler:admin", label: "Admin scheduler" },
     { value: "member:limited", label: "Limited member access" },
   ]},
+  { category: "Events", scopes: [
+    { value: "events:admin", label: "Admin events" },
+  ]},
   { category: "Superuser", scopes: [
     { value: "superuser", label: "Full superuser privileges" },
   ]},

@@ -96,6 +96,7 @@ export default function Navbar() {
   const enableVideoUploadsAdmin = useFeatureFlag("enable_video_uploads_admin");
   const enableIntegrations = useFeatureFlag("enable_integrations");
   const enableFlagsAdmin = useFeatureFlag("enable_flags_admin");
+  const enableEventsAdmin = useFeatureFlag("enable_events_admin");
   const enableAdminPasswordReset = useFeatureFlag("enable_admin_password_reset");
 
   const isAuthenticated = auth.isAuthenticated;
@@ -142,6 +143,16 @@ export default function Navbar() {
     }
     if (schedulerItems.length > 0) {
       navItems.push(schedulerItems);
+    }
+  }
+
+  if (isAuthenticated && (auth.hasScope("superuser") || auth.hasScope("events:admin"))) {
+    const eventsAdminItems: NavItem[] = [];
+    if (enableEventsAdmin) {
+      eventsAdminItems.push({ title: "Events Admin", url: "/events-admin/", icon: Calendar });
+    }
+    if (eventsAdminItems.length > 0) {
+      navItems.push(eventsAdminItems);
     }
   }
 
