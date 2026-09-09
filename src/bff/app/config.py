@@ -28,7 +28,7 @@ def _parse_list(value: str) -> list[str]:
 
 
 def _bool(name: str, default: bool) -> bool:
-    raw = os.environ.get(name)
+    raw = os.getenv(name)
     if raw is None:
         return default
     return raw.strip().lower() in {"1", "true", "yes", "on"}
@@ -75,16 +75,16 @@ class Settings:
 def load_settings() -> Settings:
     """Build a :class:`Settings` from the current environment."""
     return Settings(
-        BACKEND_URL=os.environ.get("BACKEND_URL", "https://localhost:8000"),
+        BACKEND_URL=os.getenv("BACKEND_URL", "https://localhost:8000"),
         BACKEND_VERIFY=_bool("BACKEND_VERIFY", True),
-        BACKEND_CA_BUNDLE=os.environ.get("BACKEND_CA_BUNDLE") or None,
-        SPA_ORIGINS=_parse_list(os.environ.get("SPA_ORIGINS", "")) or ["https://localhost:3000"],
-        SPA_URL=os.environ.get("SPA_URL", "https://localhost:3000").rstrip("/"),
-        SECRET_KEY=os.environ.get("SECRET_KEY") or None,
-        SESSION_COOKIE_NAME=os.environ.get("SESSION_COOKIE_NAME", "bff_session"),
+        BACKEND_CA_BUNDLE=os.getenv("BACKEND_CA_BUNDLE") or None,
+        SPA_ORIGINS=_parse_list(os.getenv("SPA_ORIGINS", "")) or ["https://localhost:3000"],
+        SPA_URL=os.getenv("SPA_URL", "https://localhost:3000").rstrip("/"),
+        SECRET_KEY=os.getenv("SECRET_KEY") or None,
+        SESSION_COOKIE_NAME=os.getenv("SESSION_COOKIE_NAME", "bff_session"),
         SESSION_COOKIE_SECURE=_bool("SESSION_COOKIE_SECURE", True),
-        SESSION_COOKIE_SAMESITE=os.environ.get("SESSION_COOKIE_SAMESITE", "Lax"),
+        SESSION_COOKIE_SAMESITE=os.getenv("SESSION_COOKIE_SAMESITE", "Lax"),
         SESSION_COOKIE_HTTPONLY=_bool("SESSION_COOKIE_HTTPONLY", True),
-        AUTH_CODE_TTL_SECONDS=int(os.environ.get("AUTH_CODE_TTL_SECONDS", "120")),
-        BACKEND_TIMEOUT=float(os.environ.get("BACKEND_TIMEOUT", "30")),
+        AUTH_CODE_TTL_SECONDS=int(os.getenv("AUTH_CODE_TTL_SECONDS", "120")),
+        BACKEND_TIMEOUT=float(os.getenv("BACKEND_TIMEOUT", "30")),
     )
