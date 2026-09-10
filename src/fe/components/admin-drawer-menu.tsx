@@ -32,7 +32,8 @@ import {
   Circle,
   ShieldIcon,
   X,
-  XIcon
+  XIcon,
+  Key
 } from "lucide-react";
 
 import { useState } from "react";
@@ -79,6 +80,7 @@ export function AdminMenu() {
       const enableIntegrations = useFeatureFlag("enable_integrations");
       const enableFlagsAdmin = useFeatureFlag("enable_flags_admin");
       const enableEventsAdmin = useFeatureFlag("enable_events_admin");
+      const enableAdminPasswordReset = useFeatureFlag("enable_admin_password_reset");
 
       const isAuthenticated = auth.isAuthenticated;
 
@@ -128,6 +130,9 @@ export function AdminMenu() {
         }
         if (enableFlagsAdmin) {
           adminItems.push({ title: "Feature Flags", url: "/flags-admin/", icon: ToggleRight });
+        }
+        if (enableAdminPasswordReset) {
+          adminItems.push({ title: "Password Reset", url: "/admin-password-reset/", icon: Key });
         }
         if (adminItems.length > 0) {
           drawerItems.push(adminItems);
