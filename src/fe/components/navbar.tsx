@@ -47,6 +47,7 @@ const publicNav = [
   { title: "Sermons", url: "https://www.youtube.com/@ApostolicFaithSacramento/streams", external: true, icon: Video },
   { title: "Events", url: "/events/", icon: Calendar },
   { title: "Media", url: "/media/", icon: Film },
+  { title: "Donate", url: "/donate/", icon: CreditCard },
   { title: "Contact Us", url: "/contact/", icon: Mail },
 ];
 
