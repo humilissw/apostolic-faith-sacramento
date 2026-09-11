@@ -180,7 +180,7 @@ export default function Events() {
 
                 <div className="flex justify-center sm:gap-15 sm:justify-center">
                   <div className='grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-y-10 lg:gap-x-25 xl:gap-x-35'>
-                    <div className='flex col-span-1 lg:col-span-2 xl:col-span-3'>
+                    <div className='flex gap-3 col-span-1 lg:col-span-2 xl:col-span-3'>
                     <Button className="bg-zinc-900 text-white" variant="outline" onClick={handleCreate}>Create Event<Plus className="w-4 h-4" /></Button>
                     {events.length > 0 && (
                       <label className="flex items-center gap-2 text-sm font-medium cursor-pointer select-none">
