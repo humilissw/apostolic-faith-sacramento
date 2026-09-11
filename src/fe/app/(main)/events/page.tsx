@@ -80,42 +80,42 @@ export default function Events() {
 
 
         <div className="flex flex-col justify-center py-15 sm:gap-15 sm:justify-center sm:py-20">
-            <div className="flex min-w-[700px] sm:min-w-0 max-w-6xl mx-auto">
+            <div className="md:flex min-w-[700px] sm:min-w-0 max-w-6xl mx-auto hidden">
                 <Button onClick={handleEventButton} className={eventButtonStyle} size="default" variant="default">Special Events</Button>
                 <Button onClick={handleCalendarButton} className={calendarButtonStyle} size="default" variant="default">Calendar</Button>
             </div>
 
             {eventsButton &&
-            <div className='grid grid-cols-2 gap-y-20 gap-x-30 px-65 '>
-                {events.map((data: Event, index) =>
-                    <div className='flex flex-col md:flex-row '
-                    key={index}>
-                        {data.flyer_url ? (
-                            <FlyerImage
-                            src={flyerImageUrl(data.flyer_url) ?? ""}
-                            alt={`Flyer for ${data.title}`}
-                            title={data.title}
-                            className='w-90 h-30 md:h-60 object-cover'
-                            />
-                        ) : (
-                        <Image
-                        src="/tempEventsPhoto.png"
-                        width={300}
-                        height={300}
-                        alt="Beige background with photo of cross"
-                        className='w-90 h-30 md:h-60'
-                        />
-                        )}
-                        <div className='flex flex-col pl-5 font-medium font-noto-sans'>
-                            <h1 className='text-3xl'>{data.title}</h1>
-
-                            <h1 className='text-black/40 font-normal'>{formatEventDateRange(data)}</h1>
-                            <h1 className='text-black/40 font-normal'>{formatEventTime(data.start_time)} - {formatEventTime(data.end_time)}</h1>
-                            <h1 className='text-lg pt-5'>{data.description}</h1>
+            <div className="flex justify-center sm:gap-15 sm:justify-center">
+                <div className='grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-y-10 lg:gap-x-25 xl:gap-x-35'>
+                    {events.map((data: Event, index) =>
+                        <div className='flex flex-col'
+                        key={index}>
+                            {data.flyer_url ? (
+                                <FlyerImage
+                                src={flyerImageUrl(data.flyer_url) ?? ""}
+                                alt={`Flyer for ${data.title}`}
+                                title={data.title}
+                                className='w-90 h-30 md:h-60 object-cover'
+                                />
+                            ) : (
+                                <Image
+                                src="/tempEventsPhoto.png"
+                                width={90}
+                                height={30}
+                                alt="Simple Background"
+                                className='w-90 h-30 md:h-60 object-cover'
+                                />
+                                )}
+                            <div className='flex flex-col pt-2 font-medium font-noto-sans w-90 group'>
+                                <h1 className='text-base sm:text-lg lg:text-xl font-semibold leading-snug'>{data.title}</h1>
+                                <h1 className='text-xs sm:text-sm text-gray-500 mt-1'>{formatEventDateRange(data)}</h1>
+                                <h1 className='text-xs sm:text-sm text-gray-500 mt-1'>{formatEventTime(data.start_time)} - {formatEventTime(data.end_time)}</h1>
+                                <h1 className='text-sm sm:text-base text-gray-600 leading-relaxed line-clamp-3 group-hover:line-clamp-none'>{data.description}</h1>
+                            </div>
                         </div>
-
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
             }
 
