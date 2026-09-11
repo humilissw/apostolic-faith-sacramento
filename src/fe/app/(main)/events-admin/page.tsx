@@ -169,15 +169,18 @@ export default function Events() {
         </div>
 
 
-        <div className="flex flex-col justify-center pt-15">
-            <div className="flex min-w-[700px] sm:min-w-0 max-w-6xl mx-auto">
+        <div className="flex flex-col justify-center py-15 sm:gap-15 sm:justify-center sm:py-20">
+            <div className="md:flex min-w-[700px] sm:min-w-0 max-w-6xl mx-auto hidden">
                 <Button onClick={handleEventButton} className={eventButtonStyle} size="default" variant="default">Special Events</Button>
                 <Button onClick={handleCalendarButton} className={calendarButtonStyle} size="default" variant="default">Calendar</Button>
             </div>
 
             {eventsButton &&
             <div className="flex flex-col justify-center items-center pb-25">
-                <div className='flex w-full justify-start items-center gap-4 py-5 px-65'>
+
+                <div className="flex justify-center sm:gap-15 sm:justify-center">
+                  <div className='grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-y-10 lg:gap-x-25 xl:gap-x-35'>
+                    <div className='flex col-span-1 lg:col-span-2 xl:col-span-3'>
                     <Button className="bg-zinc-900 text-white" variant="outline" onClick={handleCreate}>Create Event<Plus className="w-4 h-4" /></Button>
                     {events.length > 0 && (
                       <label className="flex items-center gap-2 text-sm font-medium cursor-pointer select-none">
@@ -211,68 +214,67 @@ export default function Events() {
                         }}/>
                     )}
                 </div>
-                <div className='grid grid-cols-2 gap-y-20 gap-x-30 px-65'>
-                    {events.length === 0 && !loading && <p>No events found.</p>}
-                    {loading && <p>Loading events...</p>}
-                    {error && <p>Error loading events: {error}</p>}
-
-                    {events.length > 0 && !loading && !error &&
-                    events.map((data: Event, index) =>
-                        <div key={index} >
-                            <Link href={`/events/${data.id}`}>
-                                <div className='flex flex-col md:flex-row '
-                                >
-                                    {data.flyer_url ? (
-                                        <FlyerImage
-                                        src={flyerImageUrl(data.flyer_url) ?? ""}
-                                        alt={`Flyer for ${data.title}`}
-                                        title={data.title}
-                                        className='w-90 h-30 md:h-60 object-cover'
-                                        // Inside the card Link: clicking the flyer opens the
-                                        // full-size dialog instead of following the link.
-                                        onImageClick={(openFullSize) => (event) => {
-                                            event.preventDefault();
-                                            event.stopPropagation();
-                                            openFullSize();
-                                        }}
-                                        />
-                                    ) : (
-                                    <Image
-                                    src="/tempEventsPhoto.png"
-                                    width={300}
-                                    height={300}
-                                    alt="Simple Events Background Photo"
-                                    className='w-90 h-30 md:h-60'
-                                    />
-                                    )}
-                                    <div className='flex flex-col pl-5 font-medium font-noto-sans'>
-                                        <h1 className='text-3xl'>{data.title}</h1>
-                                        <h1 className='text-black/40 font-normal'>{formatEventDateRange(data)}</h1>
-                                        <h1 className='text-black/40 font-normal'>{formatEventTime(data.start_time)} - {formatEventTime(data.end_time)}</h1>
-                                    </div>
-                                </div>
-                            </Link>
-                            <div className='flex flex-row gap-2 pt-2 items-center'>
-                                <label className='flex items-center gap-1 text-sm text-black/60 cursor-pointer select-none'>
-                                    <input
-                                        type="checkbox"
-                                        className="w-4 h-4 accent-zinc-900"
-                                        checked={selectedIds.has(data.id)}
-                                        onChange={() => toggleSelect(data.id)}
-                                        aria-label={`Select ${data.title} for bulk delete`}
-                                    />
-                                    Select
-                                </label>
-                                <button onClick={() => handleDeleteClick(data.id)}>
-                                    <Trash2 color="red" size={16} />
-                                </button>
-                                <button onClick={() => handleOpenDialog(data)}>
-                                    <Pencil size={16} />
-                                </button>
-                            </div>
-                        </div>
-
-                    )}
+                      {events.length === 0 && !loading && <p>No events found.</p>}
+                      {loading && <p>Loading events...</p>}
+                      {error && <p>Error loading events: {error}</p>}
+                      {events.length > 0 && !loading && !error &&
+                      events.map((data: Event, index) =>
+                          <div key={index} >
+                              <Link href={`/events/${data.id}`}>
+                                  <div className='flex flex-col'
+                                  >
+                                      {data.flyer_url ? (
+                                          <FlyerImage
+                                          src={flyerImageUrl(data.flyer_url) ?? ""}
+                                          alt={`Flyer for ${data.title}`}
+                                          title={data.title}
+                                          className='w-90 h-30 md:h-60 object-cover'
+                                          // Inside the card Link: clicking the flyer opens the
+                                          // full-size dialog instead of following the link.
+                                          onImageClick={(openFullSize) => (event) => {
+                                              event.preventDefault();
+                                              event.stopPropagation();
+                                              openFullSize();
+                                          }}
+                                          />
+                                      ) : (
+                                      <Image
+                                      src="/tempEventsPhoto.png"
+                                      width={300}
+                                      height={300}
+                                      alt="Simple Events Background Photo"
+                                      className='w-90 h-30 md:h-60 object-cover'
+                                      />
+                                      )}
+                                      <div className='flex flex-col pt-2 font-medium font-noto-sans w-90 group'>
+                                        <h1 className='text-base sm:text-lg lg:text-xl font-semibold leading-snug'>{data.title}</h1>
+                                        <h1 className='text-xs sm:text-sm text-gray-500 mt-1'>{formatEventDateRange(data)}</h1>
+                                        <h1 className='text-xs sm:text-sm text-gray-500 mt-1'>{formatEventTime(data.start_time)} - {formatEventTime(data.end_time)}</h1>
+                                        <h1 className='text-sm sm:text-base text-gray-600 leading-relaxed line-clamp-3 group-hover:line-clamp-none'>{data.description}</h1>
+                                      </div>
+                                  </div>
+                              </Link>
+                              <div className='flex flex-row gap-2 pt-2 items-center'>
+                                  <label className='flex items-center gap-1 text-sm text-black/60 cursor-pointer select-none'>
+                                      <input
+                                          type="checkbox"
+                                          className="w-4 h-4 accent-zinc-900"
+                                          checked={selectedIds.has(data.id)}
+                                          onChange={() => toggleSelect(data.id)}
+                                          aria-label={`Select ${data.title} for bulk delete`}
+                                      />
+                                      Select
+                                  </label>
+                                  <button onClick={() => handleDeleteClick(data.id)}>
+                                      <Trash2 color="red" size={16} />
+                                  </button>
+                                  <button onClick={() => handleOpenDialog(data)}>
+                                      <Pencil size={16} />
+                                  </button>
+                              </div>
+                          </div>
+                      )}
+                  </div>
                 </div>
 
                 <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
