@@ -12,5 +12,6 @@
   "python-envs.defaultEnvManager": "ms-python.python:poetry",
   "python.analysis.extraPaths": [
     "app"
-  ]
+  ],
+  "python.testing.cwd": "${workspaceFolder}"
 }

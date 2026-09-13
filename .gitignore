@@ -225,3 +225,7 @@ src/fe/playwright-report/
 
 # Uploaded event flyer images (runtime storage)
 src/be/data/event_flyers/
+
+# Let's Encrypt state + GoDaddy API credentials (contain secrets, do not commit)
+lib_letsencrypt/
+etc_letsencrypt/
