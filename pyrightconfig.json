@@ -12,6 +12,12 @@
       "extraPaths": [
         "src/bff"
       ]
+    },
+    {
+      "root": "src/email",
+      "extraPaths": [
+        "src/email"
+      ]
     }
   ]
 }

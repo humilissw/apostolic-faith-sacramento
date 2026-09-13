@@ -17,11 +17,50 @@ services:
       - ENVIRONMENT=local
       # Dev convenience: run `alembic upgrade head` on startup (serialized across workers)
       - RUN_MIGRATIONS_ON_STARTUP=true
+      # Email delivery is delegated to the email microservice (src/email/).
+      - EMAIL_SERVICE_URL=http://email:8100
+      - EMAIL_SERVICE_API_KEY=local-dev-email-service-key
+
+  # Email delivery microservice (src/email/). Owns SMTP delivery + its own
+  # delivery-tracking DB; reads recipients from the shared app database.
+  email:
+    build:
+      context: src/email
+      dockerfile: Dockerfile
+    env_file:
+      # REQUIRED container default config (.env.example holds safe local
+      # defaults; never src/be/.env — production SMTP/DB creds must not leak
+      # into the local stack). ENVIRONMENT=local (below) additionally makes the
+      # app overlay git-ignored .env.local (dev creds); production deploys set
+      # ENVIRONMENT=production and provide .env.prod.
+      - src/email/.env.example
+    ports:
+      - "8100:8100"
+    networks:
+      - app
+    depends_on:
+      - database
+    environment:
+      - DB_SERVER=database
+      - DB_PORT=3306
+      # Local dev DB creds (mirror infrastructure/db/db.env). The git-ignored
+      # .env.local is for host runs only and never baked into the image.
+      - DB_USER=root
+      - DB_PASSWORD=ItIsDeB3st!
+      - DB_DB=afc_sac
+      - ENVIRONMENT=local
       # Deliver mail to the local mailcatcher for testing (plaintext SMTP, no TLS)
       - SMTP_HOST=mailcatcher
       - SMTP_PORT=1025
       - SMTP_TLS=False
       - SMTP_SSL=False
+      - RSA_PUB_KEY=/app/security_keys/public_key.pem
+      - SERVICE_API_KEY=***
+      - TRACKING_DB_URL=sqlite:////app/data/email_delivery.db
+    volumes:
+      # Verify backend-issued JWTs with the backend's RSA public key.
+      - ./src/be/security_keys/public_key.pem:/app/security_keys/public_key.pem:ro
+      - email_data:/app/data
 
   # Plain-HTTP mirror of the backend health endpoint for tooling that can't
   # do TLS (e.g. `hermes verify --port 8001`). The app itself stays HTTPS-only.
@@ -121,3 +160,4 @@ networks:
 
 volumes:
   db_data:
+  email_data:

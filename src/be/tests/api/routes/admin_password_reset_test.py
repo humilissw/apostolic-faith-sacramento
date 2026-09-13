@@ -1,6 +1,6 @@
 """Tests for admin password reset endpoint."""
 
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import httpx
 import pytest
@@ -150,10 +150,7 @@ async def test_admin_password_reset_enabled_succeeds(
     )
     assert pre_seed_response.status_code == 200
 
-    with (
-        patch("app.config.settings.SMTP_HOST", "smtp.example.com"),
-        patch("app.services.auth_service.send_email", return_value=None),
-    ):
+    with (patch("app.services.email_client.send_email_request", new_callable=AsyncMock),):
         email = random_email()
         # Create the target user
         user_create = UserCreate(
@@ -194,10 +191,7 @@ async def test_admin_password_reset_non_superuser_forbidden(
     admin_reset_client, admin_reset_db_session, admin_reset_normal_user_token_headers
 ) -> None:
     """Test that non-superusers cannot call the admin password reset endpoint."""
-    with (
-        patch("app.config.settings.SMTP_HOST", "smtp.example.com"),
-        patch("app.services.auth_service.send_email", return_value=None),
-    ):
+    with (patch("app.services.email_client.send_email_request", new_callable=AsyncMock),):
         email = random_email()
         user_create = UserCreate(
             email=email,
@@ -248,10 +242,7 @@ async def test_admin_password_reset_nonexistent_user_no_error(
         headers=admin_reset_superuser_token_headers,
     )
 
-    with (
-        patch("app.config.settings.SMTP_HOST", "smtp.example.com"),
-        patch("app.services.auth_service.send_email", return_value=None),
-    ):
+    with (patch("app.services.email_client.send_email_request", new_callable=AsyncMock),):
         r = await admin_reset_client.post(
             f"{settings.API_V1_STR}/admin/password-reset",
             json={"email": "nonexistent@example.com"},
@@ -281,7 +272,7 @@ async def test_admin_password_reset_bulk_sends_to_all_users(
         headers=admin_reset_superuser_token_headers,
     )
 
-    with patch("app.services.auth_service.send_email", return_value=None):
+    with patch("app.services.email_client.send_email_request", new_callable=AsyncMock):
         ids: list[str] = []
         for _ in range(2):
             user_create = UserCreate(

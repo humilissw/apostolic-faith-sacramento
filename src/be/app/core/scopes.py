@@ -36,6 +36,9 @@ class Scope(str, Enum):
     # Events scopes
     EVENTS_ADMIN = "events:admin"
 
+    # Email service scope (required to call the src/email/ microservice)
+    EMAIL_SEND = "api:email"
+
     # Superuser claim (replaces is_superuser boolean)
     SUPERUSER = "superuser"
     # Service-to-service auth
