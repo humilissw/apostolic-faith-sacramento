@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 
 @pytest.mark.asyncio
@@ -12,7 +12,7 @@ async def test_utils_health_check(client) -> None:
 @pytest.mark.asyncio
 async def test_test_email_success(client, superuser_token_headers) -> None:
     test_email = "test@example.com"
-    with patch("app.api.routes.utils.send_email", return_value=None):
+    with patch("app.api.routes.utils.email_client.send_email_request", new_callable=AsyncMock):
         response = await client.post(
             "/api/v1/utils/test-email/",
             headers=superuser_token_headers,

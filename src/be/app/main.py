@@ -130,6 +130,12 @@ try:
     # Add CSRF protection middleware (before routes)
     app.add_middleware(CsrfProtectionMiddleware)
 
+    # Capture the caller's token so email delegation can forward it to the
+    # email microservice (which enforces the api:email scope).
+    from app.services.email_client import RequestAuthContextMiddleware
+
+    app.add_middleware(RequestAuthContextMiddleware)
+
     # Add security headers middleware (pass environment for HSTS control)
     app.add_middleware(SecurityHeadersMiddleware, env=settings.ENVIRONMENT)
 

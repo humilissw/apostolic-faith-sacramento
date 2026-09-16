@@ -1,5 +1,5 @@
 from collections.abc import AsyncGenerator
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import httpx
 import pytest
@@ -94,7 +94,7 @@ async def test_create_user_new_email(
     superuser_token_headers: dict[str, str],
     db_session: AsyncSession,
 ) -> None:
-    with (patch("app.utils.send_email", return_value=None),):
+    with (patch("app.services.email_client.send_email_request", new_callable=AsyncMock),):
         username = random_email()
         # Admins never set passwords; the user picks their own via the
         # one-time signed email link.

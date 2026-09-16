@@ -2,7 +2,6 @@
 
 from sqlalchemy import delete
 
-from app.config import settings
 from app.core.security import get_password_hash, verify_password
 from app.models import (
     Item,
@@ -55,8 +54,8 @@ class UserManagementService:
         # Send new-account email with a one-time set-password link.
         # The link is HMAC-signed and single-use (see AuthService /
         # core.reset_tokens); the plaintext password never leaves the server
-        # because there is none.
-        if settings.emails_enabled and user.email:
+        # because there is none. Delivery runs in the email microservice.
+        if user.email:
             try:
                 auth_service = AuthService(user_repository=repository, session=self.session)
                 await auth_service.send_set_password_email(user, reason="welcome")

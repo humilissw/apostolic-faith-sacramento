@@ -1,5 +1,5 @@
 from datetime import UTC
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import httpx
 import pytest
@@ -278,10 +278,7 @@ async def test_revoke_token(login_client, login_tokens, login_superuser_token_he
 
 @pytest.mark.asyncio
 async def test_recovery_password(login_client, login_db_session) -> None:
-    with (
-        patch("app.config.settings.SMTP_HOST", "smtp.example.com"),
-        patch("app.services.auth_service.send_email", return_value=None),
-    ):
+    with (patch("app.services.email_client.send_email_request", new_callable=AsyncMock),):
         email = "test@example.com"
         r = await login_client.post(
             f"{settings.API_V1_STR}/password-recovery",
@@ -497,10 +494,7 @@ async def test_reset_password_invalidates_all_user_tokens(login_client, login_db
 @pytest.mark.asyncio
 async def test_recovery_password_no_auth_required(login_client) -> None:
     """Test that password recovery endpoint doesn't require authentication."""
-    with (
-        patch("app.config.settings.SMTP_HOST", "smtp.example.com"),
-        patch("app.services.auth_service.send_email", return_value=None),
-    ):
+    with (patch("app.services.email_client.send_email_request", new_callable=AsyncMock),):
         # No auth headers - should still work
         r = await login_client.post(
             f"{settings.API_V1_STR}/password-recovery",
@@ -512,10 +506,7 @@ async def test_recovery_password_no_auth_required(login_client) -> None:
 @pytest.mark.asyncio
 async def test_recovery_password_body_not_path(login_client) -> None:
     """Test that the recovery endpoint uses POST body, not URL path."""
-    with (
-        patch("app.config.settings.SMTP_HOST", "smtp.example.com"),
-        patch("app.services.auth_service.send_email", return_value=None),
-    ):
+    with (patch("app.services.email_client.send_email_request", new_callable=AsyncMock),):
         # Old style (URL path) should no longer work as expected
         r = await login_client.post(
             f"{settings.API_V1_STR}/password-recovery/test@example.com",

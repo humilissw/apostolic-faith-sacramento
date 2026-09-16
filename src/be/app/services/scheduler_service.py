@@ -8,8 +8,7 @@ import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import User
-from app.config import settings
-from app.utils import generate_assignment_email, send_email
+from app.services import email_client
 
 logger = logging.getLogger(__name__)
 
@@ -43,26 +42,19 @@ class SchedulerService:
             instrument: Optional instrument
             notes: Optional notes
         """
-        if not settings.emails_enabled:
-            return
-
         user = await self.session.get(User, user_id)
         if not user or not user.email:
             return
 
-        email_data = generate_assignment_email(
-            email_to=user.email,
+        # Delivery is delegated to the email microservice (src/email/).
+        await email_client.send_email_request(
+            email_type="assignment",
+            recipients=[user.email],
             assignment_type=assignment_type,
             role=role,
             event_date=event_date,
             instrument=instrument,
             notes=notes,
-        )
-
-        send_email(
-            email_to=user.email,
-            subject=email_data.subject,
-            html_content=email_data.html_content,
         )
 
     async def notify_assignment_safe(

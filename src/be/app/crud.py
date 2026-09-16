@@ -36,6 +36,9 @@ async def create_user(*, session: AsyncSession, user_create: UserCreate) -> User
 
     # Seed member:limited scope for all users
     session.add(UserScope(user_id=db_obj.id, scope="member:limited"))
+    # Seed api:email scope for all users (required to call the email
+    # microservice). Temporary blanket grant until it is scoped by role.
+    session.add(UserScope(user_id=db_obj.id, scope="api:email"))
     await session.commit()
     # Seed superuser scope if requested
     if user_create.is_superuser:

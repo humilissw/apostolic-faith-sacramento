@@ -3,7 +3,7 @@ from pydantic.networks import EmailStr
 
 from app.api.deps import get_current_active_superuser
 from app.models import Message
-from app.utils import generate_test_email, send_email
+from app.services import email_client
 
 router = APIRouter(prefix="/utils", tags=["utils"])
 
@@ -13,16 +13,9 @@ router = APIRouter(prefix="/utils", tags=["utils"])
     dependencies=[Depends(get_current_active_superuser)],
     status_code=201,
 )
-def test_email(email_to: EmailStr) -> Message:
-    """
-    Test emails.
-    """
-    email_data = generate_test_email(email_to=email_to)
-    send_email(
-        email_to=email_to,
-        subject=email_data.subject,
-        html_content=email_data.html_content,
-    )
+async def test_email(email_to: EmailStr) -> Message:
+    """Send a test email via the email microservice."""
+    await email_client.send_email_request(email_type="test", recipients=[str(email_to)])
     return Message(message="Test email sent")
 
 

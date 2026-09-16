@@ -26,8 +26,10 @@ class Settings(BaseSettings):
     )
     API_V1_STR: str = "/api/v1"
     EMAIL_TEST_USER: str
-    EMAILS_FROM_EMAIL: str
-    EMAILS_FROM_NAME: str
+    # Deprecated leftovers: email delivery now lives in the src/email/
+    # microservice. Kept so existing .env files still load.
+    EMAILS_FROM_EMAIL: str = ""
+    EMAILS_FROM_NAME: str = ""
     # SQLALCHEMY_DATABASE_URI: str
     SENTRY_DSN: str
     DB_SERVER: str
@@ -46,12 +48,17 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     FIRST_SUPERUSER: str
     FIRST_SUPERUSER_PASSWORD: str
-    SMTP_HOST: str
-    SMTP_TLS: str
-    SMTP_SSL: str
-    SMTP_PORT: str
+    SMTP_HOST: str = ""
+    SMTP_TLS: str = "False"
+    SMTP_SSL: str = "False"
+    SMTP_PORT: str = "25"
     SMTP_USER: str = ""
     SMTP_PASSWORD: str = ""
+    # Email delivery is delegated to the src/email/ microservice; the backend
+    # no longer talks to SMTP. SMTP_* above are deprecated leftovers kept so
+    # existing .env files still load.
+    EMAIL_SERVICE_URL: str = ""
+    EMAIL_SERVICE_API_KEY: str = ""
     DOCKER_IMAGE_BACKEND: str
     DOCKER_IMAGE_FRONTEND: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
@@ -61,29 +68,6 @@ class Settings(BaseSettings):
     cert_key: str
     rsa_pub_key: str
     rsa_private_key: str
-
-    @staticmethod
-    def _as_bool(value: str) -> bool:
-        """Parse env-style boolean strings ("False"/"0"/"" are disabled)."""
-        return str(value).strip().lower() in {"1", "true", "yes", "on", "t"}
-
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def emails_enabled(self) -> bool:
-        """Email delivery is available once an SMTP host (or user) is configured."""
-        return bool(self.SMTP_HOST.strip() or self.SMTP_USER.strip())
-
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def smtp_use_tls(self) -> bool:
-        # NOTE: SMTP_TLS/SMTP_SSL are plain strings from the environment; a raw
-        # truthiness check would make "False" enable TLS. Parse them instead.
-        return self._as_bool(self.SMTP_TLS) and not self._as_bool(self.SMTP_SSL)
-
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def smtp_use_ssl(self) -> bool:
-        return self._as_bool(self.SMTP_SSL)
 
     # OAuth 2.0 settings
     JWT_ISSUER: str = "apostolic-faith-sacramento"

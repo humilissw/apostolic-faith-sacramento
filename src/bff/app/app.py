@@ -30,12 +30,13 @@ def _configure_logging() -> None:
 
 
 def create_app(settings: Settings | None = None) -> Flask:
+    """Build and configure the BFF Flask application."""
     try:
-        """Build and configure the BFF Flask application."""
         _configure_logging()
         settings = settings or load_settings()
-        logging.info("BACKEND_URL", os.getenv("BACKEND_URL", "failure"))
-        logging.info("SECRET_KEY", os.getenv("SECRET_KEY", "failure"))
+        logger.info("BACKEND_URL=%s", os.getenv("BACKEND_URL", "(unset)"))
+        # Never log the secret itself — only whether it is configured.
+        logger.info("SECRET_KEY %s", "is set" if os.getenv("SECRET_KEY") else "is NOT set")
         app = Flask(__name__)
         app.config["SETTINGS"] = settings
         app.config["SPA_ORIGINS"] = set(settings.SPA_ORIGINS)
@@ -95,18 +96,13 @@ def create_app(settings: Settings | None = None) -> Flask:
 
         @app.route("/health")
         def health() -> Response:  # type: ignore[return]
-            import urllib.request
+            """Liveness probe for the BFF itself.
 
-            try:
-                contents = urllib.request.urlopen(
-                    os.getenv("BFF_HOST", "failure") + "api/v1/health"
-                ).read()
-                return jsonify({"status": {"api": contents}})
-            except Exception as e:
-                print(e)
-                logger.error("Failed to get health", e)
-                return jsonify({"status": "unhealthy"})
-
+            The upstream backend exposes its own health endpoints under
+            ``/api/v1/health/*``; the BFF does not proxy them here so this
+            route stays a cheap, dependency-free check for load balancers
+            and PaaS health checks.
+            """
             return jsonify({"status": "ok"})
 
         # --- CORS ----------------------------------------------------------------- #
@@ -139,9 +135,9 @@ def create_app(settings: Settings | None = None) -> Flask:
             settings.SESSION_COOKIE_SECURE,
         )
         return app
-    except Exception as e:
-        print("Failed to start the BFF application", e)
-        logger.error("Failed to start the BFF application", e)
+    except Exception:
+        logger.exception("Failed to start the BFF application")
+        raise
 
 
 #: Module-level WSGI instance. PaaS hosts (Vercel and friends) import this

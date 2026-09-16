@@ -1,12 +1,14 @@
-import logging
-from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
-from pathlib import Path
-from typing import Any
+"""Utility helpers for the backend.
 
-import emails  # type: ignore
+Email delivery now lives in the src/email/ microservice (see
+app/services/email_client.py): this module no longer renders templates or
+talks to SMTP — it only keeps password-reset JWT helpers used by auth flows.
+"""
+
+import logging
+from datetime import UTC, datetime, timedelta
+
 import jwt
-from jinja2 import Template
 from jwt.exceptions import InvalidTokenError
 
 from app.config import settings
@@ -14,151 +16,6 @@ from app.core import security
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class EmailData:
-    html_content: str
-    subject: str
-
-
-def render_email_template(*, template_name: str, context: dict[str, Any]) -> str:
-    template_str = (Path(__file__).parent / "email-templates" / "build" / template_name).read_text()
-    html_content = Template(template_str).render(context)
-    return str(html_content)
-
-
-def send_email(
-    *,
-    email_to: str,
-    subject: str = "",
-    html_content: str = "",
-) -> None:
-    if not settings.emails_enabled:
-        # Log before raising so the failure is visible in backend logs instead
-        # of dying as a bare AssertionError deep in an email send.
-        logger.error(
-            "Cannot send email to %s: emails are disabled (SMTP_HOST/SMTP_USER " "not configured)",
-            email_to,
-        )
-        raise RuntimeError("Email delivery is not configured (emails_enabled=False)")
-    message = emails.Message(
-        subject=subject,
-        html=html_content,
-        mail_from=(settings.EMAILS_FROM_NAME, settings.EMAILS_FROM_EMAIL),
-    )
-    smtp_options: dict[str, str | bool] = {
-        "host": settings.SMTP_HOST,
-        "port": settings.SMTP_PORT,
-    }
-    if settings.smtp_use_tls:
-        smtp_options["tls"] = True
-    elif settings.smtp_use_ssl:
-        smtp_options["ssl"] = True
-    if settings.SMTP_USER:
-        smtp_options["user"] = settings.SMTP_USER
-    if settings.SMTP_PASSWORD:
-        smtp_options["password"] = settings.SMTP_PASSWORD
-    try:
-        response = message.send(to=email_to, smtp=smtp_options)
-    except Exception:
-        logger.exception(
-            "Failed to send email to %s via %s:%s", email_to, settings.SMTP_HOST, settings.SMTP_PORT
-        )
-        raise
-    # The `emails` backend does NOT raise on connection/SMTP errors: it returns
-    # an SMTPResponse carrying the failure (status_code None/non-250). Treat a
-    # non-successful response as an error so callers can react and the cause is
-    # logged, instead of silently reporting success.
-    if not getattr(response, "success", False):
-        cause = getattr(response, "error", None)
-        logger.error(
-            "SMTP delivery to %s failed: status_code=%s status_text=%s error=%s (host=%s:%s)",
-            email_to,
-            getattr(response, "status_code", None),
-            getattr(response, "status_text", None),
-            cause,
-            settings.SMTP_HOST,
-            settings.SMTP_PORT,
-        )
-        raise RuntimeError(f"Email delivery to {email_to} failed: {cause or response!r}")
-    logger.info(f"send email result: {response}")
-
-
-def generate_test_email(email_to: str) -> EmailData:
-    project_name = settings.PROJECT_NAME
-    subject = f"{project_name} - Test email"
-    html_content = render_email_template(
-        template_name="test_email.html",
-        context={"project_name": settings.PROJECT_NAME, "email": email_to},
-    )
-    return EmailData(html_content=html_content, subject=subject)
-
-
-def generate_reset_password_email(email_to: str, email: str, token: str) -> EmailData:
-    project_name = settings.PROJECT_NAME
-    subject = f"{project_name} - Password recovery for user {email}"
-    link = f"{settings.FRONTEND_HOST}/reset-password?token={token}"
-    html_content = render_email_template(
-        template_name="reset_password.html",
-        context={
-            "project_name": settings.PROJECT_NAME,
-            "username": email,
-            "email": email_to,
-            "valid_hours": settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS,
-            "link": link,
-        },
-    )
-    return EmailData(html_content=html_content, subject=subject)
-
-
-def generate_new_account_email(
-    email_to: str, username: str, link: str, valid_hours: int
-) -> EmailData:
-    """Build the new-account email with a one-time set-password link.
-
-    ``link`` is the HMAC-signed single-use token; the admin never sets (or
-    sees) a password — the recipient chooses their own via the reset page.
-    """
-    project_name = settings.PROJECT_NAME
-    subject = f"{project_name} - Set up your new account"
-    reset_link = f"{settings.FRONTEND_HOST}/reset-password?token={link}"
-    html_content = render_email_template(
-        template_name="new_account.html",
-        context={
-            "project_name": settings.PROJECT_NAME,
-            "username": username,
-            "email": email_to,
-            "valid_hours": valid_hours,
-            "link": reset_link,
-        },
-    )
-    return EmailData(html_content=html_content, subject=subject)
-
-
-def generate_assignment_email(
-    email_to: str,
-    assignment_type: str,
-    role: str,
-    event_date: str,
-    instrument: str | None = None,
-    notes: str | None = None,
-) -> EmailData:
-    project_name = settings.PROJECT_NAME
-    subject = f"{project_name} - Scheduler assignment"
-    html_content = render_email_template(
-        template_name="assignment.html",
-        context={
-            "project_name": settings.PROJECT_NAME,
-            "email": email_to,
-            "assignment_type": assignment_type,
-            "role": role,
-            "instrument": instrument or "",
-            "event_date": event_date,
-            "notes": notes or "",
-        },
-    )
-    return EmailData(html_content=html_content, subject=subject)
 
 
 def generate_password_reset_token(email: str) -> str:
@@ -169,7 +26,6 @@ def generate_password_reset_token(email: str) -> str:
     encoded_jwt = jwt.encode(
         {"exp": exp, "nbf": now, "sub": email},
         security.PRIVATE_KEY,
-        # settings.SECRET_KEY,
         algorithm=security.ALGORITHM,
     )
     return str(encoded_jwt)

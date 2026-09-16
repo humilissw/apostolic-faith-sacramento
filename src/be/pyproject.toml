@@ -17,6 +17,7 @@ dependencies = [
     "pymysql (>=1.1.2,<2.0.0)",
     "mysql-connector-python (>=9.5.0,<10.0.0)",
     "fastapi[standard]<1.0.0,>=0.114.2",
+    "a2wsgi (>=1.10,<2.0)",
     "python-multipart<1.0.0,>=0.0.7",
     "email-validator<3.0.0.0,>=2.1.0.post1",
     "passlib[bcrypt]<2.0.0,>=1.7.4",

@@ -14,11 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.reset_tokens import sign_reset_token, verify_reset_token_link
 from app.models import PasswordResetToken, User, validate_password_complexity
 from app.repositories.user_repo import UserRepository
-from app.utils import (
-    generate_new_account_email,
-    generate_reset_password_email,
-    send_email,
-)
+from app.services import email_client
 
 logger = logging.getLogger(__name__)
 
@@ -155,22 +151,13 @@ class AuthService:
         # the reset endpoint verifies the signature and looks the token up by id.
         signed_link = sign_reset_token(str(db_token.id))
 
-        if reason == "welcome":
-            email_data = generate_new_account_email(
-                email_to=user.email,
-                username=user.email,
-                link=signed_link,
-                valid_hours=settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS,
-            )
-        else:
-            email_data = generate_reset_password_email(
-                email_to=user.email, email=user.email, token=signed_link
-            )
-
-        send_email(
-            email_to=user.email,
-            subject=email_data.subject,
-            html_content=email_data.html_content,
+        # Delivery is delegated to the email microservice (src/email/). It
+        # embeds this backend-generated signed link verbatim; tokens are never
+        # issued or validated there.
+        await email_client.send_email_request(
+            email_type="new-user" if reason == "welcome" else "password-reset",
+            recipients=[user.email],
+            token=signed_link,
         )
 
     async def reset_password(self, token: str, new_password: str) -> dict:
