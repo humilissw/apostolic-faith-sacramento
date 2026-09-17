@@ -2,9 +2,10 @@ from typing import Any
 
 from app.services.media_service import MediaService
 from app.services.media_management_service import MediaManagementService
+from app.services.youtube_sync_service import YouTubeSyncError, YouTubeSyncService
 from fastapi import APIRouter, HTTPException, status
 
-from app.api.deps import CurrentUser, SessionDep
+from app.api.deps import CurrentUser, SessionDep, require_scope
 from app.crud import create_media
 from app.models import Message
 from app.requests.media_request import MediaCreate, MediaUpdate
@@ -27,6 +28,36 @@ async def read_media(session: SessionDep, skip: int = 0, limit: int = 100) -> An
     svc = MediaManagementService(session)
     media_data, total_count = await svc.get_all_media(skip=skip, limit=limit)
     return MediasPublic(data=media_data, count=total_count)
+
+
+@router.post(
+    "/sync-youtube",
+    dependencies=[require_scope("video_uploads:manage")],
+)
+async def sync_youtube_endpoint(*, session: SessionDep, current_user: CurrentUser) -> Any:
+    """Sync the connected YouTube account's uploaded videos into the media tables.
+
+    Pulls the channel's uploads playlist via the configured YouTube integration
+    (Integrations page), EXCLUDES live videos, and inserts only videos that are
+    not already in the database. Existing rows are never modified. Videos whose
+    metadata carries a scripture reference also create video_uploads rows —
+    same rules as the seed migrations. Requires video_uploads:manage scope
+    (or superuser).
+    """
+    svc = YouTubeSyncService(session)
+    try:
+        result = await svc.sync(owner_id=str(current_user.id))
+    except YouTubeSyncError as e:
+        raise HTTPException(status_code=e.status_code, detail=e.message)
+    return {
+        "message": (
+            f"YouTube sync complete: {result['media_created']} media added, "
+            f"{result['video_uploads_created']} video uploads added, "
+            f"{result['skipped_existing']} already present, "
+            f"{result['skipped_live']} live videos excluded."
+        ),
+        **result,
+    }
 
 
 @router.get(

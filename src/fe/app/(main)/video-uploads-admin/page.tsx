@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2, Youtube, Calendar, Film } from "lucide-react";
+import { Plus, Pencil, Trash2, Youtube, Calendar, Film, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import {
   deleteVideoUpload,
   fetchAllVideoUploads,
+  syncYouTubeVideos,
   type VideoUploadAdmin,
 } from "@/lib/api";
 
@@ -40,6 +41,7 @@ export default function VideoUploadsAdminPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -90,6 +92,20 @@ export default function VideoUploadsAdminPage() {
     setDialogOpen(true);
   };
 
+  const handleSyncYouTube = async () => {
+    setSyncing(true);
+    try {
+      const result = await syncYouTubeVideos();
+      toast.success(result.message);
+      const data = await fetchAllVideoUploads();
+      setUploads(data.data);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to sync YouTube videos");
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString();
   };
@@ -123,10 +139,21 @@ export default function VideoUploadsAdminPage() {
             Manage all video uploads
           </p>
         </div>
-        <Button onClick={handleCreate}>
-          <Plus className="w-4 h-4 mr-2" />
-          New
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="secondary"
+            onClick={handleSyncYouTube}
+            disabled={syncing}
+            title="Import new videos from the connected YouTube account (live videos are excluded)"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? "animate-spin" : ""}`} />
+            {syncing ? "Syncing…" : "Sync YouTube"}
+          </Button>
+          <Button onClick={handleCreate}>
+            <Plus className="w-4 h-4 mr-2" />
+            New
+          </Button>
+        </div>
       </div>
 
       <Card>

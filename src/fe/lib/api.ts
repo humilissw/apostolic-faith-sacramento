@@ -622,6 +622,39 @@ export async function fetchAllVideoUploads(): Promise<{ data: VideoUploadAdmin[]
   return body;
 }
 
+// --- YouTube sync ---
+
+export interface YouTubeSyncResult {
+  message: string;
+  media_created: number;
+  video_uploads_created: number;
+  skipped_existing: number;
+  skipped_live: number;
+  total_channel_videos: number;
+}
+
+/**
+ * Sync the connected YouTube account's uploaded videos (live videos excluded)
+ * into the app. The backend pulls the channel uploads via the configured
+ * YouTube integration and only inserts videos that are not yet present.
+ */
+export async function syncYouTubeVideos(): Promise<YouTubeSyncResult> {
+  const res = await fetchWithAuth(`${API_BASE}${API_V1}/media/sync-youtube`, {
+    method: "POST",
+  });
+  if (!res.ok) {
+    let detail = "Failed to sync YouTube videos";
+    try {
+      const body = await res.json();
+      if (body?.detail) detail = typeof body.detail === "string" ? body.detail : detail;
+    } catch {
+      /* keep default message */
+    }
+    throw new Error(detail);
+  }
+  return res.json();
+}
+
 // --- Scheduler API functions ---
 
 export interface Assignment {
