@@ -5,10 +5,11 @@ import Image from 'next/image'
 import { BsTelephone } from "react-icons/bs";
 import { IoLocationOutline, IoMailOutline } from "react-icons/io5";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import Calendar from "@/components/calendar";
 import TestCalendar from "@/components/test-calendar";
 import { API_BASE, API_V1 } from "@/lib/api/base";
+import { ChevronDown } from "lucide-react";
 
 import {
   fetchEvents,
@@ -19,6 +20,61 @@ import {
   type Event,
 } from "@/lib/api";
 import { FlyerImage } from "@/components/flyer-image";
+
+function EventCard({ event }: { event: Event }) {
+    const [expanded, setExpanded] = useState(false);
+    const [isOverflowing, setIsOverflowing] = useState(false);
+    const textRef = useRef<HTMLHeadingElement>(null);
+
+    useLayoutEffect(() => {
+        const el = textRef.current;
+        if (el) {
+            setIsOverflowing(el.scrollHeight > el.clientHeight + 1);
+        }
+    }, [event.description]);
+
+    return (
+        <div className='flex flex-col'>
+            {event.flyer_url ? (
+                <FlyerImage
+                src={flyerImageUrl(event.flyer_url) ?? ""}
+                alt={`Flyer for ${event.title}`}
+                title={event.title}
+                className='w-90 h-60 object-cover'
+                />
+            ) : (
+                <Image
+                src="/tempEventsPhoto.png"
+                width={90}
+                height={60}
+                alt="Simple Background"
+                className='w-90 h-60 object-cover'
+                />
+                )}
+            <div className='flex flex-col pt-2 font-medium font-noto-sans w-90 group'>
+                <h1 className='text-base sm:text-lg lg:text-xl font-semibold leading-snug'>{event.title}</h1>
+                <h1 className='text-xs sm:text-sm text-gray-500 mt-1'>{formatEventDateRange(event)}</h1>
+                <h1 className='text-xs sm:text-sm text-gray-500 mt-1'>{formatEventTime(event.start_time)} - {formatEventTime(event.end_time)}</h1>
+                <h1
+                    ref={textRef}
+                    className={`text-sm sm:text-base text-gray-600 leading-relaxed
+                    ${expanded ? "" : "line-clamp-3" }`}>
+                    {event.description}
+                </h1>
+
+                {isOverflowing && (
+                <button
+                    onClick={() => setExpanded((e) => !e)}
+                    className="text-slate-700 hover:text-slate-900 text-sm mt-1 hover:underline flex items-center"
+                >
+                    {expanded ? "Show Less" : "Read More"}
+                    <ChevronDown className={`ml-1 transition-transform duration-300 ${expanded ? "transform rotate-180" : ""}`} />
+
+                </button>
+                )}
+            </div>
+        </div>
+    )}
 
 
 export default function Events() {
@@ -87,33 +143,9 @@ export default function Events() {
 
             {eventsButton &&
             <div className="flex justify-center sm:gap-15 sm:justify-center">
-                <div className='grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-y-10 lg:gap-x-25 xl:gap-x-35'>
-                    {events.map((data: Event, index) =>
-                        <div className='flex flex-col'
-                        key={index}>
-                            {data.flyer_url ? (
-                                <FlyerImage
-                                src={flyerImageUrl(data.flyer_url) ?? ""}
-                                alt={`Flyer for ${data.title}`}
-                                title={data.title}
-                                className='w-90 h-30 md:h-60 object-cover'
-                                />
-                            ) : (
-                                <Image
-                                src="/tempEventsPhoto.png"
-                                width={90}
-                                height={30}
-                                alt="Simple Background"
-                                className='w-90 h-30 md:h-60 object-cover'
-                                />
-                                )}
-                            <div className='flex flex-col pt-2 font-medium font-noto-sans w-90 group'>
-                                <h1 className='text-base sm:text-lg lg:text-xl font-semibold leading-snug'>{data.title}</h1>
-                                <h1 className='text-xs sm:text-sm text-gray-500 mt-1'>{formatEventDateRange(data)}</h1>
-                                <h1 className='text-xs sm:text-sm text-gray-500 mt-1'>{formatEventTime(data.start_time)} - {formatEventTime(data.end_time)}</h1>
-                                <h1 className='text-sm sm:text-base text-gray-600 leading-relaxed line-clamp-3 group-hover:line-clamp-none'>{data.description}</h1>
-                            </div>
-                        </div>
+                <div className='grid grid-cols-1 px-10 lg:grid-cols-2 xl:grid-cols-3 gap-y-10 lg:gap-x-25 xl:gap-x-35'>
+                    {events.map((event: Event, index) =>
+                        <EventCard key={index} event={event} />
                     )}
                 </div>
             </div>
