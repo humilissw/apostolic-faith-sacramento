@@ -5,11 +5,11 @@ import Image from 'next/image'
 import { BsTelephone } from "react-icons/bs";
 import { IoLocationOutline, IoMailOutline } from "react-icons/io5";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import Calendar from "@/components/calendar";
 import TestCalendar from "@/components/test-calendar";
 import { EventDialog } from "@/components/event-dialog";
-import { Trash2, Pencil, Plus } from 'lucide-react';
+import { Trash2, Pencil, Plus, ChevronDown } from 'lucide-react';
 import { toast } from "sonner"
 
 import {
@@ -99,6 +99,79 @@ export default function Events() {
         setCalendarButtonStyle("rounded-none border border-black bg-white/70 shadow-lg hover:bg-zinc-200 text-zinc-900")
     }
 
+    function EventCard({ event }: { event: Event }) {
+    const [expanded, setExpanded] = useState(false);
+    const [isOverflowing, setIsOverflowing] = useState(false);
+    const textRef = useRef<HTMLHeadingElement>(null);
+
+    useLayoutEffect(() => {
+        const el = textRef.current;
+        if (el) {
+            setIsOverflowing(el.scrollHeight > el.clientHeight + 1);
+        }
+    }, [event.description]);
+
+    return (
+        <div className='flex flex-col'>
+            {event.flyer_url ? (
+                <FlyerImage
+                src={flyerImageUrl(event.flyer_url) ?? ""}
+                alt={`Flyer for ${event.title}`}
+                title={event.title}
+                className='w-90 h-60 object-cover'
+                />
+            ) : (
+                <Image
+                src="/tempEventsPhoto.png"
+                width={90}
+                height={60}
+                alt="Simple Background"
+                className='w-90 h-60 object-cover'
+                />
+                )}
+            <div className='flex flex-col pt-2 font-medium font-noto-sans w-90 group'>
+                <h1 className='text-base sm:text-lg lg:text-xl font-semibold leading-snug'>{event.title}</h1>
+                <h1 className='text-xs sm:text-sm text-gray-500 mt-1'>{formatEventDateRange(event)}</h1>
+                <h1 className='text-xs sm:text-sm text-gray-500 mt-1'>{formatEventTime(event.start_time)} - {formatEventTime(event.end_time)}</h1>
+                <h1
+                    ref={textRef}
+                    className={`text-sm sm:text-base text-gray-600 leading-relaxed
+                    ${expanded ? "" : "line-clamp-3" }`}>
+                    {event.description}
+                </h1>
+
+                {isOverflowing && (
+                <button
+                    onClick={() => setExpanded((e) => !e)}
+                    className="text-slate-700 hover:text-slate-900 text-sm mt-1 hover:underline flex items-center"
+                >
+                    {expanded ? "Show Less" : "Read More"}
+                    <ChevronDown className={`ml-1 transition-transform duration-300 ${expanded ? "transform rotate-180" : ""}`} />
+
+                </button>
+                )}
+                <div className='flex flex-row gap-2 pt-2 items-center'>
+                  <label className='flex items-center gap-1 text-sm text-black/60 cursor-pointer select-none'>
+                      <input
+                          type="checkbox"
+                          className="w-4 h-4 accent-zinc-900"
+                          checked={selectedIds.has(event.id)}
+                          onChange={() => toggleSelect(event.id)}
+                          aria-label={`Select ${event.title} for bulk delete`}
+                      />
+                      Select
+                  </label>
+                  <button onClick={() => handleDeleteClick(event.id)}>
+                      <Trash2 color="red" size={16} />
+                  </button>
+                  <button onClick={() => handleOpenDialog(event)}>
+                      <Pencil size={16} />
+                  </button>
+              </div>
+            </div>
+        </div>
+    )}
+
     const handleDeleteClick = (id: string) => {
       setPendingDeleteId(id);
       setDeleteConfirmOpen(true);
@@ -169,15 +242,18 @@ export default function Events() {
         </div>
 
 
-        <div className="flex flex-col justify-center pt-15">
-            <div className="flex min-w-[700px] sm:min-w-0 max-w-6xl mx-auto">
+        <div className="flex flex-col justify-center py-15 sm:gap-15 sm:justify-center sm:py-20">
+            <div className="md:flex min-w-[700px] sm:min-w-0 max-w-6xl mx-auto hidden">
                 <Button onClick={handleEventButton} className={eventButtonStyle} size="default" variant="default">Special Events</Button>
                 <Button onClick={handleCalendarButton} className={calendarButtonStyle} size="default" variant="default">Calendar</Button>
             </div>
 
             {eventsButton &&
-            <div className="flex flex-col justify-center items-center pb-25">
-                <div className='flex w-full justify-start items-center gap-4 py-5 px-65'>
+            <div className="flex flex-col justify-center items-center pb-15">
+
+                <div className="flex justify-center sm:gap-15 sm:justify-center">
+                  <div className='grid grid-cols-1 px-10 lg:grid-cols-2 xl:grid-cols-3 gap-y-10 lg:gap-x-25 xl:gap-x-35'>
+                    <div className='flex gap-3 col-span-1 lg:col-span-2 xl:col-span-3'>
                     <Button className="bg-zinc-900 text-white" variant="outline" onClick={handleCreate}>Create Event<Plus className="w-4 h-4" /></Button>
                     {events.length > 0 && (
                       <label className="flex items-center gap-2 text-sm font-medium cursor-pointer select-none">
@@ -211,68 +287,14 @@ export default function Events() {
                         }}/>
                     )}
                 </div>
-                <div className='grid grid-cols-2 gap-y-20 gap-x-30 px-65'>
-                    {events.length === 0 && !loading && <p>No events found.</p>}
-                    {loading && <p>Loading events...</p>}
-                    {error && <p>Error loading events: {error}</p>}
-
-                    {events.length > 0 && !loading && !error &&
-                    events.map((data: Event, index) =>
-                        <div key={index} >
-                            <Link href={`/events/${data.id}`}>
-                                <div className='flex flex-col md:flex-row '
-                                >
-                                    {data.flyer_url ? (
-                                        <FlyerImage
-                                        src={flyerImageUrl(data.flyer_url) ?? ""}
-                                        alt={`Flyer for ${data.title}`}
-                                        title={data.title}
-                                        className='w-90 h-30 md:h-60 object-cover'
-                                        // Inside the card Link: clicking the flyer opens the
-                                        // full-size dialog instead of following the link.
-                                        onImageClick={(openFullSize) => (event) => {
-                                            event.preventDefault();
-                                            event.stopPropagation();
-                                            openFullSize();
-                                        }}
-                                        />
-                                    ) : (
-                                    <Image
-                                    src="/tempEventsPhoto.png"
-                                    width={300}
-                                    height={300}
-                                    alt="Simple Events Background Photo"
-                                    className='w-90 h-30 md:h-60'
-                                    />
-                                    )}
-                                    <div className='flex flex-col pl-5 font-medium font-noto-sans'>
-                                        <h1 className='text-3xl'>{data.title}</h1>
-                                        <h1 className='text-black/40 font-normal'>{formatEventDateRange(data)}</h1>
-                                        <h1 className='text-black/40 font-normal'>{formatEventTime(data.start_time)} - {formatEventTime(data.end_time)}</h1>
-                                    </div>
-                                </div>
-                            </Link>
-                            <div className='flex flex-row gap-2 pt-2 items-center'>
-                                <label className='flex items-center gap-1 text-sm text-black/60 cursor-pointer select-none'>
-                                    <input
-                                        type="checkbox"
-                                        className="w-4 h-4 accent-zinc-900"
-                                        checked={selectedIds.has(data.id)}
-                                        onChange={() => toggleSelect(data.id)}
-                                        aria-label={`Select ${data.title} for bulk delete`}
-                                    />
-                                    Select
-                                </label>
-                                <button onClick={() => handleDeleteClick(data.id)}>
-                                    <Trash2 color="red" size={16} />
-                                </button>
-                                <button onClick={() => handleOpenDialog(data)}>
-                                    <Pencil size={16} />
-                                </button>
-                            </div>
-                        </div>
-
-                    )}
+                      {events.length === 0 && !loading && <p>No events found.</p>}
+                      {loading && <p>Loading events...</p>}
+                      {error && <p>Error loading events: {error}</p>}
+                      {events.length > 0 && !loading && !error &&
+                      events.map((data: Event, index) =>
+                        <EventCard key={index} event={data} />
+                      )}
+                  </div>
                 </div>
 
                 <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>

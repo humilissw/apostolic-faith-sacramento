@@ -153,7 +153,7 @@ const Calendar = () => {
   }
 
   return (
-    <div className="w-full p-2 sm:p-4 overflow-x-auto">
+    <div className="w-full p-2 sm:p-4 ">
       <div className="min-w-[700px] sm:min-w-0 max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-4 gap-2">
